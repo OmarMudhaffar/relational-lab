@@ -21,11 +21,13 @@ A free 14-day course that makes you fluent in SQL and database design. A real SQ
 1. **Learn:** short lessons with runnable examples. Before each answer, the lesson asks you to predict the result.
 2. **Practice:** graded exercises from easy to hard. Feedback tells you what is wrong. Hints come one at a time.
 3. **Recall:** a closed-book quiz. The questions return later in **Review**, on a spaced schedule (1, 3, 7, 14 and 30 days).
-4. **Explain:** write the idea in your own words, then compare it with the key points.
 
 Each feature follows a learning method with strong research behind it: retrieval practice, spacing, predicting before seeing the answer, worked examples with fading hints, interleaving, and self-explanation. All exercises use one university database: students, instructors, departments, courses, sections, enrollments and payments.
 
 ## Interactive extras
+
+- **Help when you are stuck:** after a wrong answer, a help ladder appears: next hint → the skeleton of the answer with blanks → reveal one part at a time → the lesson example that teaches it → the full solution with a plain-English explanation, line by line.
+- **Smart editor:** autocomplete for tables, columns (also after an alias like `s.`), keywords and functions; function help (`ROUND(number, digits)`); auto-closing brackets and quotes; a Format button.
 
 - **Live 3D database:** the 8 tables are drawn as database cylinders linked by their foreign keys. When you run a query, the tables it touches light up and data packets travel along the joins. You can drag the model to turn it, and clicking a table shows its columns.
 - **Watch your query run:** after every run, a step-by-step player shows how the database built your result, in the order it actually runs (FROM, JOIN, WHERE, GROUP BY, HAVING, SELECT, ORDER BY, LIMIT). Each step shows the real rows at that point and the rows it removed.

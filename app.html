@@ -496,6 +496,50 @@ button.pill.link:hover { border-color: var(--accent); }
 .sp-legend { border-top: 1px solid var(--line); padding: 10px 16px; font-size: 13px; color: var(--muted); line-height: 2; }
 .sp-legend .pill { margin: 0 4px 0 0; }
 
+/* ---------- help ladder ---------- */
+.console .help { margin: 10px 12px; }
+.help { border: 1px solid var(--hl); border-radius: 10px; background: var(--surface); padding: 12px 14px; }
+.help-h { display: flex; gap: 4px 12px; flex-wrap: wrap; align-items: baseline; margin-bottom: 10px; }
+.help-h b { font-size: 15px; color: var(--hl); }
+.help-h span { font-size: 13.5px; color: var(--muted); }
+.help-steps { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+.hs { display: flex; gap: 10px; align-items: flex-start; text-align: left; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 9px 10px; cursor: pointer; min-width: 0; }
+.hs:hover:not([disabled]) { border-color: var(--hl); background: var(--hl-soft); }
+.hs[disabled] { opacity: .5; cursor: default; }
+.hs > b { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--hl); color: var(--surface); display: grid; place-items: center; font: 700 11.5px var(--f-mono); }
+.hs > span { display: block; font-weight: 600; font-size: 14px; line-height: 1.3; min-width: 0; }
+.hs small { display: block; font-weight: 400; font-size: 12.5px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; }
+.skel { margin-top: 12px; }
+.skel .lab { font: 600 12px var(--f-mono); letter-spacing: .04em; color: var(--muted); margin-bottom: 6px; }
+.skel .code { margin: 0; font-size: 14px; }
+.skel .blank { background: var(--hl-soft); color: var(--hl); font-weight: 700; border-radius: 3px; padding: 0 2px; }
+.skel-act { display: flex; gap: 10px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.skel-act .note { margin: 0; }
+.tv.peek { width: min(760px, calc(100vw - 24px)); height: auto; max-height: min(820px, calc(100vh - 32px)); }
+.tv.peek .tv-h { overflow-y: auto; display: block; }
+.tv.peek h3 { font: 700 22px var(--f-display); margin: 4px 0 10px; }
+.tv.peek .prose { font-size: 15px; }
+.tv.peek .lab { font: 600 12px var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin: 14px 0 6px; }
+.pk-out { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-top: 8px; }
+.tv.peek .tv-links { justify-content: space-between; }
+
+/* ---------- autocomplete ---------- */
+.ed-mirror { position: absolute; inset: 0; visibility: hidden; pointer-events: none; overflow: hidden; z-index: -1; }
+.ac { position: fixed; z-index: 90; min-width: 240px; max-width: min(440px, calc(100vw - 16px)); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); overflow: hidden; font-size: 13.5px; }
+.ac-it { display: grid; grid-template-columns: 34px auto minmax(0, 1fr); gap: 8px; align-items: center; padding: 6px 10px; cursor: pointer; }
+.ac-it b { font: 600 13.5px var(--f-mono); white-space: nowrap; }
+.ac-it small { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ac-it.on { background: var(--accent-soft); }
+.ac-k { font: 700 10px var(--f-mono); text-transform: uppercase; text-align: center; border-radius: 4px; padding: 2px 0; background: var(--bg2); color: var(--muted); }
+.ac-k.table { background: var(--accent-soft); color: var(--accent); }
+.ac-k.key { background: var(--hl-soft); color: var(--hl); }
+.ac-k.function { background: var(--ok-soft); color: var(--ok); }
+.ac-foot { font: 11px var(--f-mono); color: var(--muted); padding: 5px 10px; border-top: 1px solid var(--line); }
+.ac-foot.tip { font: 12.5px var(--f-body); color: var(--hl); background: var(--hl-soft); }
+.ac.sig { padding: 8px 12px; }
+.ac-sig code { display: block; font-size: 13.5px; background: none; padding: 0; font-weight: 600; }
+.ac-sig span { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+
 /* ---------- solution walkthrough ---------- */
 .sol { margin: 0 16px 16px; border: 1px solid var(--accent); border-radius: 10px; background: var(--surface); padding: 14px 16px 16px; }
 .sol-h { display: flex; gap: 4px 12px; flex-wrap: wrap; align-items: baseline; margin-bottom: 4px; }
@@ -741,6 +785,11 @@ ul.spec b { display: inline-block; min-width: 72px; font: 600 12px var(--f-mono)
   <div class="tv-body" id="tvBody"></div>
   <div class="tv-links" id="tvLinks"></div>
 </div>
+<div class="tv peek" id="peek" hidden role="dialog" aria-modal="true" aria-label="Lesson example">
+  <div class="tv-h"><div class="tv-title" id="peekBody"></div></div>
+  <div class="tv-links"><button class="btn small" id="peekClose">Back to the exercise</button><button class="btn small primary" id="peekOpen">Open this in the lesson</button></div>
+</div>
+<div class="ac" id="ac" hidden role="listbox"></div>
 <div class="toast" id="toast" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -933,6 +982,143 @@ function hl(src) {
   return out + '\n';
 }
 const editors = {};
+const FUNC_DOC = {
+  count: ['COUNT(column) or COUNT(*)', 'Count rows. COUNT(column) skips NULLs.'], sum: ['SUM(number)', 'Add up the values.'], avg: ['AVG(number)', 'Average of the values (NULLs are skipped).'],
+  min: ['MIN(value)', 'Smallest value.'], max: ['MAX(value)', 'Largest value.'], total: ['TOTAL(number)', 'Like SUM, but gives 0.0 instead of NULL.'],
+  round: ['ROUND(number, digits)', 'Round to this many decimal places.'], abs: ['ABS(number)', 'Remove the minus sign.'],
+  length: ['LENGTH(text)', 'Number of characters.'], upper: ['UPPER(text)', 'TEXT IN CAPITALS.'], lower: ['LOWER(text)', 'text in small letters.'],
+  substr: ['SUBSTR(text, start, length)', 'Part of the text. The first character is position 1.'], instr: ['INSTR(text, find)', 'Position of find in text (0 if missing).'],
+  replace: ['REPLACE(text, from, to)', 'Replace every from with to.'], trim: ['TRIM(text)', 'Remove spaces at both ends.'],
+  coalesce: ['COALESCE(a, b, ...)', 'The first value that is not NULL.'], ifnull: ['IFNULL(a, b)', 'a, or b when a is NULL.'], nullif: ['NULLIF(a, b)', 'NULL when a = b, otherwise a.'],
+  date: ['DATE(value)', 'A date as YYYY-MM-DD. DATE(\'now\') is today.'], datetime: ['DATETIME(value)', 'Date and time.'], strftime: ['STRFTIME(format, date)', 'Format a date. \'%Y\' = year, \'%m\' = month.'],
+  julianday: ['JULIANDAY(date)', 'Day number. Subtract two of them to get days between dates.'], cast: ['CAST(value AS type)', 'Change the type, e.g. CAST(x AS INTEGER).'],
+  group_concat: ['GROUP_CONCAT(value, separator)', 'Join the values of a group into one text.'], typeof: ['TYPEOF(value)', 'The type of a value.'], iif: ['IIF(condition, a, b)', 'a if the condition is true, else b.'],
+  row_number: ['ROW_NUMBER() OVER (...)', 'Number the rows 1, 2, 3 in the window.'], rank: ['RANK() OVER (...)', 'Rank with gaps after ties (1, 1, 3).'], dense_rank: ['DENSE_RANK() OVER (...)', 'Rank without gaps (1, 1, 2).'],
+  ntile: ['NTILE(n) OVER (...)', 'Split the rows into n groups.'], lag: ['LAG(value, n) OVER (...)', 'The value n rows before.'], lead: ['LEAD(value, n) OVER (...)', 'The value n rows after.'],
+  first_value: ['FIRST_VALUE(value) OVER (...)', 'The first value in the window.'], last_value: ['LAST_VALUE(value) OVER (...)', 'The last value in the window.'],
+  pragma_table_info: ['pragma_table_info(\'table\')', 'The columns of a table.'], pragma_foreign_key_list: ['pragma_foreign_key_list(\'table\')', 'The foreign keys of a table.'], pragma_index_list: ['pragma_index_list(\'table\')', 'The indexes of a table.'], raise: ['RAISE(ABORT, \'message\')', 'Stop the statement with an error (in triggers).']
+};
+const AC_KW = ['SELECT', 'FROM', 'WHERE', 'GROUP BY', 'HAVING', 'ORDER BY', 'LIMIT', 'OFFSET', 'DISTINCT', 'AS', 'AND', 'OR', 'NOT', 'IN', 'BETWEEN', 'LIKE', 'IS NULL', 'IS NOT NULL', 'NULL', 'JOIN', 'INNER JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'FULL JOIN', 'CROSS JOIN', 'ON', 'USING', 'UNION', 'UNION ALL', 'INTERSECT', 'EXCEPT', 'EXISTS', 'NOT EXISTS', 'CASE', 'WHEN', 'THEN', 'ELSE', 'END', 'ASC', 'DESC', 'WITH', 'RECURSIVE', 'OVER', 'PARTITION BY', 'ROWS BETWEEN', 'UNBOUNDED PRECEDING', 'CURRENT ROW', 'INSERT INTO', 'VALUES', 'UPDATE', 'SET', 'DELETE FROM', 'CREATE TABLE', 'CREATE INDEX', 'CREATE VIEW', 'CREATE TRIGGER', 'PRIMARY KEY', 'FOREIGN KEY', 'REFERENCES', 'NOT NULL', 'UNIQUE', 'CHECK', 'DEFAULT', 'ON DELETE CASCADE', 'ALTER TABLE', 'ADD COLUMN', 'DROP TABLE', 'BEGIN', 'COMMIT', 'ROLLBACK', 'SAVEPOINT', 'BEFORE', 'AFTER', 'FOR EACH ROW', 'INTEGER', 'TEXT', 'REAL', 'EXPLAIN QUERY PLAN', 'ON CONFLICT', 'DO UPDATE SET', 'RETURNING', 'COLLATE NOCASE'];
+const SCHEMA_CACHE = {};
+function schemaForEditor(key) {
+  let setup = null, live = null;
+  if (key === 'pg') live = PG;
+  else if (key.startsWith('ex:')) { const ex = DAYS.flatMap(d => d.exercises).find(x => x.id === key.slice(3)); setup = ex && ex.setup || null; }
+  const ck = live ? null : (setup || '');
+  if (ck !== null && SCHEMA_CACHE[ck]) return SCHEMA_CACHE[ck];
+  const db = live || freshDB(setup); const out = {};
+  (db.exec("SELECT name FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%'")[0] || { values: [] }).values.forEach(([t]) => {
+    out[t] = (db.exec("SELECT name, type, pk FROM pragma_table_info('" + t.replace(/'/g, "''") + "')")[0] || { values: [] }).values.map(([c, ty, pk]) => ({ c, ty: (ty || '').toLowerCase(), pk }));
+  });
+  if (!live) db.close();
+  if (ck !== null) SCHEMA_CACHE[ck] = out;
+  return out;
+}
+function aliasMap(text, schema) {
+  const m = {}; const re = /\b(?:from|join|update|into)\s+"?([A-Za-z_]\w*)"?(?:\s+(?:as\s+)?(?!(?:join|left|right|inner|full|cross|natural|on|where|group|order|limit|using|union|intersect|except|set|values|having|window)\b)([A-Za-z_]\w*))?/gi; let x;
+  while ((x = re.exec(text))) { const t = x[1]; if (!schema[t]) continue; m[t.toLowerCase()] = t; if (x[2] && !KW.has(x[2].toLowerCase())) m[x[2].toLowerCase()] = t; }
+  return m;
+}
+const AC = { ta: null, items: [], i: 0, start: 0, end: 0, onApply: null };
+function acClose() { $('#ac').hidden = true; AC.items = []; AC.ta = null; }
+function caretXY(ta) {
+  const ed = ta.parentNode; let mir = ed.querySelector('.ed-mirror');
+  if (!mir) { mir = document.createElement('div'); mir.className = 'ed-mirror'; ed.appendChild(mir); }
+  mir.textContent = ta.value.slice(0, ta.selectionStart);
+  const sp = document.createElement('span'); sp.textContent = '​'; mir.appendChild(sp);
+  const r = sp.getBoundingClientRect(); return { x: r.left, y: r.bottom, top: r.top };
+}
+function acSuggest(ta, key, onApply) {
+  const pos = ta.selectionStart; if (pos !== ta.selectionEnd) return acClose();
+  const before = ta.value.slice(0, pos);
+  const line = before.slice(before.lastIndexOf('\n') + 1);
+  if (/--/.test(line) || ((before.match(/'/g) || []).length % 2 === 1)) return acClose();
+  const schema = schemaForEditor(key);
+  let items = [], m, start = pos, prefix = '';
+  if ((m = /([A-Za-z_]\w*)\.(\w*)$/.exec(before))) {
+    const t = aliasMap(ta.value, schema)[m[1].toLowerCase()];
+    prefix = m[2]; start = pos - prefix.length;
+    const srcT = t ? [t] : Object.keys(schema);
+    srcT.forEach(tt => schema[tt].forEach(c => { if (c.c.toLowerCase().startsWith(prefix.toLowerCase())) items.push({ label: c.c, ins: c.c, kind: c.pk ? 'key' : 'column', detail: tt + ' · ' + (c.ty || 'any') }); }));
+    if (!t && items.length) items.unshift({ label: 'Tip', ins: '', kind: 'keyword', detail: 'write FROM … ' + m[1] + ' so I know which table ' + m[1] + ' is', tip: true });
+  } else {
+    m = /([A-Za-z_]\w*)$/.exec(before); if (!m) return sigHelp(ta, before);
+    prefix = m[1]; start = pos - prefix.length;
+    if (prefix.length < 1) return acClose();
+    const lp = prefix.toLowerCase();
+    const prevWord = (/(\w+)\s+$/.exec(before.slice(0, start)) || [])[1];
+    const wantTable = prevWord && /^(from|join|into|update|table|exists)$/i.test(prevWord);
+    const tables = Object.keys(schema).filter(t => t.toLowerCase().startsWith(lp)).map(t => ({ label: t, ins: t + ' ', kind: 'table', detail: schema[t].length + ' columns' }));
+    if (wantTable) items = tables;
+    else {
+      const am = aliasMap(ta.value, schema); const used = [...new Set(Object.values(am))];
+      const colSrc = used.length ? used : Object.keys(schema);
+      const seen = new Set(); const cols = [];
+      colSrc.forEach(t => schema[t].forEach(c => { if (c.c.toLowerCase().startsWith(lp) && !seen.has(c.c)) { seen.add(c.c); cols.push({ label: c.c, ins: c.c, kind: c.pk ? 'key' : 'column', detail: (used.length > 1 ? t + ' · ' : '') + (c.ty || 'any') }); } }));
+      const kws = AC_KW.filter(k => k.toLowerCase().startsWith(lp)).map(k => ({ label: k, ins: k + ' ', kind: 'keyword', detail: '' }));
+      const fns = Object.keys(FUNC_DOC).filter(f => f.startsWith(lp)).map(f => ({ label: FUNC_DOC[f][0], ins: f.toUpperCase() + '(', kind: 'function', detail: FUNC_DOC[f][1] }));
+      items = cols.concat(tables, kws, fns);
+    }
+    items = items.filter(it => it.ins.trim().toLowerCase() !== lp);
+  }
+  items = items.slice(0, 8);
+  if (!items.length || items.every(it => it.tip)) return sigHelp(ta, before);
+  if (items[0].tip) { const tip = items.shift(); AC.tip = tip.detail; } else AC.tip = null;
+  Object.assign(AC, { ta, items, i: 0, start, end: pos, onApply });
+  acRender();
+}
+function sigHelp(ta, before) {
+  let depth = 0, i = before.length - 1;
+  for (; i >= 0; i--) { const c = before[i]; if (c === ')') depth++; else if (c === '(') { if (depth === 0) break; depth--; } }
+  if (i < 0) return acClose();
+  const w = (/([A-Za-z_]\w*)\s*$/.exec(before.slice(0, i)) || [])[1];
+  const doc = w && FUNC_DOC[w.toLowerCase()];
+  if (!doc) return acClose();
+  Object.assign(AC, { ta, items: [], i: 0 });
+  const box = $('#ac'); box.className = 'ac sig';
+  box.innerHTML = '<div class="ac-sig"><code>' + esc(doc[0]) + '</code><span>' + esc(doc[1]) + '</span></div>';
+  acPlace(ta);
+}
+function acPlace(ta) {
+  const box = $('#ac'); const p = caretXY(ta);
+  box.hidden = false;
+  const w = box.offsetWidth, h = box.offsetHeight;
+  let x = Math.min(p.x, window.innerWidth - w - 8), y = p.y + 4;
+  if (y + h > window.innerHeight - 8) y = p.top - h - 4;
+  box.style.left = Math.max(8, x) + 'px'; box.style.top = y + 'px';
+}
+function acRender() {
+  const box = $('#ac'); box.className = 'ac';
+  box.innerHTML = AC.items.map((it, k) => '<div class="ac-it' + (k === AC.i ? ' on' : '') + '" data-k="' + k + '" role="option"><span class="ac-k ' + it.kind + '">' + ({ column: 'col', key: 'key', table: 'tbl', keyword: 'kw', function: 'fn' })[it.kind] + '</span><b>' + esc(it.label) + '</b><small>' + esc(it.detail) + '</small></div>').join('') + (AC.tip ? '<div class="ac-foot tip">Tip: ' + esc(AC.tip) + '</div>' : '') + '<div class="ac-foot">↑↓ choose · Enter or Tab to insert · Esc to close</div>';
+  acPlace(AC.ta);
+}
+function acApply(k) {
+  const it = AC.items[k], ta = AC.ta; if (!it || !ta) return;
+  const v = ta.value; let ins = it.ins, caret = AC.start + ins.length;
+  if (ins.endsWith('(')) { ins += ')'; caret = AC.start + ins.length - 1; }
+  ta.value = v.slice(0, AC.start) + ins + v.slice(AC.end);
+  ta.selectionStart = ta.selectionEnd = caret;
+  const cb = AC.onApply; acClose(); cb && cb();
+}
+$('#ac').addEventListener('mousedown', e => { const el = e.target.closest('.ac-it'); if (!el) return; e.preventDefault(); acApply(Number(el.dataset.k)); });
+window.addEventListener('scroll', () => { if (!$('#ac').hidden) acClose(); }, true);
+function formatSQL(sql) {
+  return splitStatements(sql).map(st => {
+    let out = '', i = 0; const s = st;
+    while (i < s.length) {
+      const rest = s.slice(i), c = s[i]; let m;
+      if (rest.startsWith('--')) { const e = s.indexOf('\n', i); const j = e < 0 ? s.length : e; out += s.slice(i, j); i = j; continue; }
+      if (c === "'") { let j = i + 1; while (j < s.length) { if (s[j] === "'" && s[j + 1] === "'") { j += 2; continue; } if (s[j] === "'") { j++; break; } j++; } out += s.slice(i, j); i = j; continue; }
+      if ((m = /^[A-Za-z_][A-Za-z0-9_]*/.exec(rest)) && !/[\w.]/.test(s[i - 1] || '')) { const w = m[0]; out += KW.has(w.toLowerCase()) && !/^(date|text|key|year|name|role|status)$/i.test(w) ? w.toUpperCase() : w; i += w.length; continue; }
+      out += c; i++;
+    }
+    if (!/^\s*(select|with)\b/i.test(out)) return out.trim();
+    let flat = out.replace(/\s+/g, ' ').trim();
+    const toks = clauseTokens(flat).filter(t => t.kw !== 'SELECT' || t.start > 0);
+    for (let k = toks.length - 1; k >= 0; k--) { const t = toks[k]; flat = flat.slice(0, t.start).replace(/\s+$/, '') + '\n' + (t.kw === 'JOIN' ? '  ' : '') + flat.slice(t.start); }
+    return flat.replace(/\s*;?\s*$/, ';');
+  }).join('\n\n');
+}
 function editorHTML(key, value, rows) {
   return '<div class="ed" data-ed="' + esc(key) + '"><pre aria-hidden="true">' + hl(value) + '</pre><textarea class="ed-input" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="SQL editor" id="ed-' + esc(key) + '" rows="' + (rows || 3) + '">' + esc(value) + '</textarea></div>';
 }
@@ -941,10 +1127,24 @@ function mountEditors(root, onRun) {
     const key = ed.dataset.ed, ta = $('textarea', ed), pre = $('pre', ed);
     const fit = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
     const sync = () => { pre.innerHTML = hl(ta.value); fit(); editors[key] = ta.value; };
-    ta.addEventListener('input', () => { sync(); if (key.startsWith('ex:')) { P.drafts[key.slice(3)] = ta.value; save(); } });
+    const changed = () => { sync(); if (key.startsWith('ex:')) { P.drafts[key.slice(3)] = ta.value; save(); } };
+    const put = (text, caretBack) => { const a = ta.selectionStart, b = ta.selectionEnd; ta.value = ta.value.slice(0, a) + text + ta.value.slice(b); ta.selectionStart = ta.selectionEnd = a + text.length - (caretBack || 0); changed(); };
+    ta.addEventListener('input', e => { changed(); if (!e.inputType || /^insert/.test(e.inputType)) acSuggest(ta, key, () => { changed(); acSuggest(ta, key, changed); }); else if (AC.ta === ta) acSuggest(ta, key, changed); });
+    ta.addEventListener('blur', () => setTimeout(() => { if (AC.ta === ta && document.activeElement !== ta) acClose(); }, 120));
+    ta.addEventListener('click', () => { if (AC.ta === ta) acClose(); sigHelp(ta, ta.value.slice(0, ta.selectionStart)); });
     ta.addEventListener('keydown', e => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); onRun && onRun(key, ta.value, e.shiftKey); }
-      else if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); const a = ta.selectionStart, b = ta.selectionEnd; ta.value = ta.value.slice(0, a) + '  ' + ta.value.slice(b); ta.selectionStart = ta.selectionEnd = a + 2; sync(); }
+      const open = !$('#ac').hidden && AC.ta === ta && AC.items.length;
+      if (open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); AC.i = (AC.i + (e.key === 'ArrowDown' ? 1 : AC.items.length - 1)) % AC.items.length; acRender(); return; }
+      if (open && (e.key === 'Enter' || e.key === 'Tab') && !e.ctrlKey && !e.metaKey && !e.shiftKey) { e.preventDefault(); acApply(AC.i); return; }
+      if (e.key === 'Escape' && !$('#ac').hidden) { e.preventDefault(); e.stopPropagation(); acClose(); return; }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); acClose(); onRun && onRun(key, ta.value, e.shiftKey); return; }
+      if ((e.ctrlKey || e.metaKey) && e.key === ' ') { e.preventDefault(); acSuggest(ta, key, changed); return; }
+      if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); put('  '); return; }
+      const a = ta.selectionStart, b = ta.selectionEnd, next = ta.value[a] || '', prev = ta.value[a - 1] || '';
+      if (e.key === '(' ) { e.preventDefault(); if (a !== b) { const sel = ta.value.slice(a, b); put('(' + sel + ')'); } else put('()', 1); sigHelp(ta, ta.value.slice(0, ta.selectionStart)); return; }
+      if ((e.key === ')' || e.key === "'") && a === b && next === e.key) { const inStr = e.key === "'" && (ta.value.slice(0, a).match(/'/g) || []).length % 2 === 0; if (!inStr) { e.preventDefault(); ta.selectionStart = ta.selectionEnd = a + 1; return; } }
+      if (e.key === "'" && a === b && !/[\w']/.test(prev) && (ta.value.slice(0, a).match(/'/g) || []).length % 2 === 0) { e.preventDefault(); put("''", 1); return; }
+      if (e.key === 'Backspace' && a === b && ((prev === '(' && next === ')') || (prev === "'" && next === "'"))) { e.preventDefault(); ta.value = ta.value.slice(0, a - 1) + ta.value.slice(a + 1); ta.selectionStart = ta.selectionEnd = a - 1; changed(); return; }
     });
     requestAnimationFrame(fit);
   });
@@ -1015,7 +1215,7 @@ function dayStats(day) {
   const qRight = day.quiz.filter(q => P.quiz[q.id] && P.quiz[q.id].first === true).length;
   const qDone = day.quiz.filter(q => P.quiz[q.id]).length;
   const teach = P.teach[day.n] ? 1 : 0;
-  const pct = Math.round(100 * (0.2 * Math.min(1, seen / segs) + 0.55 * (exDone / day.exercises.length) + 0.15 * (qDone / day.quiz.length) + 0.1 * teach));
+  const pct = Math.round(100 * (0.2 * Math.min(1, seen / segs) + 0.6 * (exDone / day.exercises.length) + 0.2 * (qDone / day.quiz.length)));
   return { seen, segs, exDone, exTotal: day.exercises.length, qRight, qDone, qTotal: day.quiz.length, teach, pct };
 }
 function overall() { return Math.round(DAYS.reduce((s, d) => s + dayStats(d).pct, 0) / DAYS.length); }
@@ -1062,9 +1262,8 @@ function viewHome() {
   const routine = [
     ['10 min', 'Review', 'Spaced recall cards from earlier days'],
     ['40 min', 'Learn', 'Short segments. Predict, then run the example'],
-    ['70 min', 'Practice', 'Graded SQL exercises, easy to hard'],
-    ['15 min', 'Recall', 'Closed-book quiz on today'],
-    ['15 min', 'Explain', 'Teach the idea back in your own words']
+    ['80 min', 'Practice', 'Graded SQL exercises, easy to hard'],
+    ['20 min', 'Recall', 'Closed-book quiz on today']
   ];
   const principles = [
     ['Retrieval practice', 'Pulling an answer out of memory makes it stronger than reading it again. Every day ends with a closed-book quiz, and old questions come back in Review.', 'Recall tab + Review', 'Roediger & Karpicke, 2006'],
@@ -1072,7 +1271,7 @@ function viewHome() {
     ['Predict before you see', 'Guessing first, even wrongly, makes the correct answer stick. Lessons stop and ask you to commit to a prediction.', 'Predict blocks in Learn', 'Kornell, Hays & Bjork, 2009'],
     ['Worked examples, then fading', 'Beginners learn faster from studying solved examples, then solving with less and less help. Hints come one step at a time; the solution unlocks only after real attempts.', 'Hint ladder in Practice', 'Sweller; Renkl & Atkinson, 2003'],
     ['Interleaving', 'Mixing problem types forces you to choose the method, which is what exams test. Days 7 and 14 mix everything.', 'Mixed exams', 'Rohrer & Taylor, 2007'],
-    ['Self-explanation and fast feedback', 'Explaining in your own words reveals gaps. Feedback that says what is wrong and what to try next is one of the strongest effects in education research.', 'Explain tab + instant grading', 'Chi et al., 1994; Hattie & Timperley, 2007']
+    ['Self-explanation and fast feedback', 'Reading why a solution works, then retyping it from memory, closes gaps fast. Feedback that says what is wrong and what to try next is one of the strongest effects in education research.', 'Why-this-works notes + instant feedback', 'Chi et al., 1994; Hattie & Timperley, 2007']
   ];
   let weeks = '';
   [[1, 'Week 1 · Querying with SQL'], [2, 'Week 2 · Design, theory and internals']].forEach(([w, t]) => {
@@ -1102,15 +1301,16 @@ function viewHome() {
 }
 
 /* ---------------- views: day ---------------- */
-const TABS = [['learn', 'Learn'], ['practice', 'Practice'], ['recall', 'Recall'], ['explain', 'Explain']];
+const TABS = [['learn', 'Learn'], ['practice', 'Practice'], ['recall', 'Recall']];
 const lessonRuns = {};
 const exState = {};
 function viewDay(n, tabOverride) {
   const day = byN(n); if (!day) return viewHome();
-  const tab = tabOverride || P.tab[n] || 'learn';
+  let tab = tabOverride || P.tab[n] || 'learn';
+  if (!TABS.some(t => t[0] === tab)) tab = 'learn';
   if (P.tab[n] !== tab) { P.tab[n] = tab; save(); }
   const st = dayStats(day);
-  const doneFlags = { learn: st.seen >= st.segs, practice: st.exDone === st.exTotal, recall: st.qDone === st.qTotal, explain: !!st.teach };
+  const doneFlags = { learn: st.seen >= st.segs, practice: st.exDone === st.exTotal, recall: st.qDone === st.qTotal };
   let h = '<div class="col"><header class="dayhead"><div class="eyebrow">Day ' + pad2(day.n) + ' · ' + esc(day.tag) + ' · about ' + (day.hours || 2.5) + ' h</div><h1>' + esc(day.title) + '</h1>' +
     '<ul class="goals">' + day.goals.map(g => '<li>' + g + '</li>').join('') + '</ul>' + factHTML(true) + '</header>' +
     '<nav class="steps-nav" role="tablist">' + TABS.map(([k, l], i) => '<button role="tab" data-tab="' + k + '" class="' + (k === tab ? 'on ' : '') + (doneFlags[k] ? 'done' : '') + '"><b>' + (doneFlags[k] ? '✓' : i + 1) + '</b>' + l + (k === 'practice' ? ' <span class="eyebrow">' + st.exDone + '/' + st.exTotal + '</span>' : '') + '</button>').join('') + '</nav><div id="tabBody"></div></div>';
@@ -1194,13 +1394,13 @@ function exHTML(ex, idx) {
   const status = rec.done ? '<span class="status done">Solved</span>' : rec.attempts ? '<span class="status try">' + rec.attempts + ' tr' + (rec.attempts === 1 ? 'y' : 'ies') + '</span>' : '<span class="status todo">New</span>';
   const draft = P.drafts[ex.id] !== undefined ? P.drafts[ex.id] : (ex.kind === 'script' ? '-- write your SQL here\n' : 'SELECT ');
   const hintsShown = rec.hints || 0;
-  const canSolve = rec.done || (rec.attempts || 0) >= 2 || hintsShown >= ex.hints.length;
+  const canSolve = rec.done || (rec.attempts || 0) >= 2 || hintsShown >= ex.hints.length || (rec.skel !== undefined && rec.skel >= 0);
   const rq = requesterFor(ex);
   let h = '<article class="ex' + (rec.done ? ' done' : '') + '" id="ex-' + esc(ex.id) + '"><div class="ex-h"><span class="av" aria-hidden="true">' + rq[1] + '</span><span class="req"><b>' + esc(rq[0]) + '</b><small>REQ-' + esc(ex.id.toUpperCase()) + ' · ' + xpOfEx(ex) + ' XP</small></span><span class="id">' + pad2(idx + 1) + '</span><span class="lvl" title="Level ' + ex.level + '">' + [1, 2, 3].map(l => '<i class="' + (l <= ex.level ? 'on' : '') + '"></i>').join('') + '</span>' + (ex.kind === 'script' ? '<span class="eyebrow">' + (ex.plan ? 'index task' : 'build task') + '</span>' : '') + status + '</div>';
   const tl = tablesFor(ex);
   h += '<div class="ex-p prose">' + ex.prompt + (tl.length ? '<div class="tables-line">Tables: ' + tl.map(t => '<button class="tchip" data-schema="' + esc(t) + '" data-setupof="' + esc(ex.id) + '" title="Show the columns of ' + esc(t) + '">' + esc(t) + '</button>').join('') + '</div>' : '') + '' + (ex.setup ? '<details><summary class="note" style="cursor:pointer">Setup SQL that runs before yours</summary><pre class="code">' + hl(ex.setup) + '</pre></details>' : '') + '</div>';
-  const fbBlock = (s.fb ? fbHTML(s.fb, rec) : '') + (hintsShown ? '<div class="hints">' + ex.hints.slice(0, hintsShown).map((t, i) => '<div' + (i === hintsShown - 1 ? ' class="new"' : '') + '><b>HINT ' + (i + 1) + ' of ' + ex.hints.length + '</b><span>' + t + '</span></div>').join('') + '</div>' : '');
-  h += '<div class="console">' + editorHTML('ex:' + ex.id, draft, 4) + '<div class="toolbar ex-tb"><div class="tb-main"><button class="btn small" data-exrun="' + ex.id + '">Run</button><button class="btn primary small" data-excheck="' + ex.id + '">Check answer</button></div><div class="tb-side"><button class="btn small tb-hint" data-exhint="' + ex.id + '"' + (hintsShown >= ex.hints.length ? ' disabled' : '') + '>' + (hintsShown >= ex.hints.length ? 'All hints shown' : 'Hint ' + (hintsShown + 1) + ' of ' + ex.hints.length) + '</button>' + (ex.kind !== 'script' ? '<button class="btn ghost small" data-exexp="' + ex.id + '">' + (s.showExp ? 'Hide expected' : 'Expected result') + '</button>' : '') + '<button class="btn ghost small" data-exsol="' + ex.id + '"' + (canSolve ? '' : ' disabled title="Unlocks after 2 checks or after all hints"') + '>' + (s.showSol ? 'Hide solution' : canSolve ? 'Solution' : 'Solution (locked)') + '</button><button class="btn ghost small tutor-only" data-exask="' + ex.id + '" hidden>Ask the professor</button></div></div>' +
+  const fbBlock = (s.fb ? fbHTML(s.fb, rec) : '') + helpHTML(ex, rec, s, hintsShown, canSolve) + (hintsShown ? '<div class="hints">' + ex.hints.slice(0, hintsShown).map((t, i) => '<div' + (i === hintsShown - 1 ? ' class="new"' : '') + '><b>HINT ' + (i + 1) + ' of ' + ex.hints.length + '</b><span>' + t + '</span></div>').join('') + '</div>' : '');
+  h += '<div class="console">' + editorHTML('ex:' + ex.id, draft, 4) + '<div class="toolbar ex-tb"><div class="tb-main"><button class="btn small" data-exrun="' + ex.id + '">Run</button><button class="btn primary small" data-excheck="' + ex.id + '">Check answer</button><button class="btn ghost small" data-exfmt="' + ex.id + '" title="Put each clause on its own line">Format</button></div><div class="tb-side"><button class="btn small tb-hint" data-exhint="' + ex.id + '"' + (hintsShown >= ex.hints.length ? ' disabled' : '') + '>' + (hintsShown >= ex.hints.length ? 'All hints shown' : 'Hint ' + (hintsShown + 1) + ' of ' + ex.hints.length) + '</button>' + (ex.kind !== 'script' ? '<button class="btn ghost small" data-exexp="' + ex.id + '">' + (s.showExp ? 'Hide expected' : 'Expected result') + '</button>' : '') + '<button class="btn ghost small" data-exsol="' + ex.id + '"' + (canSolve ? '' : ' disabled title="Unlocks after 2 checks or after all hints"') + '>' + (s.showSol ? 'Hide solution' : canSolve ? 'Solution' : 'Solution (locked)') + '</button><button class="btn ghost small tutor-only" data-exask="' + ex.id + '" hidden>Ask the professor</button></div></div>' +
     fbBlock + '<div class="out"' + (s.run && !(s.fb && s.fb.kind === 'error') ? '' : ' hidden') + '>' + (s.run ? (s.fb ? '<div class="out-lab">Your result</div>' : '') + runResultHTML(s.run) + (s.run.ok ? xrayWidget('ex:' + ex.id) : '') : '') + (s.plan ? '<div class="meta"><span>Plan: ' + esc(s.plan) + '</span></div>' : '') + '</div></div>';
   if (s.showExp && ex.kind !== 'script') { let set = null; try { set = expectedFor(ex); } catch (e) {} h += '<div class="exp"><div class="lab">Expected result (your target)</div>' + gridHTML(set) + '</div>'; }
   if (s.showSol) h += solutionHTML(ex);
@@ -1345,6 +1545,88 @@ function solutionHTML(ex) {
   h += '<div class="sol-act"><button class="btn primary" data-exretry="' + ex.id + '">Your turn: hide the solution and type it yourself</button></div>';
   return h + '</div>';
 }
+/* ----- help ladder: hints → skeleton → reveal parts → lesson example → solution ----- */
+function solutionPieces(ex) {
+  const stmts = splitStatements(ex.solution);
+  if (stmts.length === 1 && /^(\s|--[^\n]*\n)*(select|with)\b/i.test(stmts[0])) {
+    const st = stmts[0].replace(/;\s*$/, ''); const toks = clauseTokens(st); const si = toks.findIndex(t => t.kw === 'SELECT');
+    const out = [];
+    if (si > 0 || (si === 0 && toks[0].start > 0 && /^\s*with\b/i.test(st))) out.push(st.slice(0, toks[si].start).trim());
+    toks.slice(Math.max(si, 0)).forEach((t, i, a) => out.push(st.slice(t.start, i + 1 < a.length ? a[i + 1].start : st.length).trim()));
+    return out.filter(Boolean);
+  }
+  return stmts;
+}
+function skeletonize(src) {
+  let out = '', i = 0, prevAs = false; const s = String(src);
+  while (i < s.length) {
+    const c = s[i], rest = s.slice(i); let m;
+    if (rest.startsWith('--')) { const e = s.indexOf('\n', i); i = e < 0 ? s.length : e; continue; }
+    if (c === "'") { let j = i + 1; while (j < s.length) { if (s[j] === "'" && s[j + 1] === "'") { j += 2; continue; } if (s[j] === "'") { j++; break; } j++; } out += '___'; i = j; prevAs = false; continue; }
+    if ((m = /^\d+(\.\d+)?/.exec(rest)) && !/[A-Za-z_]/.test(s[i - 1] || '')) { out += '___'; i += m[0].length; prevAs = false; continue; }
+    if ((m = /^"?[A-Za-z_][A-Za-z0-9_]*"?/.exec(rest))) {
+      const w = m[0], lw = w.replace(/"/g, '').toLowerCase();
+      if (prevAs) out += w;
+      else if (KW.has(lw) && lw !== 'date' && lw !== 'text' && lw !== 'integer' && lw !== 'real') out += w.toUpperCase();
+      else if (s[i + w.length] === '(' && FUNC_DOC[lw]) out += w.toUpperCase();
+      else out += '___';
+      prevAs = lw === 'as'; i += w.length; continue;
+    }
+    out += c; if (!/\s/.test(c)) prevAs = false; i++;
+  }
+  return out.replace(/___(\s*___)+/g, '___').replace(/___\.___/g, '___');
+}
+function skeletonText(ex, revealed) {
+  const parts = solutionPieces(ex);
+  const multi = splitStatements(ex.solution).length > 1 || !/^(\s|--[^\n]*\n)*(select|with)\b/i.test(ex.solution);
+  return parts.map((p, i) => i < revealed ? p : skeletonize(p)).join(multi ? '\n\n' : '\n') + (multi ? '' : ';');
+}
+const SEG_FEATS = {};
+function featsOf(sql) {
+  const s = String(sql || '').replace(/--[^\n]*/g, ' ').replace(/'(?:[^']|'')*'/g, ' ');
+  const out = new Set();
+  (s.match(/[A-Za-z_][A-Za-z0-9_]*\s*\(/g) || []).forEach(m => { const f = m.replace(/\s*\($/, '').toLowerCase(); if (FUNC_DOC[f]) out.add(f + '()'); });
+  (s.match(/[A-Za-z_][A-Za-z0-9_]*/g) || []).forEach(w => { const l = w.toLowerCase(); if (KW.has(l) && !/^(select|from|as|and|by|asc|integer|text|real|date|key)$/.test(l)) out.add(l); });
+  if (/\|\|/.test(s)) out.add('||');
+  return out;
+}
+function relatedLessons(ex) {
+  const day = DAYS.find(d => d.exercises.includes(ex)); if (!day) return [];
+  const F = featsOf(ex.solution); if (!F.size) return [];
+  const all = [];
+  DAYS.filter(d => d.n <= day.n).forEach(d => d.lesson.forEach((seg, i) => { const k = d.n + ':' + i; if (!SEG_FEATS[k]) SEG_FEATS[k] = featsOf((seg.sql || '') + ' ' + (seg.predict && seg.predict.sql || '')); all.push({ d, i, seg, f: SEG_FEATS[k] }); }));
+  const freq = {}; all.forEach(x => x.f.forEach(f => { freq[f] = (freq[f] || 0) + 1; }));
+  return all.map(x => { let sc = 0, extra = 0; F.forEach(f => { if (x.f.has(f)) sc += 1 / freq[f]; }); x.f.forEach(f => { if (!F.has(f)) extra += 1 / freq[f]; }); sc = sc / (1 + extra); if (x.d.n === day.n) sc *= 1.6; return Object.assign(x, { sc }); })
+    .filter(x => x.sc > 0.05).sort((a, b) => b.sc - a.sc).slice(0, 2);
+}
+function helpHTML(ex, rec, s, hintsShown, canSolve) {
+  const show = !rec.done && ((rec.attempts || 0) >= 1 || hintsShown > 0 || rec.skel !== undefined);
+  if (!show) return '';
+  const pieces = solutionPieces(ex), sk = rec.skel === undefined ? -1 : rec.skel;
+  const left = ex.hints.length - hintsShown;
+  const rel = relatedLessons(ex);
+  let h = '<div class="help"><div class="help-h"><b>Stuck? Here\'s help</b><span>Take the smallest step that gets you moving again.</span></div><div class="help-steps">';
+  h += '<button class="hs" data-exhint="' + ex.id + '"' + (left ? '' : ' disabled') + '><b>1</b><span>' + (left ? 'Next hint' : 'Hints used') + '<small>' + (left ? left + ' left' : 'all ' + ex.hints.length + ' shown') + '</small></span></button>';
+  h += '<button class="hs" data-exskel="' + ex.id + '"' + (sk >= pieces.length ? ' disabled' : '') + '><b>2</b><span>' + (sk < 0 ? 'Show the skeleton' : 'Reveal the next part') + '<small>' + (sk < 0 ? 'the shape of the answer' : (sk >= pieces.length ? 'all parts shown' : 'part ' + (sk + 1) + ' of ' + pieces.length)) + '</small></span></button>';
+  rel.forEach((r, k) => { h += '<button class="hs" data-expeek="' + r.d.n + ':' + r.i + '"><b>' + (3 + k) + '</b><span>Lesson example<small>' + esc((r.d.n !== DAYS.find(d => d.exercises.includes(ex)).n ? 'Day ' + r.d.n + ': ' : '') + r.seg.h) + '</small></span></button>'; });
+  h += '<button class="hs" data-exsol="' + ex.id + '"' + (canSolve ? '' : ' disabled') + '><b>★</b><span>Solution<small>' + (canSolve ? 'with explanation' : 'after the skeleton or 2 checks') + '</small></span></button>';
+  h += '</div>';
+  if (sk >= 0) h += '<div class="skel"><div class="lab">' + (sk === 0 ? 'Skeleton: replace each <code>___</code> with your own SQL' : 'Skeleton with ' + Math.min(sk, pieces.length) + ' of ' + pieces.length + ' parts filled in') + '</div><pre class="code">' + hl(skeletonText(ex, sk)).replace(/___/g, '<span class="blank">___</span>').replace(/\n$/, '') + '</pre><div class="skel-act"><button class="btn small" data-exskeluse="' + ex.id + '">Use as my start</button><span class="note">This replaces what is in your editor.</span></div></div>';
+  return h + '</div>';
+}
+/* lesson peek */
+function openPeek(dn, i) {
+  const d = byN(dn), seg = d && d.lesson[i]; if (!seg) return;
+  let h = '<div class="eyebrow">Day ' + pad2(d.n) + ' · ' + esc(d.tag) + '</div><h3>' + esc(seg.h) + '</h3><div class="prose">' + (seg.html || '') + '</div>';
+  const sql = seg.sql || (seg.predict && seg.predict.sql);
+  if (sql) { const db = freshDB(); const r = runAll(db, sql); db.close(); h += '<div class="lab">Example</div><pre class="code">' + hl(sql) + '</pre><div class="out pk-out">' + runResultHTML(r) + '</div>'; }
+  if (seg.note) h += '<p class="note">' + seg.note + '</p>';
+  $('#peekBody').innerHTML = h;
+  $('#peekOpen').onclick = () => { closePeek(); location.hash = 'day-' + d.n; P.tab[d.n] = 'learn'; save(); setTimeout(() => { viewDay(d.n, 'learn'); const el = document.querySelector('.seg[data-seg="' + i + '"]'); if (el) { el.scrollIntoView({ block: 'start' }); window.scrollBy(0, -80); } }, 60); };
+  $('#peek').hidden = false; $('#scrim').hidden = false; document.body.classList.add('modal-open');
+  setTimeout(() => $('#peekClose').focus(), 30);
+}
+function closePeek() { if ($('#peek').hidden) return false; $('#peek').hidden = true; document.body.classList.remove('modal-open'); if (!$('#drawer').classList.contains('open') && !$('#schemaDrawer').classList.contains('open') && $('#big3d').hidden && $('#tv').hidden) $('#scrim').hidden = true; return true; }
 function fbText(fb) { const strip = x => String(x || '').replace(/<[^>]+>/g, ''); return fb.kind === 'error' ? 'Error: ' + (fb.run && fb.run.error) : strip(fb.title) + '. ' + (fb.points || []).map(strip).join(' ') + (fb.tip ? ' Tip: ' + strip(fb.tip) : ''); }
 function fbHTML(fb, rec) {
   if (fb.pass) return '<div class="fb pass"><div class="fb-title">✓ Correct, request delivered</div><p>' + (rec.usedSolution ? 'Well done: you rebuilt it after studying the solution. Try this exercise again tomorrow without help, so it really sticks.' : 'Now open the model solution and compare it with yours. There is often a shorter way.') + '</p></div>';
@@ -1421,6 +1703,10 @@ function renderPractice(day, body) {
     else if (t.dataset.excheck) doCheck(exById(t.dataset.excheck));
     else if (t.dataset.exhint) { const ex = exById(t.dataset.exhint); const R = rec(ex.id); R.hints = Math.min(ex.hints.length, (R.hints || 0) + 1); save(); rerender(ex); revealIn(ex, '.hints .new'); }
     else if (t.dataset.exexp) { const ex = exById(t.dataset.exexp); const s = exState[ex.id] || (exState[ex.id] = {}); s.showExp = !s.showExp; rerender(ex); }
+    else if (t.dataset.exskel) { const ex = exById(t.dataset.exskel); const R = rec(ex.id); const n = solutionPieces(ex).length; R.skel = R.skel === undefined || R.skel < 0 ? 0 : Math.min(n, R.skel + 1); save(); rerender(ex); revealIn(ex, '.skel'); }
+    else if (t.dataset.exskeluse) { const ex = exById(t.dataset.exskeluse); const sk = skeletonText(ex, (P.ex[ex.id] || {}).skel || 0); P.drafts[ex.id] = sk; editors['ex:' + ex.id] = sk; save(); rerender(ex); const ta = $('#ex-' + CSS.escape(ex.id) + ' textarea', body); if (ta) { ta.focus(); const i = sk.indexOf('___'); if (i >= 0) { ta.selectionStart = i; ta.selectionEnd = i + 3; } } toast('Replace each ___ with your SQL'); }
+    else if (t.dataset.expeek) { const [d, i] = t.dataset.expeek.split(':').map(Number); openPeek(d, i); }
+    else if (t.dataset.exfmt) { const ex = exById(t.dataset.exfmt); const v = formatSQL(getSQL(ex)); P.drafts[ex.id] = v; editors['ex:' + ex.id] = v; save(); rerender(ex); }
     else if (t.dataset.exretry) { const ex = exById(t.dataset.exretry); const s = exState[ex.id] || (exState[ex.id] = {}); s.showSol = false; s.fb = null; s.run = null; s.showExp = false; P.drafts[ex.id] = ''; editors['ex:' + ex.id] = ''; xrayStore('ex:' + ex.id, null); save(); rerender(ex); const ta = $('#ex-' + CSS.escape(ex.id) + ' textarea', body); if (ta) { ta.focus(); ta.closest('.ex').scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' }); } toast('Now type it from memory'); }
     else if (t.dataset.exsol) { const ex = exById(t.dataset.exsol); const s = exState[ex.id] || (exState[ex.id] = {}); s.showSol = !s.showSol; if (s.showSol && !rec(ex.id).done) { rec(ex.id).usedSolution = true; save(); } if (s.showSol && ex.kind !== 'script') { const d = freshDB(ex.setup); xrayStore('sol:' + ex.id, xray(d, ex.solution)); d.close(); } rerender(ex); if (s.showSol) revealIn(ex, '.sol'); }
     else if (t.dataset.exask) { const ex = exById(t.dataset.exask); const s = exState[ex.id] || {}; lastRun = { sql: getSQL(ex), error: s.fb && !s.fb.pass ? fbText(s.fb) : (s.run && !s.run.ok ? s.run.error : null), where: 'exercise ' + ex.id, ex }; openTutor(); askTutor(s.fb && !s.fb.pass ? 'My answer to this exercise is wrong. Give me one hint about what to look at, without writing the full solution.' : 'Can you give me a hint for this exercise without writing the full solution?'); }
@@ -1437,7 +1723,7 @@ function renderRecall(day, body) {
     const right = qs.filter(q => P.quiz[q.id] && P.quiz[q.id].first === true).length;
     body.innerHTML = '<div class="score"><b>' + right + '/' + qs.length + '</b><span>correct on the first try. ' + (right / qs.length >= 0.8 ? 'Strong recall.' : 'Missed questions are now in your review deck and will come back tomorrow.') + '</span></div>' +
       '<div class="listing">' + qs.map((q, i) => { const a = P.quiz[q.id]; return '<div class="quiz"><div class="qn"><span>Q' + (i + 1) + '</span><span>' + (a && a.first ? '✓ first try' : '✕ missed') + '</span></div><div class="qq">' + q.q + '</div><div class="why"><strong>Answer: ' + q.options[q.answer] + '.</strong> ' + q.why + '</div></div>'; }).join('') + '</div>' +
-      '<div class="next-row"><button class="btn" data-retake="1">Retake (does not change your first score)</button><button class="btn primary" data-goto="explain">Go to explain →</button></div>';
+      '<div class="next-row"><button class="btn" data-retake="1">Retake (does not change your first score)</button>' + (day.n < 14 ? '<a class="btn primary" href="#day-' + (day.n + 1) + '">Day ' + (day.n + 1) + ' →</a>' : '<a class="btn primary" href="#review">Keep reviewing →</a>') + '</div>';
   } else {
     const q = qs[pos]; const a = exState['quiz:' + q.id];
     let h = '<p class="intro-note">Answer from memory, without looking back at the lesson. Every question you answer joins your review deck.</p><div class="quiz"><div class="qn"><span>Question ' + (pos + 1) + ' of ' + qs.length + '</span><span>' + answered + ' answered</span></div><div class="qq">' + q.q + '</div><div class="opts">' +
@@ -1626,7 +1912,7 @@ function viewPlayground() {
   if (!PG) PG = freshDB();
   const v = editors['pg'] !== undefined ? editors['pg'] : "-- Anything goes here. Changes persist until you reset.\nSELECT s.name, d.name AS major, s.year\nFROM students s\nLEFT JOIN departments d ON d.dept_id = s.dept_id\nORDER BY s.year DESC, s.name;";
   $('#main').innerHTML = '<div class="col" style="max-width:1180px"><header class="dayhead"><div class="eyebrow">Free practice</div><h1>SQL playground</h1><p class="note">One database that keeps your changes while this page is open. Experiment freely: create tables, delete rows, break things, then reset.</p></header>' +
-    '<div class="pg"><div style="min-width:0"><div class="console">' + editorHTML('pg', v, 8) + '<div class="toolbar"><button class="btn primary small" id="pgRun">Run</button><button class="btn small" id="pgPlan">Explain plan</button><button class="btn ghost small" id="pgReset">Reset database</button><button class="btn ghost small tutor-only" id="pgAsk" hidden>Ask about this query</button><span class="hint-k">Ctrl/⌘ + Enter</span></div><div class="out" id="pgOut"' + (pgRun ? '' : ' hidden') + '>' + runResultHTML(pgRun) + (pgRun && pgRun.ok ? xrayWidget('pg') : '') + '</div></div>' +
+    '<div class="pg"><div style="min-width:0"><div class="console">' + editorHTML('pg', v, 8) + '<div class="toolbar"><button class="btn primary small" id="pgRun">Run</button><button class="btn small" id="pgPlan">Explain plan</button><button class="btn ghost small" id="pgFmt">Format</button><button class="btn ghost small" id="pgReset">Reset database</button><button class="btn ghost small tutor-only" id="pgAsk" hidden>Ask about this query</button><span class="hint-k">Ctrl/⌘ + Enter</span></div><div class="out" id="pgOut"' + (pgRun ? '' : ' hidden') + '>' + runResultHTML(pgRun) + (pgRun && pgRun.ok ? xrayWidget('pg') : '') + '</div></div>' +
     '<div class="history" id="pgHist">' + (pgHist.length ? '<div class="eyebrow" style="margin-bottom:6px">History</div>' + pgHist.map((q, i) => '<button data-h="' + i + '" title="' + esc(q) + '">' + esc(q.replace(/\s+/g, ' ')) + '</button>').join('') : '') + '</div></div>' +
     '<aside><div class="eyebrow" style="margin-bottom:8px">Schema</div><div id="pgSchema">' + schemaHTML(PG) + '</div></aside></div></div>';
   const run = (sql, plan) => {
@@ -1641,6 +1927,7 @@ function viewPlayground() {
   mountEditors($('#main'), (k, val) => run(val));
   $('#pgRun').onclick = () => run(editors['pg'] !== undefined ? editors['pg'] : v);
   $('#pgPlan').onclick = () => run(editors['pg'] !== undefined ? editors['pg'] : v, true);
+  $('#pgFmt').onclick = () => { editors['pg'] = formatSQL(editors['pg'] !== undefined ? editors['pg'] : v); viewPlayground(); };
   $('#pgReset').onclick = () => { PG.close(); PG = freshDB(); pgRun = null; toast('Database reset to the original data'); viewPlayground(); };
   $('#pgHist').onclick = e => { const b = e.target.closest('button[data-h]'); if (b) { editors['pg'] = pgHist[Number(b.dataset.h)]; viewPlayground(); } };
   $('#pgAsk').onclick = () => { lastRun = { sql: editors['pg'] !== undefined ? editors['pg'] : v, error: pgRun && !pgRun.ok ? pgRun.error : null, where: 'playground' }; openTutor(); askTutor(lastRun.error ? 'Explain this error and how to fix it.' : 'Explain what this query does, step by step, and whether it could be written better.'); };
@@ -1932,7 +2219,6 @@ function xpTotal() {
   DAYS.forEach(d => {
     d.exercises.forEach(e => { const r = P.ex[e.id]; if (r && r.done) x += r.usedSolution ? xpOfEx(e) / 2 : xpOfEx(e); });
     d.quiz.forEach(q => { if (P.quiz[q.id] && P.quiz[q.id].first) x += 5; });
-    if (P.teach[d.n]) x += 10;
   });
   x += 2 * Object.keys(P.predict).filter(k => k.startsWith('Q:')).length;
   return Math.round(x);
@@ -2278,7 +2564,7 @@ function route() {
 }
 window.addEventListener('hashchange', () => { route(); window.scrollTo({ top: 0 }); });
 $('#menuBtn').onclick = () => { $('#rail').classList.add('open'); $('#scrim').hidden = false; };
-$('#scrim').onclick = () => { if (closeTable()) return; closeRail(); closeTutor(); closeSchema(); closeBig3D(); };
+$('#scrim').onclick = () => { if (closePeek()) return; if (closeTable()) return; closeRail(); closeTutor(); closeSchema(); closeBig3D(); };
 $('#schemaBtn').onclick = () => openSchema(null);
 $('#dockBig').onclick = openBig3D;
 $('#big3dClose').onclick = closeBig3D;
@@ -2293,7 +2579,8 @@ $('#spFind').addEventListener('input', () => {
     if (q && hit) spOpen(sec, true);
   });
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (closeTable()) return; closeBig3D(); closeSchema(); closeTutor(); closeRail(); } });
+$('#peekClose').onclick = closePeek;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (closePeek()) return; if (closeTable()) return; closeBig3D(); closeSchema(); closeTutor(); closeRail(); } });
 $('#tutorBtn').onclick = openTutor;
 $('#closeTutor').onclick = closeTutor;
 $('#sendTutor').onclick = () => { const t = $('#tutorInput'); const v = t.value; t.value = ''; askTutor(v); };

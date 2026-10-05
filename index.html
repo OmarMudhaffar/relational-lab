@@ -232,8 +232,7 @@ table.grid tr:last-child td { border-bottom: 0; }
 .ex-p { padding: 12px 14px 0; }
 .ex .console { margin: 10px 14px 12px; }
 .fb { margin: 0 14px 12px; padding: 10px 12px; border-radius: var(--radius); font-size: 14.5px; }
-.fb.pass { background: var(--ok-soft); color: var(--ok); }
-.fb.fail { background: var(--bad-soft); color: var(--bad); }
+
 .fb .sub { color: var(--ink); display: block; margin-top: 4px; font-size: 13.5px; }
 .hints { margin: 0 14px 12px; display: grid; gap: 6px; }
 .hints div { font-size: 14px; padding: 7px 10px; background: var(--hl-soft); border-radius: var(--radius); }
@@ -509,6 +508,95 @@ button.pill.link:hover { border-color: var(--accent); }
 .sp-ex .out { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .sp-legend { border-top: 1px solid var(--line); padding: 10px 16px; font-size: 13px; color: var(--muted); line-height: 2; }
 .sp-legend .pill { margin: 0 4px 0 0; }
+
+/* ---------- cleaner layout ---------- */
+.intro { margin-bottom: 28px; display: grid; gap: 14px; }
+.intro-role p { margin: 4px 0 0; font-size: 15.5px; max-width: 68ch; }
+.howto { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; counter-reset: h; }
+.howto li { counter-increment: h; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 10px 12px 10px 44px; position: relative; min-width: 0; }
+.howto li::before { content: counter(h); position: absolute; left: 12px; top: 11px; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--surface); font: 700 12px/22px var(--f-mono); text-align: center; }
+.howto b { display: block; font-size: 14.5px; }
+.howto span { display: block; font-size: 13px; color: var(--muted); line-height: 1.4; }
+.intro-foot { margin: 0; font-size: 13.5px; color: var(--muted); max-width: 72ch; }
+.intro-note { margin: 0 0 18px; font-size: 14.5px; color: var(--muted); }
+.listing { gap: 24px; }
+.ex { margin-bottom: 0; }
+.ex-p { padding: 14px 16px 2px; }
+.ex .console { margin: 12px 16px 16px; }
+.ex-tb { gap: 10px; justify-content: space-between; }
+.tb-main, .tb-side { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.tb-hint:not([disabled]) { border-color: var(--hl); color: var(--hl); }
+.next-row { margin-top: 32px; }
+.score { margin-bottom: 24px; }
+@media (max-width: 640px) { .howto { grid-template-columns: minmax(0, 1fr); } .ex .console { margin: 10px 10px 12px; } .ex-p { padding: 12px 12px 2px; } }
+
+/* ---------- feedback ---------- */
+.console .fb, .console .hints { margin: 10px 12px; }
+.fb { font-size: 14.5px; line-height: 1.5; }
+.fb.pass, .fb.fail { color: var(--ink); border: 1px solid; }
+.fb.pass { background: var(--ok-soft); border-color: var(--ok); }
+.fb.fail { background: var(--surface); border-color: var(--bad); }
+.fb p { margin: 4px 0 0; }
+.fb-title { font: 700 16px var(--f-body); }
+.fb.pass .fb-title { color: var(--ok); }
+.fb.fail .fb-title { color: var(--bad); }
+.fb-meta { display: flex; gap: 8px 18px; flex-wrap: wrap; margin-top: 6px; font: 500 13px var(--f-mono); color: var(--muted); }
+.fb-meta b { color: var(--ink); }
+.fb-points { margin: 8px 0 0; padding-left: 20px; }
+.fb-points li { margin: 3px 0; }
+.fb-lab { font: 600 12px var(--f-mono); letter-spacing: .04em; text-transform: uppercase; margin: 12px 0 4px; }
+.fb-lab.bad, .x2-lab.bad { color: var(--bad); }
+.fb-lab.ok { color: var(--ok); }
+.mini-diff { border: 1px solid var(--line); border-radius: 6px; max-height: 200px; }
+.mini-diff.bad td { background: var(--bad-soft); }
+.mini-diff.ok td { background: var(--ok-soft); }
+.fb-tip { margin-top: 12px; padding: 10px 12px; background: var(--hl-soft); border-radius: 6px; }
+.fb-tip .eh-lab { display: block; font: 700 12px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--hl); margin-bottom: 2px; }
+.fb .err { margin-top: 8px; border-radius: 6px; }
+.err b { margin-right: 6px; }
+.err-help { padding: 10px 12px; background: var(--hl-soft); font-size: 14.5px; line-height: 1.55; }
+.fb .err-help { border-radius: 6px; margin-top: 6px; }
+.err-help .eh-lab { display: block; font: 700 12px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--hl); margin-bottom: 2px; }
+.hints div { display: grid; gap: 2px; }
+.hints div.new { outline: 2px solid var(--hl); outline-offset: -2px; }
+.hints div b { font: 700 11px var(--f-mono); }
+.pop { animation: rise .35s ease both; }
+.out-lab { font: 600 11.5px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 8px 12px 0; }
+
+/* ---------- X-ray player ---------- */
+.x2 { border-top: 1px solid var(--line); }
+.x2-open { width: 100%; display: flex; align-items: center; gap: 12px; border: 0; background: var(--accent-soft); padding: 12px 14px; cursor: pointer; text-align: left; }
+.x2-open:hover { filter: brightness(1.03); }
+.x2-open b { display: block; font-size: 15px; color: var(--accent); }
+.x2-open small { display: block; font-size: 13px; color: var(--muted); }
+.x2-play { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--surface); display: grid; place-items: center; font-size: 13px; flex: none; padding-left: 2px; }
+.x2-head { padding: 12px 14px 6px; display: flex; gap: 4px 12px; flex-wrap: wrap; align-items: baseline; }
+.x2-head b { font-size: 15px; }
+.x2-head span { font-size: 13.5px; color: var(--muted); }
+.x2-steps { display: flex; align-items: center; gap: 4px; padding: 4px 14px 10px; overflow-x: auto; }
+.x2-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 16px; padding: 4px 10px 4px 4px; font: 600 12px var(--f-mono); cursor: pointer; white-space: nowrap; color: var(--muted); }
+.x2-chip b { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--bg2); font-size: 11px; }
+.x2-chip.done { color: var(--ink); }
+.x2-chip.done b { background: var(--accent-soft); color: var(--accent); }
+.x2-chip.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.x2-chip.on b { background: var(--accent); color: var(--surface); }
+.x2-arrow { color: var(--line); font-size: 13px; flex: none; }
+.x2-card { margin: 0 14px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); animation: rise .3s ease both; }
+.x2-step { font: 600 11.5px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.x2-clause { margin-top: 4px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.x2-clause .xs-k { font-size: 15px; }
+.x2-clause code { background: none; padding: 0; font-size: 14px; overflow-wrap: anywhere; }
+.x2-say { margin: 8px 0 6px; font-size: 16px; line-height: 1.5; }
+.x2-change { font: 500 14px var(--f-mono); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.x2-change b { font-size: 18px; }
+.x2-why { font: 13px var(--f-body); color: var(--muted); }
+.x2-lab { font: 600 11.5px var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin: 14px 0 6px; }
+.x2-grid { border: 1px solid var(--line); border-radius: 6px; background: var(--surface); max-height: 230px; }
+.x2-grid.bad td { background: var(--bad-soft); text-decoration: line-through; text-decoration-color: var(--bad); }
+.x2-grid th.more, .x2-grid td.more { color: var(--muted); font-weight: 400; }
+.x2-more, .x2-none { font: 12.5px var(--f-mono); color: var(--muted); margin-top: 4px; }
+.x2-nav { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px 14px; }
+.x2-nav .btn.primary { margin-left: auto; }
 
 /* ---------- X-ray, readable ---------- */
 .xs-intro { margin: 0; padding: 0 14px 10px; font-size: 14px; color: var(--muted); max-width: 70ch; }
@@ -4895,29 +4983,54 @@ function runAll(db, sql) {
       while (st.step()) rows.push(st.get());
       if (cols.length) sets.push({ columns: cols, values: rows }); else changes = db.getRowsModified();
     }
-    return { ok: true, sets, count, changes, ms: performance.now() - t0 };
+    return { ok: true, sql, sets, count, changes, ms: performance.now() - t0 };
   } catch (e) {
-    return { ok: false, error: String(e.message || e), sets, count, ms: performance.now() - t0 };
+    return { ok: false, sql, error: String(e.message || e), sets, count, ms: performance.now() - t0 };
   }
 }
 function planText(db, q) { const r = db.exec('EXPLAIN QUERY PLAN ' + q); return r.length ? r[0].values.map(v => v[v.length - 1]).join(' | ') : ''; }
 function norm(v) { if (v === null || v === undefined) return '∅'; if (typeof v === 'number') return String(Math.round(v * 100) / 100); if (v instanceof Uint8Array) return '<blob>'; return String(v); }
 function rowsKey(set) { return set.values.map(r => JSON.stringify(r.map(norm))); }
-function compareSets(exp, got, ordered) {
-  if (!got) return { pass: false, msg: 'Your SQL did not return a result table.', sub: 'The last statement must be a SELECT.' };
-  if (exp.columns.length !== got.columns.length) return { pass: false, msg: 'Expected ' + exp.columns.length + ' column' + (exp.columns.length > 1 ? 's' : '') + ', you returned ' + got.columns.length + '.', sub: 'Check the column list the question asks for, and its order.' };
-  const a = rowsKey(exp), b = rowsKey(got);
-  if (a.length !== b.length) return { pass: false, msg: 'Expected ' + a.length + ' row' + (a.length === 1 ? '' : 's') + ', you returned ' + b.length + '.', sub: b.length > a.length ? 'Too many rows: a filter or a join condition may be missing, or you need DISTINCT / GROUP BY.' : 'Too few rows: a filter may be too strict, or you may need an outer join.' };
-  if (ordered) {
-    if (a.every((r, i) => r === b[i])) return { pass: true };
-    const sa = a.slice().sort(), sb = b.slice().sort();
-    if (sa.every((r, i) => r === sb[i])) return { pass: false, msg: 'Right rows, wrong order.', sub: 'Read the sorting part of the question again (direction and tie-breaker).' };
-  } else {
-    const sa = a.slice().sort(), sb = b.slice().sort();
-    if (sa.every((r, i) => r === sb[i])) return { pass: true };
+function rowsOf(set) { return set.values.map(r => JSON.stringify(r.map(norm))); }
+function bag(keys) { const m = new Map(); keys.forEach(k => m.set(k, (m.get(k) || 0) + 1)); return m; }
+function bagDiff(a, b) { const mb = bag(b), out = []; a.forEach(k => { const c = mb.get(k) || 0; if (c > 0) mb.set(k, c - 1); else out.push(k); }); return out; }
+function colsList(cols) { return cols.map(c => '<code>' + esc(c) + '</code>').join(', '); }
+function analyze(exp, got, ordered) {
+  if (!exp) return { pass: false, kind: 'diff', title: 'This exercise could not be checked.', points: [] };
+  if (!got) return { pass: false, kind: 'diff', title: 'Your SQL did not return a result table.', points: ['The last statement you run must be a <code>SELECT</code>. Check that you did not end with a comment or another kind of statement.'] };
+  const ec = exp.columns.length, gc = got.columns.length, en = exp.values.length, gn = got.values.length;
+  const meta = { you: gn + ' row' + (gn === 1 ? '' : 's') + ', ' + gc + ' column' + (gc === 1 ? '' : 's'), ans: en + ' row' + (en === 1 ? '' : 's') + ', ' + ec + ' column' + (ec === 1 ? '' : 's') };
+  if (ec !== gc) return { pass: false, kind: 'diff', meta, title: gc > ec ? 'Too many columns: you have ' + gc + ', the answer has ' + ec : 'Too few columns: you have ' + gc + ', the answer has ' + ec,
+    points: ['The answer returns these columns, in this order: ' + colsList(exp.columns) + '.', 'Your query returns: ' + colsList(got.columns) + '.'],
+    tip: gc > ec ? 'Remove the extra columns from your <code>SELECT</code> list. Do not use <code>SELECT *</code> when the question names the columns.' : 'Add the missing columns to your <code>SELECT</code> list.' };
+  const a = rowsOf(exp), b = rowsOf(got);
+  const missing = bagDiff(a, b), extra = bagDiff(b, a);
+  const parse = k => JSON.parse(k);
+  if (!missing.length && !extra.length) {
+    if (!ordered || a.every((r, i) => r === b[i])) return { pass: true };
+    const at = a.findIndex((r, i) => r !== b[i]);
+    return { pass: false, kind: 'diff', meta, title: 'Right rows, wrong order', points: ['Your rows are all correct. Only the order is different.', 'The first difference is at row ' + (at + 1) + '.'], tip: 'Read the sorting part of the question again. Check <code>ASC</code> / <code>DESC</code>, and add the second sort column the question asks for (the tie-breaker).' };
   }
-  const setA = new Set(a); const extra = b.find(r => !setA.has(r));
-  return { pass: false, msg: 'Same shape, but some values differ.', sub: extra ? 'For example, this row of yours is not in the expected result: ' + JSON.parse(extra).join(' | ') : 'Compare your values with the expected result.' };
+  // same data with columns in another order?
+  if (en === gn) {
+    const colKey = (set, j) => set.values.map(r => norm(r[j])).sort().join('\u0001');
+    const gk = got.columns.map((_, j) => colKey(got, j)), used = new Set();
+    const map = exp.columns.map((_, j) => { const k = colKey(exp, j); const f = gk.findIndex((g, i) => g === k && !used.has(i)); if (f >= 0) used.add(f); return f; });
+    if (map.every(f => f >= 0) && map.some((f, j) => f !== j)) return { pass: false, kind: 'diff', meta, title: 'Right data, columns in the wrong order', points: ['Your values are correct, but the columns are not in the order the question asks for.'], tip: 'Write the columns in this order: ' + colsList(exp.columns) + '.' };
+    const lower = k => k.toLowerCase();
+    if (bagDiff(a.map(lower), b.map(lower)).length === 0) return { pass: false, kind: 'diff', meta, title: 'Only upper/lower case is different', points: ['Your rows match the answer if you ignore capital letters.'], tip: 'Check the text you typed in quotes, for example <code>\'Fall\'</code> and not <code>\'fall\'</code>. Do not change the case of values with <code>UPPER()</code> or <code>LOWER()</code> unless the question asks.' };
+    const round0 = k => JSON.stringify(JSON.parse(k).map(v => /^-?\d+(\.\d+)?$/.test(v) ? String(Math.round(Number(v))) : v));
+    if (bagDiff(a.map(round0), b.map(round0)).length === 0) return { pass: false, kind: 'diff', meta, title: 'Numbers are slightly different', points: ['Your rows are right, but some numbers have different decimals.'], tip: 'Round exactly as the question asks, for example <code>ROUND(x, 1)</code>. In SQLite, <code>7 / 2</code> gives <code>3</code>: divide by <code>2.0</code> to keep the decimals.' };
+  }
+  const out = { pass: false, kind: 'diff', meta, extra: extra.slice(0, 4).map(parse), extraN: extra.length, missing: missing.slice(0, 4).map(parse), missingN: missing.length, cols: exp.columns, gotCols: got.columns };
+  const lc = x => x.map(c => String(c).toLowerCase()).join('|');
+  const namesNote = lc(exp.columns) !== lc(got.columns) ? 'Also compare the columns. The answer returns ' + colsList(exp.columns) + '. You return ' + colsList(got.columns) + '.' : null;
+  if (extra.length === b.length && missing.length === a.length) return Object.assign(out, { title: 'None of your rows match the answer', points: ['Not one of your rows appears in the answer.'].concat(namesNote ? [namesNote] : []), tip: 'Read the question again. Which rows does it ask for? Check the condition in <code>WHERE</code> (the column and the value), and that you return the right columns.' });
+  const distinctB = new Set(b);
+  if (!missing.length && distinctB.size < b.length && [...distinctB].every(k => a.includes(k))) return Object.assign(out, { title: 'Your result has duplicate rows', points: ['Every row you return is correct, but some appear more than once (' + extra.length + ' extra cop' + (extra.length === 1 ? 'y' : 'ies') + ').'], tip: 'Use <code>SELECT DISTINCT</code>, or check that your <code>JOIN</code> does not match one row many times.' });
+  if (!missing.length) return Object.assign(out, { title: extra.length + ' extra row' + (extra.length === 1 ? '' : 's') + ' in your result', points: ['All the correct rows are there, but you also return rows that should not be there.'], tip: 'Your <code>WHERE</code> is missing a condition, or a condition is too wide (for example <code>&gt;=</code> instead of <code>&gt;</code>, or <code>OR</code> instead of <code>AND</code>). If you joined tables, check the <code>ON</code> condition.' });
+  if (!extra.length) return Object.assign(out, { title: missing.length + ' row' + (missing.length === 1 ? '' : 's') + ' missing from your result', points: ['Every row you return is correct, but some rows are missing.'], tip: 'Your filter is too strict (for example <code>&gt;</code> instead of <code>&gt;=</code>, or <code>AND</code> instead of <code>OR</code>). If rows without a match disappeared, you need a <code>LEFT JOIN</code>. Remember that <code>= NULL</code> never matches: use <code>IS NULL</code>.' });
+  return Object.assign(out, { title: 'Some rows are different from the answer', points: [extra.length + ' of your rows are not in the answer, and ' + missing.length + ' rows of the answer are not in yours.'].concat(namesNote ? [namesNote] : []), tip: 'Compare the two lists below. Look at the filter values, the join condition, the grouping, and any calculations.' });
 }
 function expectedFor(ex) {
   if (expectedCache[ex.id]) return expectedCache[ex.id];
@@ -4932,19 +5045,19 @@ function grade(ex, sql) {
   const d = freshDB(ex.setup);
   const run = runAll(d, sql);
   let res;
-  if (!run.ok) res = { pass: false, msg: 'The database rejected your SQL.', sub: run.error, run };
+  if (!run.ok) res = { pass: false, kind: 'error', title: 'The database could not run your SQL', run };
   else if (ex.kind === 'script' && ex.plan) {
     let plan = '';
     try { plan = planText(d, ex.plan.query); } catch (e) { plan = 'error: ' + e.message; }
     const pass = plan.indexOf(ex.plan.mustContain) >= 0;
-    res = { pass, run, plan, msg: pass ? '' : 'The query plan does not use the index yet.', sub: pass ? '' : 'Plan now: ' + plan };
+    res = pass ? { pass, run, plan } : { pass, kind: 'diff', run, plan, title: 'The query does not use your index yet', points: ['The plan for the checked query is now: <code>' + esc(plan) + '</code>', 'It must contain: <code>' + esc(ex.plan.mustContain) + '</code>'], tip: 'Create an index on the column(s) that the query filters or joins on. In a composite index, the first column must be the one used in the <code>WHERE</code>.' };
   } else if (ex.kind === 'script') {
     const r = runAll(d, ex.check);
     const got = r.ok ? r.sets[r.sets.length - 1] : null;
-    res = Object.assign(compareSets(expectedFor(ex), got, true), { run, checkSet: got });
-    if (!res.pass) res.msg = 'The database is not in the expected state. ' + res.msg;
+    res = Object.assign(analyze(expectedFor(ex), got, true), { run, checkSet: got });
+    if (!res.pass) { res.points = ['After your SQL ran, the database is not in the expected state.'].concat(res.points || []); res.meta = null; }
   } else {
-    res = Object.assign(compareSets(expectedFor(ex), run.sets[run.sets.length - 1], !!ex.ordered), { run });
+    res = Object.assign(analyze(expectedFor(ex), run.sets[run.sets.length - 1], !!ex.ordered), { run });
   }
   d.close();
   return res;
@@ -4998,9 +5111,50 @@ function gridHTML(set, extraMeta) {
   rows.forEach(r => { h += '<tr>' + r.map(v => v === null ? '<td class="null">NULL</td>' : typeof v === 'number' ? '<td class="n">' + esc(Math.round(v * 1e6) / 1e6) + '</td>' : '<td title="' + esc(v) + '">' + esc(v) + '</td>').join('') + '</tr>'; });
   return h + '</tbody></table></div>';
 }
+let NAMES = null;
+function names() {
+  if (NAMES) return NAMES;
+  const d = freshDB(); const t = [], c = new Set();
+  (d.exec("SELECT name FROM sqlite_master WHERE type='table'")[0] || { values: [] }).values.forEach(([n]) => { t.push(n); (d.exec("SELECT name FROM pragma_table_info('" + n + "')")[0] || { values: [] }).values.forEach(([x]) => c.add(x)); });
+  d.close();
+  return (NAMES = { tables: t, cols: [...c] });
+}
+function lev(a, b) { a = a.toLowerCase(); b = b.toLowerCase(); const m = []; for (let i = 0; i <= a.length; i++) { m[i] = [i]; for (let j = 1; j <= b.length; j++) m[i][j] = i ? Math.min(m[i - 1][j] + 1, m[i][j - 1] + 1, m[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)) : j; } return m[a.length][b.length]; }
+function closest(w, list) { let best = null, bd = 99; list.forEach(x => { const d = lev(w, x); if (d < bd) { bd = d; best = x; } }); return bd <= Math.max(2, Math.floor(w.length / 3)) && bd > 0 ? best : null; }
+const FN_HELP = { concat: 'join text with <code>||</code>, for example <code>first || \' \' || last</code>', len: 'use <code>LENGTH(x)</code>', getdate: 'use <code>date(\'now\')</code>', now: 'use <code>datetime(\'now\')</code>', year: 'use <code>strftime(\'%Y\', col)</code>', month: 'use <code>strftime(\'%m\', col)</code>', isnull: 'use <code>COALESCE(x, value)</code>', nvl: 'use <code>COALESCE(x, value)</code>', datediff: 'use <code>julianday(a) - julianday(b)</code>', iif: 'use <code>CASE WHEN … THEN … ELSE … END</code>', to_char: 'use <code>strftime()</code>', left: 'use <code>substr(x, 1, n)</code>', right: 'use <code>substr(x, -n)</code>' };
+function explainError(msg, sql) {
+  let m; const N = names(); sql = sql || '';
+  const dym = (w, list) => { const c = closest(w, list); return c ? ' Did you mean <code>' + esc(c) + '</code>?' : ''; };
+  if ((m = /no such column: ([\w."]+)/i.exec(msg))) { const w = m[1].split('.').pop().replace(/"/g, ''); return 'There is no column called <code>' + esc(m[1]) + '</code> in the tables you used.' + dym(w, N.cols) + ' If the column belongs to another table, add that table with a <code>JOIN</code>. Press <b>Schema</b> to check the names.'; }
+  if ((m = /no such table: ([\w."]+)/i.exec(msg))) return 'There is no table called <code>' + esc(m[1]) + '</code>.' + dym(m[1].split('.').pop(), N.tables) + ' Table names in this database are plural, like <code>students</code> and <code>courses</code>.';
+  if ((m = /ambiguous column name: ([\w.]+)/i.exec(msg))) return 'Two of your tables have a column called <code>' + esc(m[1]) + '</code>, so the database does not know which one you mean. Put the table name or alias in front of it, for example <code>s.' + esc(m[1]) + '</code>.';
+  if (/misuse of aggregate/i.test(msg)) return 'You used <code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code> or <code>MAX</code> in <code>WHERE</code>. <code>WHERE</code> runs before the rows are grouped, so it cannot use these. Move that condition to <code>HAVING</code>, after <code>GROUP BY</code>.';
+  if (/misuse of window function/i.test(msg)) return 'Window functions (like <code>ROW_NUMBER()</code>) cannot be used in <code>WHERE</code>. Compute them in a <code>WITH</code> step or a subquery first, then filter outside.';
+  if (/GROUP BY clause is required before HAVING/i.test(msg)) return '<code>HAVING</code> filters groups, so it needs a <code>GROUP BY</code>. If you want to filter single rows, use <code>WHERE</code>.';
+  if ((m = /no such function: (\w+)/i.exec(msg))) { const f = m[1].toLowerCase(); return 'SQLite has no function called <code>' + esc(m[1]) + '</code>.' + (FN_HELP[f] ? ' In SQLite, ' + FN_HELP[f] + '.' : dym(f, ['count', 'sum', 'avg', 'min', 'max', 'round', 'length', 'upper', 'lower', 'substr', 'coalesce', 'strftime', 'date', 'julianday', 'replace', 'trim', 'abs', 'group_concat'])); }
+  if (/incomplete input/i.test(msg)) return 'Your SQL ends too early. Look for a missing closing <code>)</code> or a missing <code>\'</code> at the end of a text value.';
+  if ((m = /near "(.+?)": syntax error/i.exec(msg))) {
+    const near = m[1];
+    if (/,\s*from\b/i.test(sql) && /^from$/i.test(near)) return 'There is a comma right before <code>FROM</code>. Remove the last comma in your column list.';
+    if (/^(from|where|group|order|having|limit|join|on)$/i.test(near)) return 'The database did not expect <code>' + esc(near.toUpperCase()) + '</code> here. Check for a missing comma or a missing column name before it, and that the clauses are in this order: <code>SELECT … FROM … JOIN … ON … WHERE … GROUP BY … HAVING … ORDER BY … LIMIT</code>.';
+    return 'The database could not understand your SQL near <code>' + esc(near) + '</code>. Common causes: a missing or extra comma, a missing <code>\'</code> around text, a misspelled keyword, or clauses in the wrong order (<code>SELECT … FROM … WHERE … GROUP BY … HAVING … ORDER BY … LIMIT</code>).';
+  }
+  if ((m = /unrecognized token: "(.+?)"/i.exec(msg))) return 'The database does not understand <code>' + esc(m[1]) + '</code>. Text values need single quotes, like <code>\'Cairo\'</code>. Check that every quote you open is closed.';
+  if ((m = /(\d+) values for (\d+) columns/i.exec(msg))) return 'Your <code>INSERT</code> gives ' + m[1] + ' values but the table (or your column list) has ' + m[2] + ' columns. Name the columns: <code>INSERT INTO t (a, b) VALUES (1, 2)</code>.';
+  if ((m = /UNIQUE constraint failed: ([\w.]+)/i.exec(msg))) return 'A row with the same <code>' + esc(m[1]) + '</code> already exists. Values in this column must be unique.';
+  if ((m = /NOT NULL constraint failed: ([\w.]+)/i.exec(msg))) return '<code>' + esc(m[1]) + '</code> cannot be empty (NULL). Give it a value.';
+  if (/FOREIGN KEY constraint failed/i.test(msg)) return 'A foreign key value points to a row that does not exist, or you tried to delete a row that other rows still point to. Check the linked table.';
+  if (/CHECK constraint failed/i.test(msg)) return 'A value breaks one of the table\'s <code>CHECK</code> rules (for example, year must be between 1 and 4). Press <b>Schema</b> to see the table.';
+  if ((m = /table (\w+) already exists/i.exec(msg))) return 'A table called <code>' + esc(m[1]) + '</code> already exists. Choose another name, or run <code>DROP TABLE ' + esc(m[1]) + ';</code> first.';
+  if ((m = /sub-select returns (\d+) columns/i.exec(msg))) return 'Your subquery returns ' + m[1] + ' columns, but here it must return exactly one.';
+  if (/do not have the same number of result columns/i.test(msg)) return 'Both queries in a <code>UNION</code> / <code>INTERSECT</code> / <code>EXCEPT</code> must return the same number of columns.';
+  if (/ORDER BY term out of range/i.test(msg)) return 'A number in <code>ORDER BY</code> means a column position. <code>ORDER BY 3</code> needs at least 3 columns in your result.';
+  return 'Read the message: it usually names the exact problem. Compare your table and column names with the <b>Schema</b> panel.';
+}
+function errorHTML(run) { return '<div class="err"><b>Error</b> ' + esc(run.error) + '</div><div class="err-help"><b class="eh-lab">What it means</b>' + explainError(run.error, run.sql) + '</div>'; }
 function runResultHTML(run) {
   if (!run) return '';
-  if (!run.ok) return '<div class="err">' + esc(run.error) + '</div>';
+  if (!run.ok) return errorHTML(run);
   const ms = '<span>' + run.ms.toFixed(1) + ' ms</span>';
   if (run.sets.length) return gridHTML(run.sets[run.sets.length - 1], ms + (run.count > 1 ? '<span>' + run.count + ' statements</span>' : ''));
   return '<div class="meta"><span>Done. ' + run.count + ' statement' + (run.count === 1 ? '' : 's') + ' ran.</span><span>Rows changed by the last one: ' + run.changes + '</span>' + ms + '</div>';
@@ -5117,6 +5271,7 @@ function viewDay(n, tabOverride) {
   $$('.steps-nav button').forEach(b => b.onclick = () => { viewDay(n, b.dataset.tab); window.scrollTo({ top: 0 }); });
   const body = $('#tabBody');
   ({ learn: renderLearn, practice: renderPractice, recall: renderRecall, explain: renderExplain })[tab](day, body);
+  placeLive();
   setTutorContext();
 }
 function markSeen(day, i) {
@@ -5144,7 +5299,7 @@ function renderLearn(day, body) {
     h += '<section class="seg" data-seg="' + i + '"><h2><span class="n">' + pad2(i + 1) + '</span>' + esc(s.h) + '</h2><div class="prose">' + (s.html || '') + '</div>';
     if (s.sql) {
       const v = editors[key] !== undefined ? editors[key] : s.sql;
-      h += '<div class="console">' + editorHTML(key, v) + '<div class="toolbar"><button class="btn primary small" data-run="' + key + '">Run</button><button class="btn ghost small" data-reset="' + key + '">Reset</button><span class="hint-k">Ctrl/⌘ + Enter</span></div><div class="out" data-out="' + key + '"' + (lessonRuns[key] ? '' : ' hidden') + '>' + runResultHTML(lessonRuns[key]) + (lessonRuns[key] ? xrayHTML(lessonRuns[key].xray) : '') + '</div></div>';
+      h += '<div class="console">' + editorHTML(key, v) + '<div class="toolbar"><button class="btn primary small" data-run="' + key + '">Run</button><button class="btn ghost small" data-reset="' + key + '">Reset</button><span class="hint-k">Ctrl/⌘ + Enter</span></div><div class="out" data-out="' + key + '"' + (lessonRuns[key] ? '' : ' hidden') + '>' + runResultHTML(lessonRuns[key]) + (lessonRuns[key] && lessonRuns[key].ok ? xrayWidget('L:' + key) : '') + '</div></div>';
       if (s.note) h += '<p class="note">' + s.note + '</p>';
     }
     if (s.predict) h += predictHTML(key, s.predict);
@@ -5157,9 +5312,9 @@ function renderLearn(day, body) {
   const runLesson = (key) => {
     const i = Number(key.split('-').pop());
     const sql = editors[key] !== undefined ? editors[key] : day.lesson[i].sql;
-    const d = freshDB(); const r = runAll(d, sql); const xr = r.ok ? xray(d, sql) : null; d.close();
-    lessonRuns[key] = r; r.xray = xr;
-    const out = $('[data-out="' + key + '"]', body); out.innerHTML = runResultHTML(r) + xrayHTML(xr); out.hidden = false;
+    const d = freshDB(); const r = runAll(d, sql); xrayStore('L:' + key, r.ok ? xray(d, sql) : null); d.close();
+    lessonRuns[key] = r;
+    const out = $('[data-out="' + key + '"]', body); out.innerHTML = runResultHTML(r) + (r.ok ? xrayWidget('L:' + key) : ''); out.hidden = false;
     liveRun(sql);
     markSeen(day, i);
     lastRun = { sql, error: r.ok ? null : r.error, where: 'lesson example' };
@@ -5196,21 +5351,46 @@ function exHTML(ex, idx) {
   let h = '<article class="ex' + (rec.done ? ' done' : '') + '" id="ex-' + esc(ex.id) + '"><div class="ex-h"><span class="av" aria-hidden="true">' + rq[1] + '</span><span class="req"><b>' + esc(rq[0]) + '</b><small>REQ-' + esc(ex.id.toUpperCase()) + ' · ' + xpOfEx(ex) + ' XP</small></span><span class="id">' + pad2(idx + 1) + '</span><span class="lvl" title="Level ' + ex.level + '">' + [1, 2, 3].map(l => '<i class="' + (l <= ex.level ? 'on' : '') + '"></i>').join('') + '</span>' + (ex.kind === 'script' ? '<span class="eyebrow">' + (ex.plan ? 'index task' : 'build task') + '</span>' : '') + status + '</div>';
   const tl = tablesFor(ex);
   h += '<div class="ex-p prose">' + ex.prompt + (tl.length ? '<div class="tables-line">Tables: ' + tl.map(t => '<button class="tchip" data-schema="' + esc(t) + '" data-setupof="' + esc(ex.id) + '" title="Show the columns of ' + esc(t) + '">' + esc(t) + '</button>').join('') + '</div>' : '') + (ex.ordered ? '<p class="note">Row order is checked.</p>' : '') + (ex.setup ? '<details><summary class="note" style="cursor:pointer">Setup SQL that runs before yours</summary><pre class="code">' + hl(ex.setup) + '</pre></details>' : '') + '</div>';
-  h += '<div class="console">' + editorHTML('ex:' + ex.id, draft, 4) + '<div class="toolbar"><button class="btn small" data-exrun="' + ex.id + '">Run</button><button class="btn primary small" data-excheck="' + ex.id + '">Check answer</button><button class="btn ghost small" data-exhint="' + ex.id + '"' + (hintsShown >= ex.hints.length ? ' disabled' : '') + '>Hint ' + Math.min(hintsShown + 1, ex.hints.length) + '/' + ex.hints.length + '</button>' + (ex.kind !== 'script' ? '<button class="btn ghost small" data-exexp="' + ex.id + '">' + (s.showExp ? 'Hide' : 'Show') + ' expected result</button>' : '') + '<button class="btn ghost small" data-exsol="' + ex.id + '"' + (canSolve ? '' : ' disabled title="Unlocks after 2 checks or all hints"') + '>' + (s.showSol ? 'Hide' : 'Model') + ' solution</button><button class="btn ghost small tutor-only" data-exask="' + ex.id + '" hidden>Ask the professor</button></div>' +
-    '<div class="out"' + (s.run ? '' : ' hidden') + '>' + (s.run ? runResultHTML(s.run) + (s.run.ok ? xrayHTML(s.xray) : '') : '') + (s.plan ? '<div class="meta"><span>Plan: ' + esc(s.plan) + '</span></div>' : '') + '</div></div>';
-  if (s.fb) h += '<div class="fb ' + (s.fb.pass ? 'pass' : 'fail') + '">' + (s.fb.pass ? '<strong>Correct.</strong> ' + (rec.usedSolution ? 'Next time try it without the solution.' : 'Read the model solution and compare it with yours.') : '<strong>' + esc(s.fb.msg) + '</strong>' + (s.fb.sub ? '<span class="sub">' + esc(s.fb.sub) + '</span>' : '')) + '</div>';
-  if (hintsShown) h += '<div class="hints">' + ex.hints.slice(0, hintsShown).map((t, i) => '<div><b>HINT ' + (i + 1) + '</b>' + t + '</div>').join('') + '</div>';
+  const fbBlock = (s.fb ? fbHTML(s.fb, rec) : '') + (hintsShown ? '<div class="hints">' + ex.hints.slice(0, hintsShown).map((t, i) => '<div' + (i === hintsShown - 1 ? ' class="new"' : '') + '><b>HINT ' + (i + 1) + ' of ' + ex.hints.length + '</b><span>' + t + '</span></div>').join('') + '</div>' : '');
+  h += '<div class="console">' + editorHTML('ex:' + ex.id, draft, 4) + '<div class="toolbar ex-tb"><div class="tb-main"><button class="btn small" data-exrun="' + ex.id + '">Run</button><button class="btn primary small" data-excheck="' + ex.id + '">Check answer</button></div><div class="tb-side"><button class="btn small tb-hint" data-exhint="' + ex.id + '"' + (hintsShown >= ex.hints.length ? ' disabled' : '') + '>' + (hintsShown >= ex.hints.length ? 'All hints shown' : 'Hint ' + (hintsShown + 1) + ' of ' + ex.hints.length) + '</button>' + (ex.kind !== 'script' ? '<button class="btn ghost small" data-exexp="' + ex.id + '">' + (s.showExp ? 'Hide expected' : 'Expected result') + '</button>' : '') + '<button class="btn ghost small" data-exsol="' + ex.id + '"' + (canSolve ? '' : ' disabled title="Unlocks after 2 checks or after all hints"') + '>' + (s.showSol ? 'Hide solution' : canSolve ? 'Solution' : 'Solution (locked)') + '</button><button class="btn ghost small tutor-only" data-exask="' + ex.id + '" hidden>Ask the professor</button></div></div>' +
+    fbBlock + '<div class="out"' + (s.run && !(s.fb && s.fb.kind === 'error') ? '' : ' hidden') + '>' + (s.run ? (s.fb ? '<div class="out-lab">Your result</div>' : '') + runResultHTML(s.run) + (s.run.ok ? xrayWidget('ex:' + ex.id) : '') : '') + (s.plan ? '<div class="meta"><span>Plan: ' + esc(s.plan) + '</span></div>' : '') + '</div></div>';
   if (s.showExp && ex.kind !== 'script') { let set = null; try { set = expectedFor(ex); } catch (e) {} h += '<div class="exp"><div class="lab">Expected result (your target)</div>' + gridHTML(set) + '</div>'; }
   if (s.showSol) h += '<div class="sol"><div class="lab">Model solution</div><pre class="code">' + hl(ex.solution) + '</pre>' + (ex.check ? '<div class="lab">How it is checked</div><pre class="code">' + hl(ex.check) + '</pre>' : '') + (ex.plan ? '<div class="lab">Query whose plan is checked</div><pre class="code">' + hl(ex.plan.query) + '</pre><p class="note">The plan must contain: ' + esc(ex.plan.mustContain) + '</p>' : '') + '</div>';
   return h + '</article>';
 }
+function miniRows(rows, cols, cls) {
+  const max = 7;
+  return '<div class="grid-wrap mini-diff ' + cls + '"><table class="grid"><thead><tr>' + cols.slice(0, max).map(c => '<th>' + esc(c) + '</th>').join('') + (cols.length > max ? '<th>…</th>' : '') + '</tr></thead><tbody>' +
+    rows.map(r => '<tr>' + r.slice(0, max).map(v => v === '∅' ? '<td class="null">NULL</td>' : '<td>' + esc(v) + '</td>').join('') + (cols.length > max ? '<td>…</td>' : '') + '</tr>').join('') + '</tbody></table></div>';
+}
+function fbText(fb) { const strip = x => String(x || '').replace(/<[^>]+>/g, ''); return fb.kind === 'error' ? 'Error: ' + (fb.run && fb.run.error) : strip(fb.title) + '. ' + (fb.points || []).map(strip).join(' ') + (fb.tip ? ' Tip: ' + strip(fb.tip) : ''); }
+function fbHTML(fb, rec) {
+  if (fb.pass) return '<div class="fb pass"><div class="fb-title">✓ Correct, request delivered</div><p>' + (rec.usedSolution ? 'Next time, try it without the model solution.' : 'Now open the model solution and compare it with yours. There is often a shorter way.') + '</p></div>';
+  if (fb.kind === 'empty') return '<div class="fb fail"><div class="fb-title">Write a query first</div><p>Type your SQL in the editor above, then press <b>Check answer</b>.</p></div>';
+  if (fb.kind === 'error') return '<div class="fb fail"><div class="fb-title">✕ ' + esc(fb.title) + '</div>' + errorHTML(fb.run) + '</div>';
+  let h = '<div class="fb fail"><div class="fb-title">✕ ' + esc(fb.title) + '</div>';
+  if (fb.meta) h += '<div class="fb-meta"><span>Your result: <b>' + fb.meta.you + '</b></span><span>Answer: <b>' + fb.meta.ans + '</b></span></div>';
+  if (fb.points && fb.points.length) h += '<ul class="fb-points">' + fb.points.map(p => '<li>' + p + '</li>').join('') + '</ul>';
+  if (fb.extra && fb.extra.length) h += '<div class="fb-lab bad">Rows in your result that should not be there' + (fb.extraN > fb.extra.length ? ' (first ' + fb.extra.length + ' of ' + fb.extraN + ')' : '') + '</div>' + miniRows(fb.extra, fb.gotCols || fb.cols, 'bad');
+  if (fb.missing && fb.missing.length) h += '<div class="fb-lab ok">Rows missing from your result' + (fb.missingN > fb.missing.length ? ' (first ' + fb.missing.length + ' of ' + fb.missingN + ')' : '') + '</div>' + miniRows(fb.missing, fb.cols, 'ok');
+  if (fb.tip) h += '<div class="fb-tip"><b class="eh-lab">Try this</b>' + fb.tip + '</div>';
+  return h + '</div>';
+}
 function renderPractice(day, body) {
   const st = dayStats(day);
-  let h = '<div class="brief"><div class="eyebrow">Your role</div><p>You are the new database engineer at Ibn Rushd University. Offices across campus send you requests. Run your query to watch the tables it touches light up in the live database, and X-ray how the result was built. Then press <strong>Check answer</strong> to deliver it.</p></div><p class="prose note" style="margin-top:0">Solve in order: levels go from ● to ●●●. Each exercise runs on a fresh copy of the database, so you cannot break anything. Model solutions unlock after two checks or after all hints. Click a table name to see its columns, or press <strong>Schema</strong> in the top bar.</p><div class="listing">';
+  let h = '<section class="intro"><div class="intro-role"><div class="eyebrow">Your role</div><p>You are the new database engineer at Ibn Rushd University. Each card below is a request from an office on campus. They go from easy (●) to hard (●●●).</p></div>' +
+    '<ol class="howto"><li><b>Write</b><span>your SQL in the editor</span></li><li><b>Run</b><span>to see your result and how it was built</span></li><li><b>Check answer</b><span>to deliver the request</span></li></ol>' +
+    '<p class="intro-foot">Stuck? Press <b>Hint</b>. Need a column name? Click a table name in the request, or press <b>Schema</b> at the top. You cannot break anything: every run uses a fresh copy of the database.</p></section><div class="listing">';
   day.exercises.forEach((ex, i) => { h += exHTML(ex, i); });
   h += '</div><div class="next-row"><span class="note">' + st.exDone + ' of ' + st.exTotal + ' solved.</span><button class="btn primary" data-goto="recall">Go to recall quiz →</button></div>';
   body.innerHTML = h;
   const exById = id => day.exercises.find(e => e.id === id);
+  const revealIn = (ex, sel) => {
+    const el = $('#ex-' + CSS.escape(ex.id) + ' ' + sel, body); if (!el) return;
+    const r = el.getBoundingClientRect();
+    if (r.top < 70 || r.bottom > window.innerHeight - 20) el.scrollIntoView({ block: r.height > window.innerHeight * 0.6 ? 'start' : 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+    el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+  };
   const rerender = (ex) => {
     const el = $('#ex-' + CSS.escape(ex.id), body);
     const idx = day.exercises.indexOf(ex);
@@ -5226,7 +5406,7 @@ function renderPractice(day, body) {
     const sql = getSQL(ex);
     const d = freshDB(ex.setup); s.run = runAll(d, sql);
     s.plan = (ex.plan && s.run.ok) ? (() => { try { return planText(d, ex.plan.query); } catch (e) { return ''; } })() : null;
-    s.xray = s.run.ok ? xray(d, sql) : null;
+    xrayStore('ex:' + ex.id, s.run.ok ? xray(d, sql) : null);
     d.close();
     liveRun(sql + ' ' + (ex.setup || ''));
     lastRun = { sql, error: s.run.ok ? null : s.run.error, where: 'exercise ' + ex.id, ex };
@@ -5235,18 +5415,19 @@ function renderPractice(day, body) {
   const doCheck = ex => {
     const s = exState[ex.id] || (exState[ex.id] = {});
     const sql = getSQL(ex);
-    if (!sql.trim() || /^\s*(--[^\n]*\n?\s*)*(SELECT\s*)?$/i.test(sql)) { s.fb = { pass: false, msg: 'Write a query first.' }; rerender(ex); return; }
+    if (!sql.trim() || /^\s*(--[^\n]*\n?\s*)*(SELECT\s*)?$/i.test(sql)) { s.fb = { pass: false, kind: 'empty' }; rerender(ex); revealIn(ex, '.fb'); return; }
     const r = grade(ex, sql);
     const R = rec(ex.id);
     R.attempts = (R.attempts || 0) + 1;
     const firstPass = r.pass && !R.done;
     if (firstPass) { R.done = true; R.doneAt = todayStr(); }
     s.fb = r; s.run = r.run; s.plan = r.plan || null;
-    if (r.run && r.run.ok && ex.kind !== 'script') { const xd = freshDB(ex.setup); s.xray = xray(xd, sql); xd.close(); } else s.xray = null;
+    if (r.run && r.run.ok && ex.kind !== 'script') { const xd = freshDB(ex.setup); xrayStore('ex:' + ex.id, xray(xd, sql)); xd.close(); } else xrayStore('ex:' + ex.id, null);
     liveRun(sql + ' ' + (ex.setup || ''));
     save(); renderRail();
-    lastRun = { sql, error: r.pass ? null : (r.msg + ' ' + (r.sub || '')), where: 'exercise ' + ex.id, ex };
+    lastRun = { sql, error: r.pass ? null : fbText(r), where: 'exercise ' + ex.id, ex };
     rerender(ex);
+    revealIn(ex, '.fb');
     if (firstPass) celebrate($('#ex-' + CSS.escape(ex.id), body), R.usedSolution ? xpOfEx(ex) / 2 : xpOfEx(ex));
     if (r.pass) { const done = dayStats(day).exDone; $$('.steps-nav .eyebrow').forEach(e => { e.textContent = done + '/' + day.exercises.length; }); }
   };
@@ -5256,10 +5437,10 @@ function renderPractice(day, body) {
     const t = e.target.closest('button'); if (!t) return;
     if (t.dataset.exrun) doRun(exById(t.dataset.exrun));
     else if (t.dataset.excheck) doCheck(exById(t.dataset.excheck));
-    else if (t.dataset.exhint) { const ex = exById(t.dataset.exhint); const R = rec(ex.id); R.hints = Math.min(ex.hints.length, (R.hints || 0) + 1); save(); rerender(ex); }
+    else if (t.dataset.exhint) { const ex = exById(t.dataset.exhint); const R = rec(ex.id); R.hints = Math.min(ex.hints.length, (R.hints || 0) + 1); save(); rerender(ex); revealIn(ex, '.hints .new'); }
     else if (t.dataset.exexp) { const ex = exById(t.dataset.exexp); const s = exState[ex.id] || (exState[ex.id] = {}); s.showExp = !s.showExp; rerender(ex); }
     else if (t.dataset.exsol) { const ex = exById(t.dataset.exsol); const s = exState[ex.id] || (exState[ex.id] = {}); s.showSol = !s.showSol; if (s.showSol && !rec(ex.id).done) { rec(ex.id).usedSolution = true; save(); } rerender(ex); }
-    else if (t.dataset.exask) { const ex = exById(t.dataset.exask); const s = exState[ex.id] || {}; lastRun = { sql: getSQL(ex), error: s.fb && !s.fb.pass ? s.fb.msg + ' ' + (s.fb.sub || '') : (s.run && !s.run.ok ? s.run.error : null), where: 'exercise ' + ex.id, ex }; openTutor(); askTutor(s.fb && !s.fb.pass ? 'My answer to this exercise is wrong. Give me one hint about what to look at, without writing the full solution.' : 'Can you give me a hint for this exercise without writing the full solution?'); }
+    else if (t.dataset.exask) { const ex = exById(t.dataset.exask); const s = exState[ex.id] || {}; lastRun = { sql: getSQL(ex), error: s.fb && !s.fb.pass ? fbText(s.fb) : (s.run && !s.run.ok ? s.run.error : null), where: 'exercise ' + ex.id, ex }; openTutor(); askTutor(s.fb && !s.fb.pass ? 'My answer to this exercise is wrong. Give me one hint about what to look at, without writing the full solution.' : 'Can you give me a hint for this exercise without writing the full solution?'); }
     else if (t.dataset.goto) { viewDay(day.n, t.dataset.goto); window.scrollTo({ top: 0 }); }
   };
   tutorButtons();
@@ -5276,7 +5457,7 @@ function renderRecall(day, body) {
       '<div class="next-row"><button class="btn" data-retake="1">Retake (does not change your first score)</button><button class="btn primary" data-goto="explain">Go to explain →</button></div>';
   } else {
     const q = qs[pos]; const a = exState['quiz:' + q.id];
-    let h = '<p class="note" style="margin-top:0">Answer from memory. Do not scroll back to the lesson. Every question you answer joins your spaced-review deck.</p><div class="quiz"><div class="qn"><span>Question ' + (pos + 1) + ' of ' + qs.length + '</span><span>' + answered + ' answered</span></div><div class="qq">' + q.q + '</div><div class="opts">' +
+    let h = '<p class="intro-note">Answer from memory, without looking back at the lesson. Every question you answer joins your review deck.</p><div class="quiz"><div class="qn"><span>Question ' + (pos + 1) + ' of ' + qs.length + '</span><span>' + answered + ' answered</span></div><div class="qq">' + q.q + '</div><div class="opts">' +
       q.options.map((o, i) => { const cls = a === undefined ? '' : i === q.answer ? ' right' : i === a ? ' wrong' : ''; return '<button class="opt' + cls + '" data-qopt="' + i + '"' + (a !== undefined ? ' disabled' : '') + '><b>' + 'ABCDEF'[i] + '</b><span>' + o + '</span></button>'; }).join('') + '</div>';
     if (a !== undefined) h += '<div class="why"><strong>' + (a === q.answer ? 'Correct.' : 'Not quite.') + '</strong> ' + q.why + '</div><div class="next-row" style="margin-top:14px"><span></span><button class="btn primary" data-qnext="1">' + (pos + 1 < qs.length ? 'Next question →' : 'See results') + '</button></div>';
     body.innerHTML = h + '</div>';
@@ -5460,13 +5641,13 @@ function viewPlayground() {
   if (!PG) PG = freshDB();
   const v = editors['pg'] !== undefined ? editors['pg'] : "-- Anything goes here. Changes persist until you reset.\nSELECT s.name, d.name AS major, s.year\nFROM students s\nLEFT JOIN departments d ON d.dept_id = s.dept_id\nORDER BY s.year DESC, s.name;";
   $('#main').innerHTML = '<div class="col" style="max-width:1180px"><header class="dayhead"><div class="eyebrow">Free practice</div><h1>SQL playground</h1><p class="note">One database that keeps your changes while this page is open. Experiment freely: create tables, delete rows, break things, then reset.</p></header>' +
-    '<div class="pg"><div style="min-width:0"><div class="console">' + editorHTML('pg', v, 8) + '<div class="toolbar"><button class="btn primary small" id="pgRun">Run</button><button class="btn small" id="pgPlan">Explain plan</button><button class="btn ghost small" id="pgReset">Reset database</button><button class="btn ghost small tutor-only" id="pgAsk" hidden>Ask about this query</button><span class="hint-k">Ctrl/⌘ + Enter</span></div><div class="out" id="pgOut"' + (pgRun ? '' : ' hidden') + '>' + runResultHTML(pgRun) + (pgRun && pgRun.ok ? xrayHTML(pgRun.xray) : '') + '</div></div>' +
+    '<div class="pg"><div style="min-width:0"><div class="console">' + editorHTML('pg', v, 8) + '<div class="toolbar"><button class="btn primary small" id="pgRun">Run</button><button class="btn small" id="pgPlan">Explain plan</button><button class="btn ghost small" id="pgReset">Reset database</button><button class="btn ghost small tutor-only" id="pgAsk" hidden>Ask about this query</button><span class="hint-k">Ctrl/⌘ + Enter</span></div><div class="out" id="pgOut"' + (pgRun ? '' : ' hidden') + '>' + runResultHTML(pgRun) + (pgRun && pgRun.ok ? xrayWidget('pg') : '') + '</div></div>' +
     '<div class="history" id="pgHist">' + (pgHist.length ? '<div class="eyebrow" style="margin-bottom:6px">History</div>' + pgHist.map((q, i) => '<button data-h="' + i + '" title="' + esc(q) + '">' + esc(q.replace(/\s+/g, ' ')) + '</button>').join('') : '') + '</div></div>' +
     '<aside><div class="eyebrow" style="margin-bottom:8px">Schema</div><div id="pgSchema">' + schemaHTML(PG) + '</div></aside></div></div>';
   const run = (sql, plan) => {
     const q = sql.trim().replace(/;\s*$/, '');
     pgRun = plan ? runAll(PG, 'EXPLAIN QUERY PLAN ' + q) : runAll(PG, sql);
-    if (!plan && pgRun.ok) pgRun.xray = xray(PG, sql);
+    xrayStore('pg', !plan && pgRun.ok ? xray(PG, sql) : null);
     if (sql.trim() && pgHist[0] !== sql.trim()) { pgHist.unshift(sql.trim()); pgHist = pgHist.slice(0, 12); }
     lastRun = { sql, error: pgRun.ok ? null : pgRun.error, where: 'playground' };
     viewPlayground();
@@ -5621,31 +5802,31 @@ function xray(db, sql) {
     const fs = span('FROM'); if (!fs) return null;
     const fromT = text('FROM'), selT = text('SELECT'), whereT = text('WHERE'), groupT = text('GROUP BY'), havingT = text('HAVING'), winT = text('WINDOW'), orderT = text('ORDER BY'), limitT = text('LIMIT');
     const count = q => { try { const r = db.exec(prefix + q); return r.length ? Number(r[0].values[0][0]) : null; } catch (e) { return null; } };
+    const sample = (...qs) => { for (const q of qs) { try { const r = runAll(db, prefix + q); if (r.ok && r.sets.length) return r.sets[r.sets.length - 1]; } catch (e) {} } return null; };
+    const limitTok = C.find(t => t.kw === 'LIMIT');
+    const stNoLimit = st.slice(T[0].start, limitTok ? limitTok.start : st.length);
     const stages = [];
     const joins = T.filter(t => t.kw === 'JOIN' && t.start > fs[0] && t.start < fs[1]);
     const base = st.slice(fs[0], joins.length ? joins[0].start : fs[1]).trim();
-    stages.push({ k: 'FROM', t: base, n: count('SELECT COUNT(*) FROM ' + base) });
+    stages.push({ k: 'FROM', t: base, n: count('SELECT COUNT(*) FROM ' + base), rows: sample('SELECT * FROM ' + base + ' LIMIT 5') });
     joins.forEach((j, idx) => {
       const nextStart = idx + 1 < joins.length ? joins[idx + 1].start : fs[1];
-      stages.push({ k: j.raw.replace('OUTER ', ''), t: st.slice(j.end, nextStart).trim(), n: count('SELECT COUNT(*) FROM ' + st.slice(fs[0], nextStart)) });
+      stages.push({ k: j.raw.replace('OUTER ', ''), t: st.slice(j.end, nextStart).trim(), n: count('SELECT COUNT(*) FROM ' + st.slice(fs[0], nextStart)), rows: sample('SELECT * FROM ' + st.slice(fs[0], nextStart) + ' LIMIT 5') });
     });
     const fw = fromT + (whereT ? ' WHERE ' + whereT : '');
-    if (whereT) stages.push({ k: 'WHERE', t: whereT, n: count('SELECT COUNT(*) FROM ' + fw) });
+    if (whereT) stages.push({ k: 'WHERE', t: whereT, n: count('SELECT COUNT(*) FROM ' + fw), rows: sample('SELECT * FROM ' + fw + ' LIMIT 5'), removed: sample('SELECT * FROM ' + fromT + ' WHERE (' + whereT + ') IS NOT 1 LIMIT 3') });
     const grp = groupT ? ' GROUP BY ' + groupT : '';
-    if (groupT) stages.push({ k: 'GROUP BY', t: groupT, n: count('SELECT COUNT(*) FROM (SELECT ' + selT + ' FROM ' + fw + grp + ')'), note: 'groups' });
-    if (havingT) stages.push({ k: 'HAVING', t: havingT, n: count('SELECT COUNT(*) FROM (SELECT ' + selT + ' FROM ' + fw + grp + ' HAVING ' + havingT + ')'), note: 'groups' });
+    if (groupT) stages.push({ k: 'GROUP BY', t: groupT, n: count('SELECT COUNT(*) FROM (SELECT ' + selT + ' FROM ' + fw + grp + ')'), note: 'groups', rows: sample('SELECT ' + groupT + ', COUNT(*) AS rows_in_group FROM ' + fw + grp + ' LIMIT 5', 'SELECT ' + selT + ' FROM ' + fw + grp + ' LIMIT 5') });
+    if (havingT) stages.push({ k: 'HAVING', t: havingT, n: count('SELECT COUNT(*) FROM (SELECT ' + selT + ' FROM ' + fw + grp + ' HAVING ' + havingT + ')'), note: 'groups', rows: sample('SELECT ' + groupT + ', COUNT(*) AS rows_in_group FROM ' + fw + grp + ' HAVING ' + havingT + ' LIMIT 5', 'SELECT ' + selT + ' FROM ' + fw + grp + ' HAVING ' + havingT + ' LIMIT 5'), removed: sample('SELECT ' + groupT + ', COUNT(*) AS rows_in_group FROM ' + fw + grp + ' HAVING (' + havingT + ') IS NOT 1 LIMIT 3') });
     const core = 'SELECT ' + selT + ' FROM ' + fw + grp + (havingT ? ' HAVING ' + havingT : '') + (winT ? ' WINDOW ' + winT : '');
     const nSel = count('SELECT COUNT(*) FROM (' + core + ')');
-    stages.push({ k: /^distinct\b/i.test(selT) ? 'SELECT DISTINCT' : 'SELECT', t: selT.replace(/^distinct\s+/i, ''), n: nSel });
-    if (orderT) stages.push({ k: 'ORDER BY', t: orderT, n: nSel, note: 'same rows, new order' });
-    if (limitT) stages.push({ k: 'LIMIT', t: limitT, n: count('SELECT COUNT(*) FROM (' + st.slice(T[0].start) + ')') });
+    stages.push({ k: /^distinct\b/i.test(selT) ? 'SELECT DISTINCT' : 'SELECT', t: selT.replace(/^distinct\s+/i, ''), n: nSel, rows: sample(core + ' LIMIT 5') });
+    if (orderT) stages.push({ k: 'ORDER BY', t: orderT, n: nSel, note: 'same rows, new order', rows: sample(stNoLimit + ' LIMIT 5') });
+    if (limitT) stages.push({ k: 'LIMIT', t: limitT, n: count('SELECT COUNT(*) FROM (' + st.slice(T[0].start) + ')'), rows: sample('SELECT * FROM (' + st.slice(T[0].start) + ') LIMIT 5') });
     const ok = stages.filter(s => s.n !== null && !isNaN(s.n));
     return ok.length >= 2 ? ok : null;
   } catch (e) { return null; }
 }
-const XR_KEY = 'relational-lab-xray-open';
-let xrayOpen = true; try { xrayOpen = localStorage.getItem(XR_KEY) !== '0'; } catch (e) {}
-document.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('xray')) { xrayOpen = e.target.open; try { localStorage.setItem(XR_KEY, xrayOpen ? '1' : '0'); } catch (err) {} } }, true);
 function firstWord(t) { const m = /^\s*("?[A-Za-z_][A-Za-z0-9_]*"?)/.exec(t || ''); return m ? m[1].replace(/"/g, '') : 'the table'; }
 function xraySay(s, prev) {
   const k = s.k, t = firstWord(s.t);
@@ -5665,29 +5846,59 @@ function xraySay(s, prev) {
   if (k === 'LIMIT') return 'Keep only the first rows.';
   return '';
 }
-function xrayHTML(stages) {
-  if (!stages) return '';
-  const max = Math.max(1, ...stages.map(s => s.n));
-  const short = t => { t = String(t).replace(/\s+/g, ' '); return t.length > 90 ? t.slice(0, 88) + '…' : t; };
-  let prev = null;
-  const rows = stages.map((s, i) => {
-    const unit = s.note === 'groups' ? (s.n === 1 ? 'group' : 'groups') : (s.n === 1 ? 'row' : 'rows');
-    let delta = '';
-    if (prev !== null && s.k !== 'ORDER BY') {
-      if (s.n < prev) delta = '<span class="xs-d down">−' + (prev - s.n) + ' removed</span>';
-      else if (s.n > prev) delta = '<span class="xs-d up">+' + (s.n - prev) + ' added</span>';
-      else delta = '<span class="xs-d same">no change</span>';
-    }
-    prev = s.n;
-    return '<li class="xs" style="--i:' + i + '"><span class="xs-n">' + (i + 1) + '</span><div class="xs-m">' +
-      '<div class="xs-top"><span class="xs-k">' + esc(s.k) + '</span><code class="xs-c" title="' + esc(s.t) + '">' + hl(short(s.t)).replace(/\n$/, '') + '</code></div>' +
-      '<div class="xs-say">' + xraySay(s) + '</div>' +
-      '<div class="xs-bar"><span class="xr-bar"><i style="width:' + Math.max(1.5, 100 * s.n / max).toFixed(1) + '%"></i></span><span class="xs-cnt"><b>' + s.n + '</b> ' + unit + '</span>' + delta + '</div></div></li>';
-  }).join('');
-  return '<details class="xray"' + (xrayOpen ? ' open' : '') + '><summary><b>Query X-ray</b><span>See how your result was built, step by step</span></summary>' +
-    '<p class="xs-intro">The database does not read your query from top to bottom. It runs it in the order below. The bar shows how many rows are left after each step.</p><ol class="xs-list">' + rows + '</ol></details>';
+const XREG = {}, XPLAY = {};
+function xrayStore(id, stages) { const old = XREG[id]; if (XPLAY[id]) { clearInterval(XPLAY[id]); delete XPLAY[id]; } XREG[id] = { stages, step: 0, open: !!(old && old.open && stages) }; }
+function xrayWidget(id) { const x = XREG[id]; if (!x || !x.stages) return ''; return '<div class="x2" data-x2="' + esc(id) + '">' + x2Inner(id) + '</div>'; }
+function x2Table(set, total, cls) {
+  if (!set) return '';
+  const max = 7, cols = set.columns, rows = set.values;
+  if (!rows.length) return '<div class="x2-none">No rows left.</div>';
+  return '<div class="grid-wrap x2-grid ' + (cls || '') + '"><table class="grid"><thead><tr>' + cols.slice(0, max).map(c => '<th>' + esc(c) + '</th>').join('') + (cols.length > max ? '<th class="more">+' + (cols.length - max) + ' more</th>' : '') + '</tr></thead><tbody>' +
+    rows.map(r => '<tr>' + r.slice(0, max).map(v => v === null ? '<td class="null">NULL</td>' : typeof v === 'number' ? '<td class="n">' + esc(Math.round(v * 100) / 100) + '</td>' : '<td>' + esc(String(v).length > 26 ? String(v).slice(0, 25) + '…' : v) + '</td>').join('') + (cols.length > max ? '<td class="more"></td>' : '') + '</tr>').join('') +
+    '</tbody></table></div>' + (total !== null && total > rows.length ? '<div class="x2-more">… and ' + (total - rows.length) + ' more ' + (total - rows.length === 1 ? 'row' : 'rows') + '</div>' : '');
 }
-
+function x2Inner(id) {
+  const x = XREG[id], st = x.stages;
+  if (!x.open) return '<button class="x2-open" data-x2act="open"><span class="x2-play" aria-hidden="true">▶</span><span><b>Watch how your query runs</b><small>' + st.length + ' steps, with your real data. See where rows are added or removed.</small></span></button>';
+  const i = x.step, s = st[i], prev = i ? st[i - 1].n : null;
+  const unit = n => s.note === 'groups' ? (n === 1 ? 'group' : 'groups') : (n === 1 ? 'row' : 'rows');
+  let change;
+  if (prev === null) change = '<b>' + s.n + '</b> ' + unit(s.n) + ' to start with';
+  else if (s.k === 'ORDER BY') change = '<b>' + s.n + '</b> ' + unit(s.n) + ', now sorted';
+  else if (s.n < prev) change = prev + ' → <b>' + s.n + '</b> ' + unit(s.n) + ' <span class="xs-d down">' + (prev - s.n) + ' removed</span>';
+  else if (s.n > prev) change = prev + ' → <b>' + s.n + '</b> ' + unit(s.n) + ' <span class="xs-d up">' + (s.n - prev) + ' more</span>' + (/JOIN/.test(s.k) ? '<span class="x2-why">one row can match several rows</span>' : '');
+  else change = '<b>' + s.n + '</b> ' + unit(s.n) + ' <span class="xs-d same">no change</span>';
+  const short = t => { t = String(t).replace(/\s+/g, ' '); return t.length > 110 ? t.slice(0, 108) + '…' : t; };
+  return '<div class="x2-head"><b>How your query runs</b><span>The database runs these steps in this order, not top to bottom.</span></div>' +
+    '<div class="x2-steps" role="tablist">' + st.map((t, k) => '<button class="x2-chip' + (k === i ? ' on' : '') + (k < i ? ' done' : '') + '" data-x2act="go" data-k="' + k + '" role="tab" aria-selected="' + (k === i) + '"><b>' + (k + 1) + '</b>' + esc(t.k) + '</button>').join('<span class="x2-arrow" aria-hidden="true">→</span>') + '</div>' +
+    '<div class="x2-card"><div class="x2-step">Step ' + (i + 1) + ' of ' + st.length + '</div>' +
+    '<div class="x2-clause"><span class="xs-k">' + esc(s.k) + '</span><code>' + hl(short(s.t)).replace(/\n$/, '') + '</code></div>' +
+    '<p class="x2-say">' + xraySay(s) + '</p><div class="x2-change">' + change + '</div>' +
+    (s.rows ? '<div class="x2-lab">' + (i === st.length - 1 ? 'Final result' : 'The rows after this step') + '</div>' + x2Table(s.rows, s.n) : '') +
+    (s.removed && s.removed.values.length ? '<div class="x2-lab bad">Removed by this step, for example</div>' + x2Table(s.removed, null, 'bad') : '') +
+    '</div><div class="x2-nav"><button class="btn small" data-x2act="prev"' + (i ? '' : ' disabled') + '>← Back</button><button class="btn small" data-x2act="play">' + (XPLAY[id] ? '❚❚ Pause' : '▶ Play all') + '</button><button class="btn primary small" data-x2act="next"' + (i < st.length - 1 ? '' : ' disabled') + '>Next step →</button><button class="btn ghost small" data-x2act="close">Hide</button></div>';
+}
+function x2Render(id) { const box = document.querySelector('[data-x2="' + CSS.escape(id) + '"]'); if (box) box.innerHTML = x2Inner(id); return box; }
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-x2act]'); if (!b) return;
+  const box = b.closest('[data-x2]'); const id = box.dataset.x2, x = XREG[id]; if (!x) return;
+  const act = b.dataset.x2act, last = x.stages.length - 1;
+  const stop = () => { if (XPLAY[id]) { clearInterval(XPLAY[id]); delete XPLAY[id]; } };
+  if (act === 'open') { x.open = true; x.step = 0; }
+  else if (act === 'close') { stop(); x.open = false; }
+  else if (act === 'next') { stop(); x.step = Math.min(last, x.step + 1); }
+  else if (act === 'prev') { stop(); x.step = Math.max(0, x.step - 1); }
+  else if (act === 'go') { stop(); x.step = Number(b.dataset.k); }
+  else if (act === 'play') {
+    if (XPLAY[id]) stop();
+    else {
+      if (x.step >= last) x.step = 0;
+      XPLAY[id] = setInterval(() => { const xx = XREG[id]; if (!xx || xx.step >= xx.stages.length - 1 || !document.querySelector('[data-x2="' + CSS.escape(id) + '"]')) { stop(); x2Render(id); return; } xx.step++; x2Render(id); }, 2200);
+    }
+  }
+  const nb = x2Render(id);
+  if (act === 'open' && nb) { const r = nb.getBoundingClientRect(); if (r.bottom > window.innerHeight) nb.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' }); }
+});
 /* ---------------- did you know ---------------- */
 const FACT_KEY = 'relational-lab-fact';
 let factIdx = -1;
@@ -5936,7 +6147,7 @@ function placeLive() {
   document.body.classList.remove('dock-open');
   if (!Live3D.ok()) { dock.hidden = true; return; }
   if (current.view === 'home') { dock.hidden = true; Live3D.mount($('#home3d')); return; }
-  if (current.view === 'review') { dock.hidden = true; return; }
+  if (current.view === 'review' || (current.view === 'day' && /^(recall|explain)$/.test(P.tab[current.day] || 'learn'))) { dock.hidden = true; return; }
   dock.hidden = false;
   const st = dockState(); dock.classList.toggle('min', st === 'min');
   document.body.classList.toggle('dock-open', st !== 'min');

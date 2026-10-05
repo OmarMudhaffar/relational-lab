@@ -28,7 +28,8 @@ Each feature follows a learning method with strong research behind it: retrieval
 ## Interactive extras
 
 - **Live 3D database:** the 8 tables are drawn as database cylinders linked by their foreign keys. When you run a query, the tables it touches light up and data packets travel along the joins. You can drag the model to turn it, and clicking a table shows its columns.
-- **Query X-ray:** after every run, an animated breakdown shows how the database built your result in the order it actually runs (FROM, JOIN, WHERE, GROUP BY, HAVING, SELECT, ORDER BY, LIMIT), with the row count after each step.
+- **Watch your query run:** after every run, a step-by-step player shows how the database built your result, in the order it actually runs (FROM, JOIN, WHERE, GROUP BY, HAVING, SELECT, ORDER BY, LIMIT). Each step shows the real rows at that point and the rows it removed.
+- **Clear feedback:** a wrong answer shows exactly what is different (extra rows, missing rows, wrong columns, wrong order, duplicates, rounding) and suggests what to try. SQL errors get a plain-English explanation and a "did you mean" suggestion.
 - **Real-world requests:** each exercise is a request from a university office (Registrar, Finance, HR…). Solving one delivers it, earns XP and moves you up the ranks from Intern to Data Architect.
 
 Your progress (XP, streak, solved exercises, review cards) is saved automatically in your own browser (localStorage). You can download a backup file and restore it on another device.

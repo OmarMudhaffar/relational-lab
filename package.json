@@ -1,0 +1,16 @@
+{
+  "name": "relational-lab",
+  "version": "1.0.0",
+  "description": "A 14-day interactive database course that runs a real SQL engine in the browser.",
+  "private": true,
+  "scripts": {
+    "test": "node test.js",
+    "build": "node build.js",
+    "smoke": "node smoke.js"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "puppeteer-core": "^21.11.0",
+    "sql.js": "1.14.2"
+  }
+}

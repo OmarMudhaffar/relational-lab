@@ -1,0 +1,1058 @@
+<title>Relational Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: syllabus rail on the left, a reading column for lessons, console-style editors and result grids inside it, tutor drawer on the right. */
+:root {
+  --bg: #F2F3EF;
+  --surface: #FCFCFA;
+  --bg2: #E7E9E3;
+  --ink: #1A2028;
+  --muted: #5B646D;
+  --line: #D2D6CE;
+  --accent: #0A6B72;
+  --accent-soft: #D7ECEC;
+  --hl: #A85F00;
+  --hl-soft: #F6E7CF;
+  --ok: #2C7A4B;
+  --ok-soft: #DCEFE2;
+  --bad: #B0281F;
+  --bad-soft: #F7DEDB;
+  --code-bg: #ECEEE9;
+  --kw: #0A6B72;
+  --str: #9A4D00;
+  --num: #6B3FA0;
+  --cmt: #7C858C;
+  --shadow: 0 1px 2px rgba(20,30,40,.06), 0 6px 24px rgba(20,30,40,.06);
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --rail: 268px;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161B; --surface: #181E25; --bg2: #212932; --ink: #E3E7EB; --muted: #98A2AC; --line: #2D3741;
+    --accent: #52BFC4; --accent-soft: #173538; --hl: #E3A64B; --hl-soft: #3A2C17;
+    --ok: #5CC28A; --ok-soft: #173327; --bad: #F07B70; --bad-soft: #3B1D1B; --code-bg: #0D1115;
+    --kw: #61C9CD; --str: #E9AE6A; --num: #B99AE8; --cmt: #6E7983;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161B; --surface: #181E25; --bg2: #212932; --ink: #E3E7EB; --muted: #98A2AC; --line: #2D3741;
+  --accent: #52BFC4; --accent-soft: #173538; --hl: #E3A64B; --hl-soft: #3A2C17;
+  --ok: #5CC28A; --ok-soft: #173327; --bad: #F07B70; --bad-soft: #3B1D1B; --code-bg: #0D1115;
+  --kw: #61C9CD; --str: #E9AE6A; --num: #B99AE8; --cmt: #6E7983;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.25);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+a.btn { text-decoration: none; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 15.5px/1.6 var(--f-body); -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, kbd, pre, textarea.ed-input { font-family: var(--f-mono); }
+code { font-size: .88em; background: var(--code-bg); padding: .1em .35em; border-radius: 3px; }
+kbd { font-size: .78em; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 .35em; background: var(--surface); }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+.eyebrow { font: 600 11.5px/1 var(--f-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+
+/* ---------- shell ---------- */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: baseline; gap: 10px; text-decoration: none; color: var(--ink); min-width: 0; }
+.brand b { font: 800 19px/1 var(--f-display); font-stretch: 118%; letter-spacing: -.01em; white-space: nowrap; }
+.brand span { font: 500 11px/1 var(--f-mono); color: var(--muted); letter-spacing: .06em; white-space: nowrap; }
+.topbar .spacer { flex: 1; }
+.meter { display: flex; align-items: center; gap: 8px; font: 500 12px var(--f-mono); color: var(--muted); }
+.meter .track { width: 120px; height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+.meter .fill { height: 100%; background: var(--accent); }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); padding: 6px 12px; border-radius: var(--radius); cursor: pointer; font-size: 14px; line-height: 1.3; white-space: nowrap; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.ghost { border-color: transparent; background: transparent; }
+.btn.small { padding: 3px 9px; font-size: 13px; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.icon-btn { display: none; }
+.layout { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); min-height: calc(100% - 53px); }
+.rail { border-right: 1px solid var(--line); padding: 18px 12px 40px; position: sticky; top: calc(53px + env(safe-area-inset-top, 0px)); height: calc(100vh - 53px); overflow-y: auto; background: var(--bg); }
+.rail h4 { margin: 18px 10px 6px; font: 600 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.rail h4:first-child { margin-top: 0; }
+.navlink { display: grid; grid-template-columns: 30px minmax(0,1fr) auto; align-items: center; gap: 8px; padding: 7px 10px; border-radius: var(--radius); text-decoration: none; color: var(--ink); font-size: 14px; line-height: 1.3; }
+.navlink:hover { background: var(--bg2); }
+.navlink.active { background: var(--accent-soft); }
+.navlink .num { font: 600 12px var(--f-mono); color: var(--muted); }
+.navlink.active .num { color: var(--accent); }
+.navlink .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.navlink .lbl small { display: block; font: 500 10.5px var(--f-mono); color: var(--muted); letter-spacing: .05em; }
+.ring { width: 18px; height: 18px; }
+.badge { font: 600 11px var(--f-mono); background: var(--hl-soft); color: var(--hl); padding: 1px 7px; border-radius: 10px; }
+main { padding-block: 28px 80px; padding-inline: clamp(16px, 4vw, 48px); min-width: 0; }
+.col { max-width: 860px; margin: 0 auto; }
+
+/* ---------- home ---------- */
+.hero { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; align-items: end; padding-bottom: 28px; border-bottom: 1px solid var(--line); }
+.hero h1 { font-size: clamp(30px, 4.4vw, 46px); font-weight: 800; font-stretch: 112%; letter-spacing: -.02em; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero p { color: var(--muted); max-width: 54ch; margin: 14px 0 20px; font-size: 16.5px; }
+.hero .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.map { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.map a { aspect-ratio: 1; border: 1px solid var(--line); border-radius: 5px; display: flex; flex-direction: column; justify-content: space-between; padding: 6px; text-decoration: none; color: var(--ink); background: var(--surface); position: relative; overflow: hidden; }
+.map a .d { font: 700 13px/1 var(--f-mono); position: relative; }
+.map a .t { font: 600 8.5px/1.1 var(--f-mono); color: var(--muted); letter-spacing: .04em; position: relative; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.map a .f { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent-soft); }
+.map a.today { outline: 2px solid var(--hl); outline-offset: 1px; }
+.map-caption { display: flex; justify-content: space-between; font: 500 11px var(--f-mono); color: var(--muted); margin-top: 8px; gap: 8px; flex-wrap: wrap; }
+.section { padding-block: 32px; border-bottom: 1px solid var(--line); }
+.section:last-child { border-bottom: 0; }
+.section > h2 { font-size: 24px; font-weight: 750; font-stretch: 108%; margin-bottom: 6px; }
+.section > p.lead { color: var(--muted); margin: 0 0 20px; max-width: 65ch; }
+.routine { display: flex; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); }
+.routine div { min-width: 118px; padding: 10px 12px; background: var(--surface); border-right: 1px solid var(--line); min-width: 0; }
+.routine div:last-child { border-right: 0; }
+.routine b { display: block; font: 600 12px var(--f-mono); color: var(--accent); }
+.routine span { display: block; font-size: 13.5px; font-weight: 600; }
+.routine small { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.35; margin-top: 3px; }
+.principles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 32px; }
+.principle { padding: 14px 0; border-top: 1px solid var(--line); }
+.principle h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.principle p { margin: 0; font-size: 14.5px; color: var(--muted); }
+.principle .src { font: 500 11.5px var(--f-mono); color: var(--muted); margin-top: 6px; display: block; opacity: .85; }
+.principle .feat { color: var(--ink); }
+.weeks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.weeks ol { list-style: none; padding: 0; margin: 0; }
+.weeks li { display: grid; grid-template-columns: 54px minmax(0,1fr); gap: 8px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 14.5px; }
+.weeks li span { font: 600 12px/1.9 var(--f-mono); color: var(--muted); }
+.weeks h3 { font-size: 15px; margin-bottom: 8px; }
+
+/* ---------- day ---------- */
+.dayhead { padding-bottom: 18px; }
+.dayhead .eyebrow { color: var(--accent); }
+.dayhead h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; font-stretch: 110%; letter-spacing: -.015em; margin: 8px 0 12px; }
+.goals { margin: 0; padding-left: 20px; color: var(--muted); }
+.goals li { margin: 2px 0; }
+.steps-nav { display: flex; gap: 0; border-bottom: 1px solid var(--line); margin: 18px 0 26px; position: sticky; top: calc(53px + env(safe-area-inset-top, 0px)); background: var(--bg); z-index: 5; overflow-x: auto; }
+.steps-nav button { border: 0; background: none; padding: 12px 16px 11px; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--muted); font-weight: 500; }
+.steps-nav button b { font: 600 11px var(--f-mono); width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; background: var(--bg2); color: var(--muted); }
+.steps-nav button.on { color: var(--ink); border-bottom-color: var(--accent); }
+.steps-nav button.on b { background: var(--accent); color: var(--surface); }
+.steps-nav button.done b { background: var(--ok-soft); color: var(--ok); }
+.seg { padding: 4px 0 30px; }
+.seg + .seg { border-top: 1px solid var(--line); padding-top: 26px; }
+.seg h2 { font-size: 21px; font-weight: 700; font-stretch: 104%; margin-bottom: 10px; display: flex; gap: 12px; align-items: baseline; }
+.seg h2 .n { font: 600 12px var(--f-mono); color: var(--muted); }
+.prose { max-width: 68ch; }
+.prose p { margin: 0 0 12px; }
+.prose ul, .prose ol { margin: 0 0 12px; padding-left: 22px; }
+.prose li { margin: 3px 0; }
+.prose ol.steps { list-style: none; padding: 0; counter-reset: s; display: grid; gap: 4px; }
+.prose ol.steps li { counter-increment: s; position: relative; padding-left: 28px; }
+.prose ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 0; font: 600 12px/2 var(--f-mono); color: var(--accent); }
+table.mini { border-collapse: collapse; margin: 6px 0 14px; font-size: 14px; display: block; overflow-x: auto; max-width: 100%; }
+table.mini th, table.mini td { border: 1px solid var(--line); padding: 5px 10px; text-align: left; vertical-align: top; }
+table.mini th { background: var(--bg2); font-weight: 600; font-size: 13px; }
+table.mini td { background: var(--surface); }
+.callout { border: 1px solid var(--line); background: var(--surface); padding: 12px 14px; border-radius: var(--radius); margin: 8px 0 14px; font-size: 14.5px; }
+.callout.warn { border-color: var(--hl); background: var(--hl-soft); }
+pre.code { background: var(--code-bg); padding: 12px 14px; border-radius: var(--radius); overflow-x: auto; font-size: 13.5px; line-height: 1.55; margin: 6px 0 14px; }
+figure.diagram { margin: 10px 0 16px; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow-x: auto; color: var(--ink); }
+figure.diagram svg { max-width: 100%; height: auto; display: block; margin: 0 auto; font-family: var(--f-mono); }
+figure.diagram figcaption { font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+/* editor */
+.console { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); margin: 12px 0 6px; overflow: hidden; }
+.ed { position: relative; display: grid; background: var(--code-bg); }
+.ed > * { grid-area: 1 / 1; margin: 0; padding: 12px 14px; font: 13.5px/1.6 var(--f-mono); white-space: pre-wrap; word-break: break-word; tab-size: 2; border: 0; min-width: 0; }
+.ed pre { pointer-events: none; color: var(--ink); }
+.ed textarea { resize: none; background: transparent; color: transparent; caret-color: var(--ink); overflow: hidden; outline: none; min-height: 3.4em; }
+.ed textarea::selection { background: var(--accent-soft); color: transparent; }
+.ed:focus-within { box-shadow: inset 0 0 0 2px var(--accent); }
+.tk-kw { color: var(--kw); font-weight: 600; }
+.tk-str { color: var(--str); }
+.tk-num { color: var(--num); }
+.tk-cmt { color: var(--cmt); font-style: italic; }
+.tk-fn { color: var(--ink); font-weight: 500; text-decoration: underline dotted var(--line); text-underline-offset: 3px; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border-top: 1px solid var(--line); }
+.toolbar .hint-k { margin-left: auto; font: 500 11.5px var(--f-mono); color: var(--muted); }
+.out { border-top: 1px solid var(--line); }
+.out .meta { font: 500 12px var(--f-mono); color: var(--muted); padding: 6px 12px; display: flex; gap: 12px; flex-wrap: wrap; }
+.grid-wrap { overflow: auto; max-height: 360px; }
+table.grid { border-collapse: collapse; font: 13px/1.45 var(--f-mono); width: max-content; min-width: 100%; }
+table.grid th { position: sticky; top: 0; background: var(--bg2); text-align: left; font-weight: 600; padding: 5px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.grid td { padding: 4px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; max-width: 420px; overflow: hidden; text-overflow: ellipsis; }
+table.grid td.n { text-align: right; font-variant-numeric: tabular-nums; }
+table.grid td.null { color: var(--muted); font-style: italic; }
+table.grid tr:last-child td { border-bottom: 0; }
+.err { color: var(--bad); background: var(--bad-soft); padding: 10px 12px; font: 13px/1.5 var(--f-mono); white-space: pre-wrap; }
+.note { font-size: 13.5px; color: var(--muted); margin: 4px 0 0; }
+
+/* predict */
+.predict { border: 1px solid var(--hl); border-radius: var(--radius); background: var(--surface); margin: 14px 0 6px; overflow: hidden; }
+.predict .ph { background: var(--hl-soft); color: var(--hl); font: 600 11.5px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; padding: 7px 12px; }
+.predict .pb { padding: 12px 14px; }
+.predict .q { font-weight: 600; margin-bottom: 10px; }
+.opts { display: grid; gap: 6px; }
+.opt { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); padding: 8px 12px; cursor: pointer; display: grid; grid-template-columns: 22px minmax(0,1fr); gap: 6px; line-height: 1.45; }
+.opt:hover:not([disabled]) { border-color: var(--accent); }
+.opt b { font: 600 12px/1.6 var(--f-mono); color: var(--muted); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt[disabled] { cursor: default; }
+.why { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--bg2); font-size: 14.5px; border-radius: 0 var(--radius) var(--radius) 0; }
+
+/* exercises */
+.ex { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); margin-bottom: 18px; overflow: hidden; }
+.ex.done { border-color: var(--ok); }
+.ex-h { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--bg2); }
+.ex-h .id { font: 600 12px var(--f-mono); color: var(--muted); }
+.lvl { display: inline-flex; gap: 3px; }
+.lvl i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.lvl i.on { background: var(--hl); }
+.status { margin-left: auto; font: 600 11px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; }
+.status.done { background: var(--ok-soft); color: var(--ok); }
+.status.todo { background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
+.status.try { background: var(--hl-soft); color: var(--hl); }
+.ex-p { padding: 12px 14px 0; }
+.ex .console { margin: 10px 14px 12px; }
+.fb { margin: 0 14px 12px; padding: 10px 12px; border-radius: var(--radius); font-size: 14.5px; }
+.fb.pass { background: var(--ok-soft); color: var(--ok); }
+.fb.fail { background: var(--bad-soft); color: var(--bad); }
+.fb .sub { color: var(--ink); display: block; margin-top: 4px; font-size: 13.5px; }
+.hints { margin: 0 14px 12px; display: grid; gap: 6px; }
+.hints div { font-size: 14px; padding: 7px 10px; background: var(--hl-soft); border-radius: var(--radius); }
+.hints div b { font: 600 11px var(--f-mono); color: var(--hl); margin-right: 6px; }
+.sol { margin: 0 14px 12px; }
+.sol .lab { font: 600 11px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.exp { margin: 0 14px 12px; border: 1px dashed var(--line); border-radius: var(--radius); overflow: hidden; }
+.exp .lab { font: 600 11px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 6px 12px; }
+.listing { display: grid; gap: 10px; }
+.pit { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.pit li { padding: 10px 12px 10px 36px; position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); font-size: 14.5px; }
+.pit li::before { content: "!"; position: absolute; left: 12px; top: 10px; width: 16px; height: 16px; border-radius: 50%; background: var(--bad-soft); color: var(--bad); font: 700 11px/16px var(--f-mono); text-align: center; }
+.next-row { display: flex; justify-content: space-between; gap: 10px; margin-top: 26px; flex-wrap: wrap; }
+
+/* quiz + review */
+.quiz { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 20px; }
+.quiz .qn { font: 600 12px var(--f-mono); color: var(--muted); margin-bottom: 8px; display: flex; justify-content: space-between; gap: 10px; }
+.quiz .qq { font-size: 17px; font-weight: 600; margin-bottom: 14px; line-height: 1.45; }
+.score { display: flex; gap: 22px; align-items: baseline; flex-wrap: wrap; margin-bottom: 18px; }
+.score b { font: 800 40px/1 var(--f-display); font-stretch: 110%; }
+.score span { color: var(--muted); }
+.boxes { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 6px; margin: 10px 0 22px; }
+.boxes div { border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); padding: 8px 10px; }
+.boxes b { display: block; font: 700 22px/1.1 var(--f-display); font-variant-numeric: tabular-nums; }
+.boxes small { font: 500 11px var(--f-mono); color: var(--muted); }
+
+/* teach */
+textarea.plain { width: 100%; min-height: 180px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); font: 15px/1.6 var(--f-body); resize: vertical; }
+.fbk { margin-top: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 16px; }
+.fbk h3 { font-size: 15px; margin: 12px 0 4px; }
+.fbk h3:first-child { margin-top: 0; }
+.fbk ul { margin: 0; padding-left: 20px; }
+.meterbar { height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; margin: 6px 0 12px; }
+.meterbar i { display: block; height: 100%; background: var(--accent); }
+
+/* playground */
+.pg { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 22px; align-items: start; }
+.schema { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); font-size: 13px; }
+.schema details { border-bottom: 1px solid var(--line); }
+.schema details:last-child { border-bottom: 0; }
+.schema summary { padding: 8px 12px; cursor: pointer; font: 600 13px var(--f-mono); display: flex; justify-content: space-between; gap: 8px; }
+.schema summary small { color: var(--muted); font-weight: 500; }
+.schema .cols { padding: 0 12px 10px; }
+.schema .cols p { margin: 0 0 6px; color: var(--muted); font-size: 12.5px; line-height: 1.4; }
+.schema .c { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px; font: 12.5px/1.7 var(--f-mono); }
+.schema .c span:last-child { color: var(--muted); }
+.schema .k { color: var(--hl); font-weight: 600; }
+.schema .fk { color: var(--accent); }
+.history { margin-top: 18px; }
+.history button { display: block; width: 100%; text-align: left; border: 0; border-top: 1px solid var(--line); background: none; padding: 7px 4px; font: 12.5px/1.4 var(--f-mono); color: var(--muted); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history button:hover { color: var(--ink); }
+
+/* tutor drawer */
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100%); background: var(--surface); border-left: 1px solid var(--line); box-shadow: var(--shadow); z-index: 50; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); transform: translateX(105%); transition: transform .22s ease; }
+.drawer.open { transform: none; }
+.drawer header { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.drawer header h3 { font-size: 16px; flex: 1; }
+.drawer .ctx { font: 500 11.5px var(--f-mono); color: var(--muted); padding: 8px 14px; border-bottom: 1px solid var(--line); }
+.msgs { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.msg { max-width: 92%; padding: 9px 12px; border-radius: 10px; font-size: 14.5px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+.msg.me { align-self: flex-end; background: var(--accent-soft); border-bottom-right-radius: 3px; }
+.msg.ai { align-self: flex-start; background: var(--bg2); border-bottom-left-radius: 3px; }
+.msg.ai code, .msg.ai pre { font-size: 12.5px; }
+.msg.ai pre { background: var(--code-bg); padding: 8px 10px; border-radius: 5px; overflow-x: auto; white-space: pre; margin: 6px 0; }
+.msg.sys { align-self: center; color: var(--muted); font-size: 13px; text-align: center; background: none; }
+.composer { border-top: 1px solid var(--line); padding: 10px; display: grid; gap: 8px; }
+.composer textarea { width: 100%; min-height: 64px; max-height: 180px; resize: vertical; border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px; background: var(--bg); color: var(--ink); font: 14.5px/1.5 var(--f-body); }
+.composer .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 14px 10px; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; padding: 3px 10px; font-size: 12.5px; cursor: pointer; }
+.chip:hover { border-color: var(--accent); }
+.seg-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.seg-toggle button { border: 0; background: var(--surface); padding: 3px 10px; cursor: pointer; font-size: 13px; }
+.seg-toggle button.on { background: var(--accent); color: var(--surface); }
+.scrim { position: fixed; inset: 0; background: rgba(10,15,20,.35); z-index: 40; }
+.loading { display: grid; place-items: center; min-height: 50vh; color: var(--muted); font: 500 13px var(--f-mono); text-align: center; gap: 10px; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: var(--radius); font-size: 14px; z-index: 60; box-shadow: var(--shadow); }
+.dialect { font-size: 14.5px; }
+.dialect ul { padding-left: 20px; margin: 0; }
+.dialect li { margin: 4px 0; }
+
+@media (max-width: 980px) {
+  .pg { grid-template-columns: minmax(0, 1fr); }
+  .hero { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 820px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: fixed; top: 0; left: 0; bottom: 0; width: min(300px, 86vw); height: auto; z-index: 45; transform: translateX(-105%); transition: transform .22s ease; background: var(--surface); padding-top: calc(18px + env(safe-area-inset-top, 0px)); }
+  .rail.open { transform: none; }
+  .icon-btn { display: inline-flex; }
+  .meter { display: none; }
+  .brand span { display: none; }
+  .principles, .weeks { grid-template-columns: minmax(0, 1fr); }
+  .routine { flex-direction: column; }
+  .routine div { border-right: 0; border-bottom: 1px solid var(--line); flex: none !important; min-width: 0; }
+  .routine div:last-child { border-bottom: 0; }
+  .boxes { grid-template-columns: repeat(5, minmax(0,1fr)); gap: 4px; }
+  .boxes b { font-size: 17px; }
+  .topbar .btn .lbl-long { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .drawer, .rail { transition: none; } }
+</style>
+
+<div class="topbar">
+  <button class="btn ghost small icon-btn" id="menuBtn" aria-label="Open the day list">☰</button>
+  <a class="brand" href="#home"><b>Relational Lab</b><span>14 DAYS · SQL &amp; DATABASE DESIGN</span></a>
+  <div class="spacer"></div>
+  <div class="meter" title="Overall progress"><div class="track"><div class="fill" id="meterFill" style="width:0%"></div></div><span id="meterTxt">0%</span></div>
+  <a class="btn small" href="#review" id="reviewBtn">Review <span class="badge" id="dueBadge" hidden>0</span></a>
+  <button class="btn small" id="tutorBtn" hidden><span class="lbl-long">Ask the </span>Professor</button>
+</div>
+<div class="layout">
+  <nav class="rail" id="rail" aria-label="Course"></nav>
+  <main id="main"><div class="loading" id="boot">Starting the SQL engine…</div></main>
+</div>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" aria-label="Professor chat">
+  <header>
+    <h3>Ask the professor</h3>
+    <div class="seg-toggle" id="langToggle"><button data-lang="en" class="on">EN</button><button data-lang="ar">عربي</button></div>
+    <button class="btn ghost small" id="closeTutor" aria-label="Close">✕</button>
+  </header>
+  <div class="ctx" id="tutorCtx">Context: home</div>
+  <div class="msgs" id="msgs"><div class="msg sys">Ask about the current lesson, your query, or any database topic. The professor sees what you are working on.</div></div>
+  <div class="chips" id="chips"></div>
+  <div class="composer">
+    <textarea id="tutorInput" placeholder="e.g. Why does my LEFT JOIN behave like an INNER JOIN?"></textarea>
+    <div class="row"><button class="btn primary small" id="sendTutor">Send</button><button class="btn small" id="stopTutor" hidden>Stop</button><button class="btn ghost small" id="clearTutor">New chat</button></div>
+  </div>
+</aside>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.14.2/sql-asm-memory-growth.min.js"></script>
+<script>
+/*__SEED__*/
+/*__DAYS__*/
+</script>
+<script>
+(function () {
+'use strict';
+const HOSTED = !!(window.claude && window.claude.use);
+const DAYS = LAB.days.slice().sort((a, b) => a.n - b.n);
+const byN = n => DAYS.find(d => d.n === n);
+const $ = (s, el) => (el || document).querySelector(s);
+const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad2 = n => String(n).padStart(2, '0');
+const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
+const addDays = (s, k) => { const d = new Date(s + 'T12:00:00'); d.setDate(d.getDate() + k); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
+const daysBetween = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5);
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 2200); }
+
+/* ---------------- progress store ---------------- */
+const LS_KEY = 'relational-lab-progress-v1';
+let P = { v: 1, updatedAt: 0, start: null, active: [], seen: {}, predict: {}, ex: {}, drafts: {}, quiz: {}, cards: {}, teach: {}, tab: {}, lang: 'en' };
+const remote = { db: null, ref: null, ok: false, saving: false, again: false };
+function lsGet() { try { const s = localStorage.getItem(LS_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+function lsSet(v) { try { localStorage.setItem(LS_KEY, JSON.stringify(v)); } catch (e) {} }
+function mergeIn(o) { if (o && typeof o === 'object' && (o.updatedAt || 0) >= (P.updatedAt || 0)) P = Object.assign({}, P, o); }
+mergeIn(lsGet());
+let saveTimer = null;
+function save() {
+  P.updatedAt = Date.now();
+  const t = todayStr(); if (!P.active.includes(t)) P.active.push(t);
+  if (!P.start) P.start = t;
+  lsSet(P);
+  clearTimeout(saveTimer); saveTimer = setTimeout(pushRemote, 1500);
+  updateChrome();
+}
+async function pushRemote() {
+  if (!remote.ok) return;
+  if (remote.saving) { remote.again = true; return; }
+  remote.saving = true;
+  try { await remote.ref.set(JSON.parse(JSON.stringify(P))); }
+  catch (e) { if (e && (e.code === 'invalid_argument' || e.code === 'not_granted' || e.code === 'revoked')) remote.ok = false; }
+  remote.saving = false;
+  if (remote.again) { remote.again = false; pushRemote(); }
+}
+async function connectRemote() {
+  if (!window.claude || !window.claude.use) return;
+  try {
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if (!db || !user) return;
+    const id = await user.id();
+    if (!id) return;
+    remote.db = db; remote.ref = db.doc('data/users/' + id + '/progress');
+    const snap = await remote.ref.get();
+    remote.ok = true;
+    if (snap.exists) {
+      const before = P.updatedAt || 0;
+      mergeIn(snap.data());
+      if ((P.updatedAt || 0) !== before) { lsSet(P); updateChrome(); route(); }
+      else if ((snap.data().updatedAt || 0) < before) pushRemote();
+    } else if (P.updatedAt) pushRemote();
+  } catch (e) { remote.ok = false; }
+}
+
+/* ---------------- SQL engine ---------------- */
+let SQL = null, BASE = null;
+const expectedCache = {};
+async function initEngine() {
+  SQL = await initSqlJs();
+  const db = new SQL.Database();
+  db.exec(LAB.SCHEMA_SQL); db.exec(LAB.buildSeedSQL());
+  BASE = db.export(); db.close();
+}
+function freshDB(setup) { const d = new SQL.Database(BASE); d.exec('PRAGMA foreign_keys = ON;'); if (setup) d.exec(setup); return d; }
+function runAll(db, sql) {
+  const t0 = performance.now();
+  const sets = []; let count = 0, changes = 0;
+  try {
+    for (const st of db.iterateStatements(sql)) {
+      count++;
+      const cols = st.getColumnNames(), rows = [];
+      while (st.step()) rows.push(st.get());
+      if (cols.length) sets.push({ columns: cols, values: rows }); else changes = db.getRowsModified();
+    }
+    return { ok: true, sets, count, changes, ms: performance.now() - t0 };
+  } catch (e) {
+    return { ok: false, error: String(e.message || e), sets, count, ms: performance.now() - t0 };
+  }
+}
+function planText(db, q) { const r = db.exec('EXPLAIN QUERY PLAN ' + q); return r.length ? r[0].values.map(v => v[v.length - 1]).join(' | ') : ''; }
+function norm(v) { if (v === null || v === undefined) return '∅'; if (typeof v === 'number') return String(Math.round(v * 100) / 100); if (v instanceof Uint8Array) return '<blob>'; return String(v); }
+function rowsKey(set) { return set.values.map(r => JSON.stringify(r.map(norm))); }
+function compareSets(exp, got, ordered) {
+  if (!got) return { pass: false, msg: 'Your SQL did not return a result table.', sub: 'The last statement must be a SELECT.' };
+  if (exp.columns.length !== got.columns.length) return { pass: false, msg: 'Expected ' + exp.columns.length + ' column' + (exp.columns.length > 1 ? 's' : '') + ', you returned ' + got.columns.length + '.', sub: 'Check the column list the question asks for, and its order.' };
+  const a = rowsKey(exp), b = rowsKey(got);
+  if (a.length !== b.length) return { pass: false, msg: 'Expected ' + a.length + ' row' + (a.length === 1 ? '' : 's') + ', you returned ' + b.length + '.', sub: b.length > a.length ? 'Too many rows: a filter or a join condition may be missing, or you need DISTINCT / GROUP BY.' : 'Too few rows: a filter may be too strict, or you may need an outer join.' };
+  if (ordered) {
+    if (a.every((r, i) => r === b[i])) return { pass: true };
+    const sa = a.slice().sort(), sb = b.slice().sort();
+    if (sa.every((r, i) => r === sb[i])) return { pass: false, msg: 'Right rows, wrong order.', sub: 'Read the sorting part of the question again (direction and tie-breaker).' };
+  } else {
+    const sa = a.slice().sort(), sb = b.slice().sort();
+    if (sa.every((r, i) => r === sb[i])) return { pass: true };
+  }
+  const setA = new Set(a); const extra = b.find(r => !setA.has(r));
+  return { pass: false, msg: 'Same shape, but some values differ.', sub: extra ? 'For example, this row of yours is not in the expected result: ' + JSON.parse(extra).join(' | ') : 'Compare your values with the expected result.' };
+}
+function expectedFor(ex) {
+  if (expectedCache[ex.id]) return expectedCache[ex.id];
+  const d = freshDB(ex.setup);
+  let set = null;
+  if (ex.kind === 'script') { d.exec(ex.solution); if (ex.check) { const r = runAll(d, ex.check); set = r.sets[r.sets.length - 1]; } }
+  else { const r = runAll(d, ex.solution); set = r.sets[r.sets.length - 1]; }
+  d.close();
+  return (expectedCache[ex.id] = set);
+}
+function grade(ex, sql) {
+  const d = freshDB(ex.setup);
+  const run = runAll(d, sql);
+  let res;
+  if (!run.ok) res = { pass: false, msg: 'The database rejected your SQL.', sub: run.error, run };
+  else if (ex.kind === 'script' && ex.plan) {
+    let plan = '';
+    try { plan = planText(d, ex.plan.query); } catch (e) { plan = 'error: ' + e.message; }
+    const pass = plan.indexOf(ex.plan.mustContain) >= 0;
+    res = { pass, run, plan, msg: pass ? '' : 'The query plan does not use the index yet.', sub: pass ? '' : 'Plan now: ' + plan };
+  } else if (ex.kind === 'script') {
+    const r = runAll(d, ex.check);
+    const got = r.ok ? r.sets[r.sets.length - 1] : null;
+    res = Object.assign(compareSets(expectedFor(ex), got, true), { run, checkSet: got });
+    if (!res.pass) res.msg = 'The database is not in the expected state. ' + res.msg;
+  } else {
+    res = Object.assign(compareSets(expectedFor(ex), run.sets[run.sets.length - 1], !!ex.ordered), { run });
+  }
+  d.close();
+  return res;
+}
+
+/* ---------------- SQL highlighting + editor ---------------- */
+const KW = new Set(('select from where and or not in is null like between group by having order asc desc limit offset as distinct join inner left right full outer cross natural on using union all intersect except exists case when then else end create table primary key foreign references unique check default insert into values update set delete drop alter add column index view trigger begin commit rollback savepoint release transaction with recursive over partition rows range preceding following current row unbounded if replace conflict do nothing returning explain query plan pragma cascade restrict no action collate glob escape filter window before after instead of for each autoincrement integer text real numeric blob varchar date boolean decimal true false to rename temp temporary vacuum analyze grant revoke deferrable initially deferred immediate exclusive abort fail ignore raise strict without rowid row_number rank dense_rank ntile lag lead first_value last_value cast').split(' '));
+function hl(src) {
+  let out = '', i = 0; const s = String(src);
+  while (i < s.length) {
+    const c = s[i], rest = s.slice(i);
+    let m;
+    if (rest.startsWith('--')) { const e = s.indexOf('\n', i); const j = e < 0 ? s.length : e; out += '<span class="tk-cmt">' + esc(s.slice(i, j)) + '</span>'; i = j; continue; }
+    if (rest.startsWith('/*')) { const e = s.indexOf('*/', i + 2); const j = e < 0 ? s.length : e + 2; out += '<span class="tk-cmt">' + esc(s.slice(i, j)) + '</span>'; i = j; continue; }
+    if (c === "'") { let j = i + 1; while (j < s.length) { if (s[j] === "'" && s[j + 1] === "'") { j += 2; continue; } if (s[j] === "'") { j++; break; } j++; } out += '<span class="tk-str">' + esc(s.slice(i, j)) + '</span>'; i = j; continue; }
+    if ((m = /^\d+(\.\d+)?/.exec(rest)) && !/[A-Za-z_]/.test(s[i - 1] || '')) { out += '<span class="tk-num">' + m[0] + '</span>'; i += m[0].length; continue; }
+    if ((m = /^[A-Za-z_][A-Za-z0-9_]*/.exec(rest))) {
+      const w = m[0];
+      if (KW.has(w.toLowerCase())) out += '<span class="tk-kw">' + w + '</span>';
+      else if (s[i + w.length] === '(') out += '<span class="tk-fn">' + w + '</span>';
+      else out += esc(w);
+      i += w.length; continue;
+    }
+    out += esc(c); i++;
+  }
+  return out + '\n';
+}
+const editors = {};
+function editorHTML(key, value, rows) {
+  return '<div class="ed" data-ed="' + esc(key) + '"><pre aria-hidden="true">' + hl(value) + '</pre><textarea class="ed-input" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="SQL editor" id="ed-' + esc(key) + '" rows="' + (rows || 3) + '">' + esc(value) + '</textarea></div>';
+}
+function mountEditors(root, onRun) {
+  $$('.ed', root).forEach(ed => {
+    const key = ed.dataset.ed, ta = $('textarea', ed), pre = $('pre', ed);
+    const fit = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
+    const sync = () => { pre.innerHTML = hl(ta.value); fit(); editors[key] = ta.value; };
+    ta.addEventListener('input', () => { sync(); if (key.startsWith('ex:')) { P.drafts[key.slice(3)] = ta.value; save(); } });
+    ta.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); onRun && onRun(key, ta.value, e.shiftKey); }
+      else if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); const a = ta.selectionStart, b = ta.selectionEnd; ta.value = ta.value.slice(0, a) + '  ' + ta.value.slice(b); ta.selectionStart = ta.selectionEnd = a + 2; sync(); }
+    });
+    requestAnimationFrame(fit);
+  });
+}
+function gridHTML(set, extraMeta) {
+  if (!set) return '';
+  const max = 200, rows = set.values.slice(0, max);
+  let h = '<div class="meta"><span>' + set.values.length + ' row' + (set.values.length === 1 ? '' : 's') + '</span><span>' + set.columns.length + ' column' + (set.columns.length === 1 ? '' : 's') + '</span>' + (extraMeta || '') + (set.values.length > max ? '<span>showing first ' + max + '</span>' : '') + '</div>';
+  h += '<div class="grid-wrap"><table class="grid"><thead><tr>' + set.columns.map(c => '<th>' + esc(c) + '</th>').join('') + '</tr></thead><tbody>';
+  if (!rows.length) h += '<tr><td class="null" colspan="' + set.columns.length + '">no rows</td></tr>';
+  rows.forEach(r => { h += '<tr>' + r.map(v => v === null ? '<td class="null">NULL</td>' : typeof v === 'number' ? '<td class="n">' + esc(Math.round(v * 1e6) / 1e6) + '</td>' : '<td title="' + esc(v) + '">' + esc(v) + '</td>').join('') + '</tr>'; });
+  return h + '</tbody></table></div>';
+}
+function runResultHTML(run) {
+  if (!run) return '';
+  if (!run.ok) return '<div class="err">' + esc(run.error) + '</div>';
+  const ms = '<span>' + run.ms.toFixed(1) + ' ms</span>';
+  if (run.sets.length) return gridHTML(run.sets[run.sets.length - 1], ms + (run.count > 1 ? '<span>' + run.count + ' statements</span>' : ''));
+  return '<div class="meta"><span>Done. ' + run.count + ' statement' + (run.count === 1 ? '' : 's') + ' ran.</span><span>Rows changed by the last one: ' + run.changes + '</span>' + ms + '</div>';
+}
+
+/* ---------------- metrics ---------------- */
+function dayStats(day) {
+  const segs = day.lesson.length;
+  const seen = (P.seen[day.n] || []).length;
+  const exDone = day.exercises.filter(e => P.ex[e.id] && P.ex[e.id].done).length;
+  const qRight = day.quiz.filter(q => P.quiz[q.id] && P.quiz[q.id].first === true).length;
+  const qDone = day.quiz.filter(q => P.quiz[q.id]).length;
+  const teach = P.teach[day.n] ? 1 : 0;
+  const pct = Math.round(100 * (0.2 * Math.min(1, seen / segs) + 0.55 * (exDone / day.exercises.length) + 0.15 * (qDone / day.quiz.length) + 0.1 * teach));
+  return { seen, segs, exDone, exTotal: day.exercises.length, qRight, qDone, qTotal: day.quiz.length, teach, pct };
+}
+function overall() { return Math.round(DAYS.reduce((s, d) => s + dayStats(d).pct, 0) / DAYS.length); }
+function planDay() { if (!P.start) return 1; return Math.max(1, Math.min(14, daysBetween(P.start, todayStr()) + 1)); }
+function nextDay() { const d = DAYS.find(d => dayStats(d).pct < 80); return d ? d.n : 14; }
+function dueCards() { const t = todayStr(); return Object.keys(P.cards).filter(id => P.cards[id].due <= t && quizById(id)); }
+const QIDX = {}; DAYS.forEach(d => d.quiz.forEach(q => { QIDX[q.id] = { q, day: d }; }));
+function quizById(id) { return QIDX[id]; }
+function ringSVG(pct) {
+  const r = 7, c = 2 * Math.PI * r, f = c * pct / 100;
+  return '<svg class="ring" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="' + r + '" fill="none" stroke="var(--line)" stroke-width="2.4"/>' + (pct > 0 ? '<circle cx="9" cy="9" r="' + r + '" fill="none" stroke="' + (pct >= 80 ? 'var(--ok)' : 'var(--accent)') + '" stroke-width="2.4" stroke-dasharray="' + f.toFixed(2) + ' ' + c.toFixed(2) + '" transform="rotate(-90 9 9)" stroke-linecap="round"/>' : '') + '</svg>';
+}
+
+/* ---------------- chrome ---------------- */
+let current = { view: 'home', day: null };
+function renderRail() {
+  const link = (href, num, lbl, small, right, active) => '<a class="navlink' + (active ? ' active' : '') + '" href="#' + href + '"><span class="num">' + num + '</span><span class="lbl">' + lbl + (small ? '<small>' + small + '</small>' : '') + '</span>' + (right || '') + '</a>';
+  let h = '<h4>Start here</h4>' + link('home', '◎', 'Plan &amp; method', '', '', current.view === 'home');
+  [[1, 'Week 1 · Querying'], [2, 'Week 2 · Design &amp; internals']].forEach(([w, title]) => {
+    h += '<h4>' + title + '</h4>';
+    DAYS.filter(d => d.week === w).forEach(d => {
+      const st = dayStats(d);
+      h += link('day-' + d.n, pad2(d.n), esc(d.title), esc(d.tag), ringSVG(st.pct), current.view === 'day' && current.day === d.n);
+    });
+  });
+  const due = dueCards().length;
+  h += '<h4>Tools</h4>' + link('playground', '>_', 'SQL playground', 'free practice + schema', '', current.view === 'playground') + link('review', '↻', 'Spaced review', due ? due + ' cards due' : 'nothing due', due ? '<span class="badge">' + due + '</span>' : '', current.view === 'review');
+  $('#rail').innerHTML = h;
+}
+function updateChrome() {
+  const o = overall();
+  $('#meterFill').style.width = o + '%'; $('#meterTxt').textContent = o + '% of 14 days';
+  const due = dueCards().length; const b = $('#dueBadge'); b.hidden = !due; b.textContent = due;
+}
+function closeRail() { $('#rail').classList.remove('open'); if (!$('#drawer').classList.contains('open')) $('#scrim').hidden = true; }
+
+/* ---------------- views: home ---------------- */
+function viewHome() {
+  const nd = nextDay(), pd = planDay();
+  const started = Object.keys(P.ex).length || Object.keys(P.seen).length;
+  let map = '';
+  DAYS.forEach(d => { const st = dayStats(d); map += '<a href="#day-' + d.n + '" class="' + (d.n === nd ? 'today' : '') + '" title="Day ' + d.n + ': ' + esc(d.title) + ' (' + st.pct + '%)"><span class="f" style="height:' + st.pct + '%"></span><span class="d">' + pad2(d.n) + '</span><span class="t">' + esc(d.tag) + '</span></a>'; });
+  const routine = [
+    ['10 min', 'Review', 'Spaced recall cards from earlier days'],
+    ['40 min', 'Learn', 'Short segments. Predict, then run the example'],
+    ['70 min', 'Practice', 'Graded SQL exercises, easy to hard'],
+    ['15 min', 'Recall', 'Closed-book quiz on today'],
+    ['15 min', 'Explain', 'Teach the idea back in your own words']
+  ];
+  const principles = [
+    ['Retrieval practice', 'Pulling an answer out of memory makes it stronger than reading it again. Every day ends with a closed-book quiz, and old questions come back in Review.', 'Recall tab + Review', 'Roediger & Karpicke, 2006'],
+    ['Spacing', 'Study spread over days beats one long session. Cards you miss come back tomorrow; cards you know come back after 3, 7, then 14 days.', 'Spaced review (Leitner boxes)', 'Cepeda et al., 2006'],
+    ['Predict before you see', 'Guessing first, even wrongly, makes the correct answer stick. Lessons stop and ask you to commit to a prediction.', 'Predict blocks in Learn', 'Kornell, Hays & Bjork, 2009'],
+    ['Worked examples, then fading', 'Beginners learn faster from studying solved examples, then solving with less and less help. Hints come one step at a time; the solution unlocks only after real attempts.', 'Hint ladder in Practice', 'Sweller; Renkl & Atkinson, 2003'],
+    ['Interleaving', 'Mixing problem types forces you to choose the method, which is what exams test. Days 7 and 14 mix everything.', 'Mixed exams', 'Rohrer & Taylor, 2007'],
+    ['Self-explanation and fast feedback', 'Explaining in your own words reveals gaps. Feedback that says what is wrong and what to try next is one of the strongest effects in education research.', 'Explain tab + instant grading', 'Chi et al., 1994; Hattie & Timperley, 2007']
+  ];
+  let weeks = '';
+  [[1, 'Week 1 · Querying with SQL'], [2, 'Week 2 · Design, theory and internals']].forEach(([w, t]) => {
+    weeks += '<div><h3>' + t + '</h3><ol>' + DAYS.filter(d => d.week === w).map(d => '<li><span>DAY ' + pad2(d.n) + '</span><a href="#day-' + d.n + '">' + esc(d.title) + '</a></li>').join('') + '</ol></div>';
+  });
+  $('#main').innerHTML = '<div class="col">' +
+    '<section class="hero"><div><div class="eyebrow">Your personal database course</div><h1>Fourteen days to <em>fluent SQL</em> and solid database design.</h1>' +
+    '<p>A real SQL engine runs in this page. You read a short idea, predict what happens, run it, then solve graded problems on a university database.' + (HOSTED ? ' A professor is one click away when you get stuck.' : ' Hints and model solutions are there when you get stuck.') + '</p>' +
+    '<div class="actions"><a class="btn primary" href="#day-' + nd + '">' + (started ? 'Continue with Day ' + nd : 'Start Day 1') + '</a><a class="btn" href="#playground">Open the playground</a>' + (dueCards().length ? '<a class="btn" href="#review">Review ' + dueCards().length + ' cards</a>' : '') + '</div></div>' +
+    '<div><div class="map">' + map + '</div><div class="map-caption"><span>Fill = progress per day</span><span>' + (P.start ? 'Calendar day ' + pd + ' of 14' : 'Plan starts when you do') + '</span></div></div></section>' +
+    '<section class="section"><h2>The daily routine</h2><p class="lead">About 2.5 hours a day. Do the blocks in this order: the first and last blocks are where most of the remembering happens.</p><div class="routine">' +
+    routine.map(r => '<div style="flex:' + parseInt(r[0]) + ' 1 0"><b>' + r[0] + '</b><span>' + r[1] + '</span><small>' + r[2] + '</small></div>').join('') + '</div></section>' +
+    '<section class="section"><h2>Why the lab is built this way</h2><p class="lead">Each feature follows a learning method with strong evidence behind it. None of them feel easy. That effort is the point: it is what makes knowledge last past the exam.</p><div class="principles">' +
+    principles.map(p => '<div class="principle"><h3>' + p[0] + '</h3><p>' + p[1] + '</p><span class="src"><span class="feat">In the lab: ' + p[2] + '</span> · ' + p[3] + '</span></div>').join('') + '</div></section>' +
+    '<section class="section"><h2>The syllabus</h2><p class="lead">Week 1 makes you fast at writing queries. Week 2 covers what university exams and job interviews ask about design and internals.</p><div class="weeks">' + weeks + '</div></section>' +
+    '<section class="section"><h2>Rules that make it work</h2><div class="prose"><ul>' +
+    '<li><strong>Type every query yourself.</strong> Do not paste. Typing is how the syntax moves from the page into your hands.</li>' +
+    '<li><strong>Struggle for five minutes before taking a hint.</strong> Then take one hint at a time.</li>' +
+    '<li><strong>When you pass, read the model solution anyway.</strong> There is often a shorter or safer way.</li>' +
+    '<li><strong>Do not skip Review.</strong> It takes ten minutes and protects everything you learned before.</li>' +
+    (HOSTED ? '<li><strong>Use the professor for "why" questions</strong>, not to get answers. Ask it to quiz you, or to explain your error message.</li>' : '') +
+    '<li>Shortcuts: <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> runs a query. In exercises, <kbd>Shift</kbd> + <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> checks it.</li>' +
+    '</ul></div></section></div>';
+}
+
+/* ---------------- views: day ---------------- */
+const TABS = [['learn', 'Learn'], ['practice', 'Practice'], ['recall', 'Recall'], ['explain', 'Explain']];
+const lessonRuns = {};
+const exState = {};
+function viewDay(n, tabOverride) {
+  const day = byN(n); if (!day) return viewHome();
+  const tab = tabOverride || P.tab[n] || 'learn';
+  if (P.tab[n] !== tab) { P.tab[n] = tab; save(); }
+  const st = dayStats(day);
+  const doneFlags = { learn: st.seen >= st.segs, practice: st.exDone === st.exTotal, recall: st.qDone === st.qTotal, explain: !!st.teach };
+  let h = '<div class="col"><header class="dayhead"><div class="eyebrow">Day ' + pad2(day.n) + ' · ' + esc(day.tag) + ' · about ' + (day.hours || 2.5) + ' h</div><h1>' + esc(day.title) + '</h1>' +
+    '<ul class="goals">' + day.goals.map(g => '<li>' + g + '</li>').join('') + '</ul></header>' +
+    '<nav class="steps-nav" role="tablist">' + TABS.map(([k, l], i) => '<button role="tab" data-tab="' + k + '" class="' + (k === tab ? 'on ' : '') + (doneFlags[k] ? 'done' : '') + '"><b>' + (doneFlags[k] ? '✓' : i + 1) + '</b>' + l + (k === 'practice' ? ' <span class="eyebrow">' + st.exDone + '/' + st.exTotal + '</span>' : '') + '</button>').join('') + '</nav><div id="tabBody"></div></div>';
+  $('#main').innerHTML = h;
+  $$('.steps-nav button').forEach(b => b.onclick = () => { viewDay(n, b.dataset.tab); window.scrollTo({ top: 0 }); });
+  const body = $('#tabBody');
+  ({ learn: renderLearn, practice: renderPractice, recall: renderRecall, explain: renderExplain })[tab](day, body);
+  setTutorContext();
+}
+function markSeen(day, i) {
+  const a = P.seen[day.n] || (P.seen[day.n] = []);
+  if (!a.includes(i)) { a.push(i); save(); renderRail(); }
+}
+function predictHTML(key, p) {
+  const ans = P.predict[key];
+  let h = '<div class="predict" data-pk="' + esc(key) + '"><div class="ph">Predict first</div><div class="pb"><div class="q">' + p.q + '</div>';
+  if (p.sql) h += '<pre class="code">' + hl(p.sql) + '</pre>';
+  h += '<div class="opts">' + p.options.map((o, i) => {
+    const cls = ans === undefined ? '' : i === p.answer ? ' right' : i === ans ? ' wrong' : '';
+    return '<button class="opt' + cls + '" data-opt="' + i + '"' + (ans !== undefined ? ' disabled' : '') + '><b>' + 'ABCDEF'[i] + '</b><span>' + o + '</span></button>';
+  }).join('') + '</div>';
+  if (ans !== undefined) {
+    h += '<div class="why"><strong>' + (ans === p.answer ? 'Correct.' : 'Not quite.') + '</strong> ' + p.why + '</div>';
+    if (p.sql) h += '<div style="margin-top:10px"><button class="btn small" data-runpredict="' + esc(key) + '">Run it and see</button></div><div class="console" data-pout="' + esc(key) + '" hidden></div>';
+  }
+  return h + '</div></div>';
+}
+function renderLearn(day, body) {
+  let h = '';
+  day.lesson.forEach((s, i) => {
+    const key = 'L' + day.n + '-' + i;
+    h += '<section class="seg" data-seg="' + i + '"><h2><span class="n">' + pad2(i + 1) + '</span>' + esc(s.h) + '</h2><div class="prose">' + (s.html || '') + '</div>';
+    if (s.sql) {
+      const v = editors[key] !== undefined ? editors[key] : s.sql;
+      h += '<div class="console">' + editorHTML(key, v) + '<div class="toolbar"><button class="btn primary small" data-run="' + key + '">Run</button><button class="btn ghost small" data-reset="' + key + '">Reset</button><span class="hint-k">Ctrl/⌘ + Enter</span></div><div class="out" data-out="' + key + '"' + (lessonRuns[key] ? '' : ' hidden') + '>' + runResultHTML(lessonRuns[key]) + '</div></div>';
+      if (s.note) h += '<p class="note">' + s.note + '</p>';
+    }
+    if (s.predict) h += predictHTML(key, s.predict);
+    h += '</section>';
+  });
+  if (day.pitfalls && day.pitfalls.length) h += '<section class="seg"><h2><span class="n">!!</span>Common mistakes</h2><ul class="pit">' + day.pitfalls.map(p => '<li>' + p + '</li>').join('') + '</ul></section>';
+  if (day.dialect) h += '<section class="seg"><h2><span class="n">≠</span>Other databases</h2><div class="prose dialect">' + day.dialect + '</div><p class="note">Your course may use MySQL, PostgreSQL, SQL Server or Oracle. The ideas are the same; these are the spelling differences.</p></section>';
+  h += '<div class="next-row"><span class="note">Finished reading? Practice is where the learning happens.</span><button class="btn primary" data-goto="practice">Go to practice →</button></div>';
+  body.innerHTML = h;
+  const runLesson = (key) => {
+    const i = Number(key.split('-').pop());
+    const sql = editors[key] !== undefined ? editors[key] : day.lesson[i].sql;
+    const d = freshDB(); const r = runAll(d, sql); d.close();
+    lessonRuns[key] = r;
+    const out = $('[data-out="' + key + '"]', body); out.innerHTML = runResultHTML(r); out.hidden = false;
+    markSeen(day, i);
+    lastRun = { sql, error: r.ok ? null : r.error, where: 'lesson example' };
+  };
+  mountEditors(body, (key) => runLesson(key));
+  body.onclick = e => {
+    const t = e.target.closest('button'); if (!t) return;
+    if (t.dataset.run) runLesson(t.dataset.run);
+    else if (t.dataset.reset) { const key = t.dataset.reset; delete editors[key]; delete lessonRuns[key]; renderLearn(day, body); }
+    else if (t.dataset.opt !== undefined) {
+      const box = t.closest('.predict'); const key = box.dataset.pk; const i = Number(key.split('-').pop());
+      P.predict[key] = Number(t.dataset.opt); save(); markSeen(day, i);
+      box.outerHTML = predictHTML(key, day.lesson[i].predict);
+    } else if (t.dataset.runpredict) {
+      const key = t.dataset.runpredict; const i = Number(key.split('-').pop());
+      const d = freshDB(); const r = runAll(d, day.lesson[i].predict.sql); d.close();
+      const out = $('[data-pout="' + key + '"]', body); out.innerHTML = '<div class="out">' + runResultHTML(r) + '</div>'; out.hidden = false;
+    } else if (t.dataset.goto) { viewDay(day.n, t.dataset.goto); window.scrollTo({ top: 0 }); }
+  };
+  // segments without runnable parts count as seen when scrolled into view
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(ents => ents.forEach(en => { if (en.isIntersecting) { const i = Number(en.target.dataset.seg); const s = day.lesson[i]; if (!s.sql && !s.predict) markSeen(day, i); io.unobserve(en.target); } }), { threshold: 0.6 });
+    $$('.seg[data-seg]', body).forEach(s => io.observe(s));
+  }
+}
+function exHTML(ex, idx) {
+  const rec = P.ex[ex.id] || {};
+  const s = exState[ex.id] || {};
+  const status = rec.done ? '<span class="status done">Solved</span>' : rec.attempts ? '<span class="status try">' + rec.attempts + ' tr' + (rec.attempts === 1 ? 'y' : 'ies') + '</span>' : '<span class="status todo">New</span>';
+  const draft = P.drafts[ex.id] !== undefined ? P.drafts[ex.id] : (ex.kind === 'script' ? '-- write your SQL here\n' : 'SELECT ');
+  const hintsShown = rec.hints || 0;
+  const canSolve = rec.done || (rec.attempts || 0) >= 2 || hintsShown >= ex.hints.length;
+  let h = '<article class="ex' + (rec.done ? ' done' : '') + '" id="ex-' + esc(ex.id) + '"><div class="ex-h"><span class="id">' + pad2(idx + 1) + '</span><span class="lvl" title="Level ' + ex.level + '">' + [1, 2, 3].map(l => '<i class="' + (l <= ex.level ? 'on' : '') + '"></i>').join('') + '</span>' + (ex.kind === 'script' ? '<span class="eyebrow">' + (ex.plan ? 'index task' : 'build task') + '</span>' : '') + status + '</div>';
+  h += '<div class="ex-p prose">' + ex.prompt + (ex.ordered ? '<p class="note">Row order is checked.</p>' : '') + (ex.setup ? '<details><summary class="note" style="cursor:pointer">Setup SQL that runs before yours</summary><pre class="code">' + hl(ex.setup) + '</pre></details>' : '') + '</div>';
+  h += '<div class="console">' + editorHTML('ex:' + ex.id, draft, 4) + '<div class="toolbar"><button class="btn small" data-exrun="' + ex.id + '">Run</button><button class="btn primary small" data-excheck="' + ex.id + '">Check answer</button><button class="btn ghost small" data-exhint="' + ex.id + '"' + (hintsShown >= ex.hints.length ? ' disabled' : '') + '>Hint ' + Math.min(hintsShown + 1, ex.hints.length) + '/' + ex.hints.length + '</button>' + (ex.kind !== 'script' ? '<button class="btn ghost small" data-exexp="' + ex.id + '">' + (s.showExp ? 'Hide' : 'Show') + ' expected result</button>' : '') + '<button class="btn ghost small" data-exsol="' + ex.id + '"' + (canSolve ? '' : ' disabled title="Unlocks after 2 checks or all hints"') + '>' + (s.showSol ? 'Hide' : 'Model') + ' solution</button><button class="btn ghost small tutor-only" data-exask="' + ex.id + '" hidden>Ask the professor</button></div>' +
+    '<div class="out"' + (s.run ? '' : ' hidden') + '>' + (s.run ? runResultHTML(s.run) : '') + (s.plan ? '<div class="meta"><span>Plan: ' + esc(s.plan) + '</span></div>' : '') + '</div></div>';
+  if (s.fb) h += '<div class="fb ' + (s.fb.pass ? 'pass' : 'fail') + '">' + (s.fb.pass ? '<strong>Correct.</strong> ' + (rec.usedSolution ? 'Next time try it without the solution.' : 'Read the model solution and compare it with yours.') : '<strong>' + esc(s.fb.msg) + '</strong>' + (s.fb.sub ? '<span class="sub">' + esc(s.fb.sub) + '</span>' : '')) + '</div>';
+  if (hintsShown) h += '<div class="hints">' + ex.hints.slice(0, hintsShown).map((t, i) => '<div><b>HINT ' + (i + 1) + '</b>' + t + '</div>').join('') + '</div>';
+  if (s.showExp && ex.kind !== 'script') { let set = null; try { set = expectedFor(ex); } catch (e) {} h += '<div class="exp"><div class="lab">Expected result (your target)</div>' + gridHTML(set) + '</div>'; }
+  if (s.showSol) h += '<div class="sol"><div class="lab">Model solution</div><pre class="code">' + hl(ex.solution) + '</pre>' + (ex.check ? '<div class="lab">How it is checked</div><pre class="code">' + hl(ex.check) + '</pre>' : '') + (ex.plan ? '<div class="lab">Query whose plan is checked</div><pre class="code">' + hl(ex.plan.query) + '</pre><p class="note">The plan must contain: ' + esc(ex.plan.mustContain) + '</p>' : '') + '</div>';
+  return h + '</article>';
+}
+function renderPractice(day, body) {
+  const st = dayStats(day);
+  let h = '<p class="prose note" style="margin-top:0">Solve in order: levels go from ● to ●●●. Each exercise runs on a fresh copy of the database, so you cannot break anything. Model solutions unlock after two checks or after all hints.</p><div class="listing">';
+  day.exercises.forEach((ex, i) => { h += exHTML(ex, i); });
+  h += '</div><div class="next-row"><span class="note">' + st.exDone + ' of ' + st.exTotal + ' solved.</span><button class="btn primary" data-goto="recall">Go to recall quiz →</button></div>';
+  body.innerHTML = h;
+  const exById = id => day.exercises.find(e => e.id === id);
+  const rerender = (ex) => {
+    const el = $('#ex-' + CSS.escape(ex.id), body);
+    const idx = day.exercises.indexOf(ex);
+    const tmp = document.createElement('div'); tmp.innerHTML = exHTML(ex, idx);
+    el.replaceWith(tmp.firstChild);
+    mountEditors($('#ex-' + CSS.escape(ex.id), body), onKey);
+    tutorButtons();
+  };
+  const rec = id => P.ex[id] || (P.ex[id] = { attempts: 0, hints: 0 });
+  const getSQL = ex => editors['ex:' + ex.id] !== undefined ? editors['ex:' + ex.id] : (P.drafts[ex.id] !== undefined ? P.drafts[ex.id] : '');
+  const doRun = ex => {
+    const s = exState[ex.id] || (exState[ex.id] = {});
+    const sql = getSQL(ex);
+    const d = freshDB(ex.setup); s.run = runAll(d, sql);
+    s.plan = (ex.plan && s.run.ok) ? (() => { try { return planText(d, ex.plan.query); } catch (e) { return ''; } })() : null;
+    d.close();
+    lastRun = { sql, error: s.run.ok ? null : s.run.error, where: 'exercise ' + ex.id, ex };
+    rerender(ex);
+  };
+  const doCheck = ex => {
+    const s = exState[ex.id] || (exState[ex.id] = {});
+    const sql = getSQL(ex);
+    if (!sql.trim() || /^\s*(--[^\n]*\n?\s*)*(SELECT\s*)?$/i.test(sql)) { s.fb = { pass: false, msg: 'Write a query first.' }; rerender(ex); return; }
+    const r = grade(ex, sql);
+    const R = rec(ex.id);
+    R.attempts = (R.attempts || 0) + 1;
+    if (r.pass && !R.done) { R.done = true; R.doneAt = todayStr(); }
+    s.fb = r; s.run = r.run; s.plan = r.plan || null;
+    save(); renderRail();
+    lastRun = { sql, error: r.pass ? null : (r.msg + ' ' + (r.sub || '')), where: 'exercise ' + ex.id, ex };
+    rerender(ex);
+    if (r.pass) { const done = dayStats(day).exDone; $$('.steps-nav .eyebrow').forEach(e => { e.textContent = done + '/' + day.exercises.length; }); }
+  };
+  const onKey = (key, val, shift) => { const ex = exById(key.slice(3)); if (ex) (shift ? doCheck : doRun)(ex); };
+  mountEditors(body, onKey);
+  body.onclick = e => {
+    const t = e.target.closest('button'); if (!t) return;
+    if (t.dataset.exrun) doRun(exById(t.dataset.exrun));
+    else if (t.dataset.excheck) doCheck(exById(t.dataset.excheck));
+    else if (t.dataset.exhint) { const ex = exById(t.dataset.exhint); const R = rec(ex.id); R.hints = Math.min(ex.hints.length, (R.hints || 0) + 1); save(); rerender(ex); }
+    else if (t.dataset.exexp) { const ex = exById(t.dataset.exexp); const s = exState[ex.id] || (exState[ex.id] = {}); s.showExp = !s.showExp; rerender(ex); }
+    else if (t.dataset.exsol) { const ex = exById(t.dataset.exsol); const s = exState[ex.id] || (exState[ex.id] = {}); s.showSol = !s.showSol; if (s.showSol && !rec(ex.id).done) { rec(ex.id).usedSolution = true; save(); } rerender(ex); }
+    else if (t.dataset.exask) { const ex = exById(t.dataset.exask); const s = exState[ex.id] || {}; lastRun = { sql: getSQL(ex), error: s.fb && !s.fb.pass ? s.fb.msg + ' ' + (s.fb.sub || '') : (s.run && !s.run.ok ? s.run.error : null), where: 'exercise ' + ex.id, ex }; openTutor(); askTutor(s.fb && !s.fb.pass ? 'My answer to this exercise is wrong. Give me one hint about what to look at, without writing the full solution.' : 'Can you give me a hint for this exercise without writing the full solution?'); }
+    else if (t.dataset.goto) { viewDay(day.n, t.dataset.goto); window.scrollTo({ top: 0 }); }
+  };
+  tutorButtons();
+}
+let quizPos = {};
+function renderRecall(day, body) {
+  const qs = day.quiz;
+  let pos = quizPos[day.n] || 0;
+  const answered = qs.filter(q => P.quiz[q.id]).length;
+  if (pos >= qs.length) {
+    const right = qs.filter(q => P.quiz[q.id] && P.quiz[q.id].first === true).length;
+    body.innerHTML = '<div class="score"><b>' + right + '/' + qs.length + '</b><span>correct on the first try. ' + (right / qs.length >= 0.8 ? 'Strong recall.' : 'Missed questions are now in your review deck and will come back tomorrow.') + '</span></div>' +
+      '<div class="listing">' + qs.map((q, i) => { const a = P.quiz[q.id]; return '<div class="quiz"><div class="qn"><span>Q' + (i + 1) + '</span><span>' + (a && a.first ? '✓ first try' : '✕ missed') + '</span></div><div class="qq">' + q.q + '</div><div class="why"><strong>Answer: ' + q.options[q.answer] + '.</strong> ' + q.why + '</div></div>'; }).join('') + '</div>' +
+      '<div class="next-row"><button class="btn" data-retake="1">Retake (does not change your first score)</button><button class="btn primary" data-goto="explain">Go to explain →</button></div>';
+  } else {
+    const q = qs[pos]; const a = exState['quiz:' + q.id];
+    let h = '<p class="note" style="margin-top:0">Answer from memory. Do not scroll back to the lesson. Every question you answer joins your spaced-review deck.</p><div class="quiz"><div class="qn"><span>Question ' + (pos + 1) + ' of ' + qs.length + '</span><span>' + answered + ' answered</span></div><div class="qq">' + q.q + '</div><div class="opts">' +
+      q.options.map((o, i) => { const cls = a === undefined ? '' : i === q.answer ? ' right' : i === a ? ' wrong' : ''; return '<button class="opt' + cls + '" data-qopt="' + i + '"' + (a !== undefined ? ' disabled' : '') + '><b>' + 'ABCDEF'[i] + '</b><span>' + o + '</span></button>'; }).join('') + '</div>';
+    if (a !== undefined) h += '<div class="why"><strong>' + (a === q.answer ? 'Correct.' : 'Not quite.') + '</strong> ' + q.why + '</div><div class="next-row" style="margin-top:14px"><span></span><button class="btn primary" data-qnext="1">' + (pos + 1 < qs.length ? 'Next question →' : 'See results') + '</button></div>';
+    body.innerHTML = h + '</div>';
+  }
+  body.onclick = e => {
+    const t = e.target.closest('button'); if (!t) return;
+    if (t.dataset.qopt !== undefined) {
+      const q = qs[pos]; const i = Number(t.dataset.qopt); exState['quiz:' + q.id] = i;
+      const ok = i === q.answer;
+      if (!P.quiz[q.id]) P.quiz[q.id] = { first: ok, at: todayStr() };
+      if (!P.cards[q.id]) P.cards[q.id] = { box: ok ? 2 : 1, due: addDays(todayStr(), ok ? 3 : 1) };
+      save(); renderRail(); renderRecall(day, body);
+    } else if (t.dataset.qnext) { quizPos[day.n] = pos + 1; renderRecall(day, body); }
+    else if (t.dataset.retake) { quizPos[day.n] = 0; qs.forEach(q => delete exState['quiz:' + q.id]); renderRecall(day, body); }
+    else if (t.dataset.goto) { viewDay(day.n, t.dataset.goto); window.scrollTo({ top: 0 }); }
+  };
+}
+function renderExplain(day, body) {
+  const saved = P.teach[day.n] || {};
+  const draft = saved.text || '';
+  let h = '<div class="prose"><p>Explaining an idea in your own words is the fastest way to find what you do not understand yet. Write as if you are teaching a classmate who missed the lecture. No notes.</p>' +
+    '<div class="callout"><strong>Your prompt.</strong> ' + esc(day.teach) + '</div></div>' +
+    '<textarea class="plain" id="teachText" placeholder="Write 5–10 sentences. Use an example from the university database.">' + esc(draft) + '</textarea>' +
+    '<div class="next-row" style="margin-top:10px"><span class="note" id="teachNote">' + (saved.score !== undefined ? 'Last score: ' + saved.score + '/10' : '') + '</span><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="teachSelf">Check against the key points</button><button class="btn primary" id="teachAI" hidden>Get feedback from the professor</button></span></div><div id="teachOut">' + (saved.fb ? teachFbHTML(saved.fb) : '') + '</div>' +
+    (day.n < 14 ? '<div class="next-row"><span class="note">Day ' + day.n + ' finished? Tomorrow starts with Review.</span><a class="btn primary" href="#day-' + (day.n + 1) + '">Day ' + (day.n + 1) + ' →</a></div>' : '<div class="next-row"><span class="note">You reached the end of the course.</span><a class="btn primary" href="#review">Keep reviewing →</a></div>');
+  body.innerHTML = h;
+  const ta = $('#teachText');
+  ta.addEventListener('input', () => { P.teach[day.n] = Object.assign({}, P.teach[day.n] || {}, { text: ta.value }); if (!ta.value.trim()) delete P.teach[day.n]; save(); });
+  $('#teachSelf').onclick = () => {
+    $('#teachOut').innerHTML = '<div class="fbk"><h3>Key points a complete answer covers</h3><p>' + esc(day.rubric) + '</p><p class="note">Tick them off against what you wrote. Anything missing is your next thing to review.</p></div>';
+    if (ta.value.trim()) { P.teach[day.n] = Object.assign({}, P.teach[day.n] || {}, { text: ta.value, self: true }); save(); renderRail(); }
+  };
+  if (sampleFn) {
+    const b = $('#teachAI'); b.hidden = false;
+    b.onclick = async () => {
+      const text = ta.value.trim();
+      if (text.length < 40) { toast('Write a few sentences first.'); return; }
+      b.disabled = true; $('#teachOut').innerHTML = '<div class="fbk note">The professor is reading your explanation…</div>';
+      const prompt = 'You are a database professor grading a student\'s explanation. Be kind but precise.\n' +
+        'Topic prompt: ' + day.teach + '\nKey points a complete answer covers: ' + day.rubric + '\n\nStudent answer:\n"""\n' + text.slice(0, 6000) + '\n"""\n\n' +
+        'Reply with only a JSON object: {"score": integer 0-10, "strengths": [short strings], "missing": [key points not covered], "misconceptions": [factual errors, empty if none], "better": "a model explanation in 4-6 plain sentences", "followup": "one question that tests the weakest part"}.' + (P.lang === 'ar' ? ' Write all string values in Arabic (keep SQL keywords and table names in English).' : ' Use simple English.');
+      try {
+        const fb = await sampleFn.json(prompt, { modelTier: 'default' });
+        P.teach[day.n] = { text, score: Number(fb.score) || 0, fb }; save(); renderRail();
+        $('#teachOut').innerHTML = teachFbHTML(fb); $('#teachNote').textContent = 'Last score: ' + (Number(fb.score) || 0) + '/10';
+      } catch (e) {
+        $('#teachOut').innerHTML = '<div class="fbk">' + esc(sampleErrorText(e)) + '</div>';
+        if (e && (e.code === 'not_granted' || e.code === 'sampling_disabled')) b.hidden = true;
+      }
+      b.disabled = false;
+    };
+  }
+}
+function teachFbHTML(fb) {
+  const list = (t, a) => (a && a.length) ? '<h3>' + t + '</h3><ul>' + a.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' : '';
+  const sc = Math.max(0, Math.min(10, Number(fb.score) || 0));
+  return '<div class="fbk"><h3>Score ' + sc + '/10</h3><div class="meterbar"><i style="width:' + sc * 10 + '%"></i></div>' + list('What you did well', fb.strengths) + list('Missing', fb.missing) + list('Fix these misunderstandings', fb.misconceptions) + (fb.better ? '<h3>A model explanation</h3><p>' + esc(fb.better) + '</p>' : '') + (fb.followup ? '<h3>Test yourself</h3><p>' + esc(fb.followup) + '</p>' : '') + '</div>';
+}
+
+/* ---------------- views: review ---------------- */
+const INTERVALS = [0, 1, 3, 7, 14, 30];
+let reviewQueue = null, reviewAns = null;
+function viewReview() {
+  if (!reviewQueue) { reviewQueue = dueCards().sort(() => Math.random() - 0.5); reviewAns = null; }
+  const counts = [1, 2, 3, 4, 5].map(b => Object.keys(P.cards).filter(id => P.cards[id].box === b).length);
+  let h = '<div class="col"><header class="dayhead"><div class="eyebrow">Spaced review</div><h1>Review</h1><p class="note" style="max-width:62ch">Questions you answered in Recall come back here on a schedule. A correct answer moves the card to the next box and it waits longer: 1, 3, 7, 14, then 30 days. A wrong answer sends it back to box 1.</p></header>' +
+    '<div class="boxes">' + counts.map((c, i) => '<div><b>' + c + '</b><small>Box ' + (i + 1) + ' · ' + INTERVALS[i + 1] + 'd</small></div>').join('') + '</div>';
+  if (!reviewQueue.length) {
+    const total = Object.keys(P.cards).length;
+    const next = Object.values(P.cards).map(c => c.due).sort()[0];
+    h += '<div class="quiz"><div class="qq">' + (total ? 'Nothing due right now.' : 'Your deck is empty.') + '</div><p class="note">' + (total ? 'Next card is due on ' + next + '. Come back then, or continue with today\'s lesson.' : 'Finish a Recall quiz and its questions land here.') + '</p><div class="next-row"><span></span><a class="btn primary" href="#day-' + nextDay() + '">Go to Day ' + nextDay() + '</a></div></div>';
+    $('#main').innerHTML = h + '</div>'; reviewQueue = null; return;
+  }
+  const id = reviewQueue[0]; const { q, day } = quizById(id);
+  h += '<div class="quiz"><div class="qn"><span>' + reviewQueue.length + ' left · from Day ' + day.n + ' (' + esc(day.tag) + ')</span><span>Box ' + P.cards[id].box + '</span></div><div class="qq">' + q.q + '</div><div class="opts">' +
+    q.options.map((o, i) => { const cls = reviewAns === null ? '' : i === q.answer ? ' right' : i === reviewAns ? ' wrong' : ''; return '<button class="opt' + cls + '" data-ropt="' + i + '"' + (reviewAns !== null ? ' disabled' : '') + '><b>' + 'ABCDEF'[i] + '</b><span>' + o + '</span></button>'; }).join('') + '</div>';
+  if (reviewAns !== null) h += '<div class="why"><strong>' + (reviewAns === q.answer ? 'Correct.' : 'Not quite.') + '</strong> ' + q.why + '</div><div class="next-row" style="margin-top:14px"><span></span><button class="btn primary" data-rnext="1">Next →</button></div>';
+  $('#main').innerHTML = h + '</div></div>';
+  $('#main').onclick = e => {
+    const t = e.target.closest('button'); if (!t) return;
+    if (t.dataset.ropt !== undefined) {
+      reviewAns = Number(t.dataset.ropt);
+      const c = P.cards[id];
+      if (reviewAns === q.answer) { c.box = Math.min(5, c.box + 1); c.due = addDays(todayStr(), INTERVALS[c.box]); }
+      else { c.box = 1; c.due = addDays(todayStr(), 1); reviewQueue.push(id); }
+      save(); renderRail(); viewReview();
+    } else if (t.dataset.rnext) { reviewQueue.shift(); if (reviewQueue[0] === id && reviewQueue.length > 1) reviewQueue.push(reviewQueue.shift()); reviewAns = null; viewReview(); }
+  };
+}
+
+/* ---------------- views: playground ---------------- */
+let PG = null; let pgRun = null; let pgHist = [];
+function schemaHTML(db) {
+  let h = '<div class="schema">';
+  const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY rowid");
+  (tables[0] ? tables[0].values : []).forEach(([t]) => {
+    const cols = db.exec("SELECT name, type, pk, \"notnull\" FROM pragma_table_info('" + t.replace(/'/g, "''") + "')")[0];
+    const fks = db.exec("SELECT \"from\", \"table\" FROM pragma_foreign_key_list('" + t.replace(/'/g, "''") + "')");
+    const fkMap = {}; (fks[0] ? fks[0].values : []).forEach(([f, tt]) => { fkMap[f] = tt; });
+    let n = 0; try { n = db.exec('SELECT COUNT(*) FROM "' + t.replace(/"/g, '""') + '"')[0].values[0][0]; } catch (e) {}
+    h += '<details><summary>' + esc(t) + '<small>' + n + ' rows</small></summary><div class="cols">' + (LAB.TABLE_NOTES[t] ? '<p>' + esc(LAB.TABLE_NOTES[t]) + '</p>' : '') +
+      (cols ? cols.values : []).map(([c, ty, pk]) => '<div class="c"><span class="' + (pk ? 'k' : fkMap[c] ? 'fk' : '') + '">' + esc(c) + (pk ? ' · PK' : '') + (fkMap[c] ? ' → ' + esc(fkMap[c]) : '') + '</span><span>' + esc((ty || '').toLowerCase()) + '</span></div>').join('') + '</div></details>';
+  });
+  return h + '</div>';
+}
+function viewPlayground() {
+  if (!PG) PG = freshDB();
+  const v = editors['pg'] !== undefined ? editors['pg'] : "-- Anything goes here. Changes persist until you reset.\nSELECT s.name, d.name AS major, s.year\nFROM students s\nLEFT JOIN departments d ON d.dept_id = s.dept_id\nORDER BY s.year DESC, s.name;";
+  $('#main').innerHTML = '<div class="col" style="max-width:1180px"><header class="dayhead"><div class="eyebrow">Free practice</div><h1>SQL playground</h1><p class="note">One database that keeps your changes while this page is open. Experiment freely: create tables, delete rows, break things, then reset.</p></header>' +
+    '<div class="pg"><div style="min-width:0"><div class="console">' + editorHTML('pg', v, 8) + '<div class="toolbar"><button class="btn primary small" id="pgRun">Run</button><button class="btn small" id="pgPlan">Explain plan</button><button class="btn ghost small" id="pgReset">Reset database</button><button class="btn ghost small tutor-only" id="pgAsk" hidden>Ask about this query</button><span class="hint-k">Ctrl/⌘ + Enter</span></div><div class="out" id="pgOut"' + (pgRun ? '' : ' hidden') + '>' + runResultHTML(pgRun) + '</div></div>' +
+    '<div class="history" id="pgHist">' + (pgHist.length ? '<div class="eyebrow" style="margin-bottom:6px">History</div>' + pgHist.map((q, i) => '<button data-h="' + i + '" title="' + esc(q) + '">' + esc(q.replace(/\s+/g, ' ')) + '</button>').join('') : '') + '</div></div>' +
+    '<aside><div class="eyebrow" style="margin-bottom:8px">Schema</div><div id="pgSchema">' + schemaHTML(PG) + '</div></aside></div></div>';
+  const run = (sql, plan) => {
+    const q = sql.trim().replace(/;\s*$/, '');
+    pgRun = plan ? runAll(PG, 'EXPLAIN QUERY PLAN ' + q) : runAll(PG, sql);
+    if (sql.trim() && pgHist[0] !== sql.trim()) { pgHist.unshift(sql.trim()); pgHist = pgHist.slice(0, 12); }
+    lastRun = { sql, error: pgRun.ok ? null : pgRun.error, where: 'playground' };
+    viewPlayground();
+  };
+  mountEditors($('#main'), (k, val) => run(val));
+  $('#pgRun').onclick = () => run(editors['pg'] !== undefined ? editors['pg'] : v);
+  $('#pgPlan').onclick = () => run(editors['pg'] !== undefined ? editors['pg'] : v, true);
+  $('#pgReset').onclick = () => { PG.close(); PG = freshDB(); pgRun = null; toast('Database reset to the original data'); viewPlayground(); };
+  $('#pgHist').onclick = e => { const b = e.target.closest('button[data-h]'); if (b) { editors['pg'] = pgHist[Number(b.dataset.h)]; viewPlayground(); } };
+  $('#pgAsk').onclick = () => { lastRun = { sql: editors['pg'] !== undefined ? editors['pg'] : v, error: pgRun && !pgRun.ok ? pgRun.error : null, where: 'playground' }; openTutor(); askTutor(lastRun.error ? 'Explain this error and how to fix it.' : 'Explain what this query does, step by step, and whether it could be written better.'); };
+  tutorButtons();
+  setTutorContext();
+}
+
+/* ---------------- tutor (sample capability) ---------------- */
+let sampleFn = null, turns = [], tutorCtl = null, lastRun = null;
+function sampleErrorText(e) {
+  const c = e && e.code;
+  if (c === 'not_granted' || c === 'sampling_disabled' || c === 'not_declared' || c === 'capability_disabled') return 'The professor is not available in this view. The rest of the lab works normally.';
+  if (c === 'rate_limited') return 'Too many questions in a short time. Wait a minute and ask again.';
+  if (c === 'session_expired') return 'Your session expired. Sign in again to use the professor.';
+  if (c === 'refused') return 'The professor could not answer that. Try asking in a different way.';
+  if (c === 'prompt_too_large') return 'That is too much text at once. Shorten your question or query.';
+  return 'The answer was interrupted. Try again.';
+}
+function tutorButtons() { $$('.tutor-only').forEach(b => { b.hidden = !sampleFn; }); }
+function schemaSummary() {
+  return 'Tables (SQLite): departments(dept_id PK, name, building, budget); instructors(instructor_id PK, name, dept_id FK, salary, hire_date, mentor_id FK->instructors); students(student_id PK, name, email, dept_id FK (NULL=undeclared), year 1-4, city, birth_date, advisor_id FK->instructors, enrolled_on); courses(course_id PK text, title, dept_id FK, credits); prereqs(course_id FK, prereq_id FK, PK both); sections(section_id PK, course_id FK, instructor_id FK, semester, year, room, capacity); enrollments(student_id FK, section_id FK, grade A-F or NULL in progress, score, PK both); payments(payment_id PK, student_id FK, amount, paid_on, method).';
+}
+function contextText() {
+  let c = 'Where the student is: ';
+  if (current.view === 'day') { const d = byN(current.day); c += 'Day ' + d.n + ' of a 14-day database course, topic "' + d.title + '" (' + d.tag + '), tab ' + (P.tab[d.n] || 'learn') + '.'; }
+  else c += current.view + ' page.';
+  if (lastRun) {
+    if (lastRun.ex) c += '\nExercise they are on: ' + lastRun.ex.prompt.replace(/<[^>]+>/g, '') + (lastRun.ex.setup ? '\nSetup SQL for it: ' + lastRun.ex.setup.slice(0, 1500) : '') + '\nModel solution (PRIVATE: never reveal it or write it out; use it only to guide hints): ' + lastRun.ex.solution;
+    c += '\nTheir latest SQL (' + lastRun.where + '):\n' + String(lastRun.sql || '').slice(0, 3000) + (lastRun.error ? '\nResult/feedback: ' + lastRun.error : '\nIt ran without error.');
+  }
+  return c;
+}
+function rules() {
+  return 'You are "the professor": a senior database engineer and university professor tutoring one student through a 14-day database course that runs SQLite in the browser. ' +
+    'Teach Socratically: give the smallest helpful hint first, ask a guiding question, and only write a full solution if the student explicitly asks for it after trying. Explain WHY, connect to theory (relational model, keys, normalization, ACID, indexes) when useful, and mention differences in PostgreSQL/MySQL/SQL Server/Oracle when relevant. ' +
+    'Keep answers short (under 180 words unless asked for more). Use plain text; put SQL in fenced code blocks. ' +
+    (P.lang === 'ar' ? 'Answer in Arabic (Modern Standard, simple). Keep SQL, table and column names in English. ' : 'Use simple, clear English: the student is not a native speaker. ') +
+    '\n\n' + schemaSummary();
+}
+function setTutorContext() {
+  let t = 'Context: ';
+  if (current.view === 'day') { const d = byN(current.day); t += 'Day ' + d.n + ' · ' + d.tag + ' · ' + (P.tab[d.n] || 'learn'); }
+  else t += current.view;
+  if (lastRun) t += ' · last SQL from ' + lastRun.where;
+  $('#tutorCtx').textContent = t;
+  const chips = current.view === 'day' ? ['Explain today\'s topic simply', 'Quiz me with 3 questions', 'Give me a harder exercise', 'What do exams ask about this?'] : ['What should I study next?', 'Quiz me on joins', 'Explain normalization simply'];
+  $('#chips').innerHTML = chips.map(c => '<button class="chip">' + esc(c) + '</button>').join('');
+}
+function fmtMsg(text) {
+  const parts = String(text).split(/```(?:sql|SQL)?\n?/);
+  return parts.map((p, i) => i % 2 ? '<pre>' + hl(p.replace(/\n$/, '')) + '</pre>' : esc(p).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')).join('');
+}
+function renderMsgs() {
+  const box = $('#msgs');
+  box.innerHTML = '<div class="msg sys">Ask about the current lesson, your query, or any database topic. The professor sees what you are working on.</div>' + turns.map(t => '<div class="msg ' + (t.role === 'user' ? 'me' : 'ai') + '">' + (t.role === 'user' ? esc(t.content) : fmtMsg(t.content)) + '</div>').join('');
+  box.scrollTop = box.scrollHeight;
+}
+function openTutor() { $('#drawer').classList.add('open'); $('#scrim').hidden = false; setTutorContext(); setTimeout(() => $('#tutorInput').focus(), 50); }
+function closeTutor() { $('#drawer').classList.remove('open'); $('#scrim').hidden = true; }
+async function askTutor(text) {
+  if (!sampleFn || !text.trim()) return;
+  if (tutorCtl) tutorCtl.abort();
+  turns.push({ role: 'user', content: text.trim() });
+  turns = turns.slice(-12);
+  renderMsgs();
+  const box = $('#msgs');
+  const bubble = document.createElement('div'); bubble.className = 'msg ai'; bubble.textContent = 'Thinking…'; box.appendChild(bubble); box.scrollTop = box.scrollHeight;
+  tutorCtl = new AbortController();
+  $('#stopTutor').hidden = false; $('#sendTutor').disabled = true;
+  const history = turns.map((t, i) => i === turns.length - 1 ? { role: 'user', content: 'CURRENT CONTEXT\n' + contextText() + '\n\nSTUDENT: ' + t.content } : t);
+  try {
+    const { text: ans } = await sampleFn([{ role: 'user', content: rules() }].concat(history[0].role === 'assistant' ? history.slice(1) : history), {
+      cache: false, signal: tutorCtl.signal,
+      onText: ({ text }) => { bubble.innerHTML = fmtMsg(text); box.scrollTop = box.scrollHeight; }
+    });
+    turns.push({ role: 'assistant', content: ans });
+  } catch (e) {
+    if (e && e.text) { turns.push({ role: 'assistant', content: e.text }); }
+    if (e && e.code === 'cancelled') { if (!e.text) bubble.remove(); }
+    else { bubble.textContent = (e && e.text ? e.text + '\n\n' : '') + sampleErrorText(e); }
+    if (e && (e.code === 'not_granted' || e.code === 'sampling_disabled')) { sampleFn = null; $('#tutorBtn').hidden = true; tutorButtons(); }
+  }
+  tutorCtl = null; $('#stopTutor').hidden = true; $('#sendTutor').disabled = false;
+  if (turns.length && turns[turns.length - 1].role === 'assistant') renderMsgs();
+}
+async function connectTutor() {
+  if (!window.claude || !window.claude.use) return;
+  try { sampleFn = await window.claude.use('sample'); } catch (e) { sampleFn = null; }
+  if (!sampleFn) return;
+  $('#tutorBtn').hidden = false; tutorButtons();
+  if (current.view === 'day' && (P.tab[current.day] || 'learn') === 'explain') route();
+}
+
+/* ---------------- router ---------------- */
+function route() {
+  const h = (location.hash || '#home').slice(1);
+  let m;
+  closeRail();
+  if ((m = /^day-(\d+)$/.exec(h)) && byN(Number(m[1]))) { current = { view: 'day', day: Number(m[1]) }; renderRail(); viewDay(current.day); }
+  else if (h === 'playground') { current = { view: 'playground' }; renderRail(); viewPlayground(); }
+  else if (h === 'review') { current = { view: 'review' }; reviewQueue = null; renderRail(); viewReview(); }
+  else { current = { view: 'home' }; renderRail(); viewHome(); }
+  updateChrome(); setTutorContext();
+}
+window.addEventListener('hashchange', () => { route(); window.scrollTo({ top: 0 }); });
+$('#menuBtn').onclick = () => { $('#rail').classList.add('open'); $('#scrim').hidden = false; };
+$('#scrim').onclick = () => { closeRail(); closeTutor(); };
+$('#tutorBtn').onclick = openTutor;
+$('#closeTutor').onclick = closeTutor;
+$('#sendTutor').onclick = () => { const t = $('#tutorInput'); const v = t.value; t.value = ''; askTutor(v); };
+$('#tutorInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#sendTutor').click(); } });
+$('#stopTutor').onclick = () => { if (tutorCtl) tutorCtl.abort(); };
+$('#clearTutor').onclick = () => { if (tutorCtl) tutorCtl.abort(); turns = []; renderMsgs(); };
+$('#chips').onclick = e => { const b = e.target.closest('.chip'); if (b) askTutor(b.textContent); };
+$('#langToggle').onclick = e => { const b = e.target.closest('button'); if (!b) return; P.lang = b.dataset.lang; save(); $$('#langToggle button').forEach(x => x.classList.toggle('on', x === b)); };
+$$('#langToggle button').forEach(x => x.classList.toggle('on', x.dataset.lang === (P.lang || 'en')));
+
+initEngine().then(() => { route(); }).catch(err => {
+  $('#main').innerHTML = '<div class="loading">The SQL engine could not load (' + esc(err && err.message || err) + ').<br>Check your connection and reload the page.</div>';
+});
+renderRail(); updateChrome();
+connectTutor();
+connectRemote();
+})();
+</script>

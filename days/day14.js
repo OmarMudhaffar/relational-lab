@@ -81,10 +81,10 @@ appts = (session.query(Appointment)
 <p>ORMs save time, but you still need SQL: to read the SQL they generate, to fix slow pages, and to write reports. The famous ORM trap is the <strong>N+1 problem</strong>: load 100 appointments (1 query), then for each one load its patient (100 more queries). The fix is one query with a JOIN (in ORMs: "eager loading", e.g. <code>joinedload</code> or <code>Include</code>).</p>
 <p>Other tools you will meet: <strong>connection pools</strong> (reuse open connections), <strong>migrations</strong> (versioned scripts that change the schema: Flyway, Liquibase, Alembic, EF migrations).</p>`,
         predict: {
-          q: 'A page shows 50 orders and, for each order, the customer name. The log shows 51 SQL queries. What is this and how do you fix it?',
+          q: 'A page shows 50 orders, each with its customer name. The log shows 51 SQL queries. What is the problem, and how do you fix it?',
           options: ['A deadlock; add retries', 'The N+1 problem; load orders and customers with one JOIN (eager loading)', 'Missing ORDER BY; add sorting', 'SQL injection; use parameters'],
           answer: 1,
-          why: 'One query for the list plus one query per row is N+1. A single JOIN (or the ORM\'s eager loading) returns everything in one round trip.'
+          why: 'One query for the list, plus one query for each row, is the N+1 problem. One JOIN (or eager loading in the ORM) gets everything at once.'
         }
       },
       {
@@ -131,10 +131,10 @@ GROUP BY d.dept_id, d.name
 HAVING COUNT(*) >= 10
 ORDER BY avg_score DESC;`,
         predict: {
-          q: 'Why does this query use COUNT(DISTINCT e.student_id) instead of COUNT(*)?',
+          q: 'Why does this query use COUNT(DISTINCT e.student_id) and not COUNT(*)?',
           options: ['COUNT(*) does not work with JOIN', 'A student can take several courses of the same department, and should be counted once', 'DISTINCT makes the query faster', 'COUNT(*) counts NULL scores'],
           answer: 1,
-          why: 'Each enrollment is one row after the join. A student with three Computer Science courses gives three rows. DISTINCT counts that student once.'
+          why: 'After the join, each enrollment is one row. A student with three Computer Science courses gives three rows. DISTINCT counts that student once.'
         }
       }
     ],
@@ -150,18 +150,18 @@ ORDER BY avg_score DESC;`,
     exercises: [
       {
         id: 'd14-1', level: 1, kind: 'script',
-        prompt: '<strong>Capstone step 1.</strong> Create the tables <code>doctors(doctor_id, name, specialty)</code> and <code>patients(patient_id, name, phone, birth_date)</code>. Requirements: integer primary keys <code>doctor_id</code> and <code>patient_id</code>; <code>name</code> and <code>specialty</code> are required; <code>phone</code> is optional but unique; <code>birth_date</code> is optional (TEXT).',
+        prompt: '<p><strong>Capstone step 1.</strong> Create the first two tables of a small clinic.</p><ul class="spec"><li><b>Create:</b> <code>doctors(doctor_id, name, specialty)</code> and <code>patients(patient_id, name, phone, birth_date)</code></li><li><b>Keys:</b> <code>doctor_id</code> and <code>patient_id</code> are integer primary keys.</li><li><b>Rules:</b> <code>name</code> and <code>specialty</code> are required. <code>phone</code> is optional, but two patients cannot have the same phone. <code>birth_date</code> is optional (TEXT).</li></ul>',
         solution: C1,
         check: `SELECT m.name AS tbl, p.name AS col, p.pk, CASE WHEN p.pk > 0 THEN NULL ELSE p."notnull" END AS required,
   (SELECT COUNT(*) FROM pragma_index_list(m.name) il JOIN pragma_index_info(il.name) ii WHERE il."unique" = 1 AND ii.name = p.name AND il.origin <> 'pk') AS unique_idx
 FROM sqlite_master m, pragma_table_info(m.name) p
 WHERE m.type = 'table' AND m.name IN ('doctors', 'patients')
 ORDER BY tbl, col;`,
-        hints: ['Two CREATE TABLE statements.', 'Required means NOT NULL. Optional and unique means UNIQUE without NOT NULL.', 'doctor_id INTEGER PRIMARY KEY, name TEXT NOT NULL, specialty TEXT NOT NULL ...']
+        hints: ['Write two CREATE TABLE statements.', 'Required means NOT NULL. Optional but unique means UNIQUE without NOT NULL.', 'doctor_id INTEGER PRIMARY KEY, name TEXT NOT NULL, specialty TEXT NOT NULL ...']
       },
       {
         id: 'd14-2', level: 2, kind: 'script',
-        prompt: '<strong>Capstone step 2.</strong> Doctors and patients exist. Create <code>appointments(appt_id, patient_id, doctor_id, starts_at, status)</code>: integer PK <code>appt_id</code>; <code>patient_id</code> and <code>doctor_id</code> required foreign keys to their tables; <code>starts_at</code> required TEXT; <code>status</code> required, default <code>\'booked\'</code>, only <code>\'booked\'</code>, <code>\'done\'</code> or <code>\'cancelled\'</code> allowed; a doctor cannot have two appointments with the same <code>starts_at</code>.',
+        prompt: '<p><strong>Capstone step 2.</strong> The doctors and patients tables exist. Now create the appointments table.</p><ul class="spec"><li><b>Create:</b> <code>appointments(appt_id, patient_id, doctor_id, starts_at, status)</code></li><li><b>Keys:</b> <code>appt_id</code> is an integer primary key. <code>patient_id</code> and <code>doctor_id</code> are required foreign keys to their tables.</li><li><b>Rules:</b> <code>starts_at</code> is required TEXT. <code>status</code> is required, with default <code>\'booked\'</code>. It allows only <code>\'booked\'</code>, <code>\'done\'</code> or <code>\'cancelled\'</code>.</li><li><b>Note:</b> a doctor cannot have two appointments with the same <code>starts_at</code>.</li></ul>',
         setup: C1,
         solution: C2,
         check: `SELECT 'col' AS what, p.name AS a, CASE WHEN p.pk > 0 THEN 'pk' ELSE p."notnull" END AS b, CASE WHEN p.name = 'status' THEN replace(p.dflt_value, '"', '''') END AS c
@@ -175,22 +175,22 @@ SELECT 'uniq', group_concat(name, ','), NULL, NULL FROM (
 UNION ALL
 SELECT 'check', (SELECT instr(sql, 'cancelled') > 0 AND instr(sql, 'done') > 0 FROM sqlite_master WHERE name = 'appointments'), NULL, NULL
 ORDER BY what, a;`,
-        hints: ['A foreign key: doctor_id INTEGER NOT NULL REFERENCES doctors(doctor_id).', "status TEXT NOT NULL DEFAULT 'booked' CHECK (status IN ('booked','done','cancelled'))", 'No double booking: a table constraint UNIQUE (doctor_id, starts_at) at the end of the column list.']
+        hints: ['A foreign key: doctor_id INTEGER NOT NULL REFERENCES doctors(doctor_id).', "status TEXT NOT NULL DEFAULT 'booked' CHECK (status IN ('booked','done','cancelled'))", 'No double booking: add UNIQUE (doctor_id, starts_at) at the end of the column list.']
       },
       {
         id: 'd14-3', level: 2, kind: 'script',
-        prompt: '<strong>Capstone step 3.</strong> Create <code>prescriptions(appt_id, drug, dose)</code>. Each prescription belongs to one appointment (required FK to <code>appointments</code>). <code>drug</code> and <code>dose</code> are required. The same drug cannot appear twice in one appointment, and that rule is the table\'s primary key.',
+        prompt: '<p><strong>Capstone step 3.</strong> Create the prescriptions table.</p><ul class="spec"><li><b>Create:</b> <code>prescriptions(appt_id, drug, dose)</code></li><li><b>Keys:</b> <code>appt_id</code> is a required foreign key to <code>appointments</code>. Each prescription belongs to one appointment.</li><li><b>Rules:</b> <code>drug</code> and <code>dose</code> are required.</li><li><b>Note:</b> the same drug cannot appear twice in one appointment. Make this rule the primary key of the table.</li></ul>',
         setup: C1 + '\n' + C2,
         solution: C3,
         check: `SELECT 'col' AS what, p.name AS a, p.pk > 0 AS b, p."notnull" OR p.pk > 0 AS c FROM pragma_table_info('prescriptions') p
 UNION ALL
 SELECT 'fk', f."from", f."table", coalesce(f."to", f."from") FROM pragma_foreign_key_list('prescriptions') f
 ORDER BY what, a;`,
-        hints: ['A composite primary key is a table constraint: PRIMARY KEY (appt_id, drug).', 'appt_id INTEGER NOT NULL REFERENCES appointments(appt_id)']
+        hints: ['A primary key on two columns is written at the end: PRIMARY KEY (appt_id, drug).', 'appt_id INTEGER NOT NULL REFERENCES appointments(appt_id)']
       },
       {
         id: 'd14-4', level: 2, kind: 'script',
-        prompt: '<strong>Capstone step 4.</strong> The full clinic schema and sample data are loaded. Today is 2026-10-01. Write the DML for these three tasks, in one transaction: (1) every <code>booked</code> appointment that started before <code>\'2026-10-01\'</code> becomes <code>done</code>; (2) cancel appointment 9; (3) book a new appointment: id 12, patient 2 with doctor 4 at <code>\'2026-10-14 09:30\'</code> (use the default status).',
+        prompt: '<p><strong>Capstone step 4.</strong> The clinic tables and sample data are loaded. Today is 2026-10-01. Do three changes in one transaction.</p><ul class="spec"><li><b>Steps:</b> (1) Every <code>booked</code> appointment that started before <code>\'2026-10-01\'</code> becomes <code>done</code>. (2) Cancel appointment 9. (3) Book a new appointment: id 12, patient 2, doctor 4, at <code>\'2026-10-14 09:30\'</code>.</li><li><b>Note:</b> do not give a status to the new appointment. Let the default fill it.</li></ul>',
         setup: FULL,
         solution: `BEGIN;
 UPDATE appointments SET status = 'done' WHERE status = 'booked' AND starts_at < '2026-10-01';
@@ -198,19 +198,19 @@ UPDATE appointments SET status = 'cancelled' WHERE appt_id = 9;
 INSERT INTO appointments (appt_id, patient_id, doctor_id, starts_at) VALUES (12, 2, 4, '2026-10-14 09:30');
 COMMIT;`,
         check: `SELECT appt_id, patient_id, doctor_id, starts_at, status FROM appointments ORDER BY appt_id;`,
-        hints: ['Text dates in YYYY-MM-DD HH:MM format compare correctly with <.', 'Only booked ones become done: the cancelled appointment 4 must stay cancelled.', 'Leave status out of the INSERT column list so the DEFAULT applies.']
+        hints: ['Dates in YYYY-MM-DD HH:MM text compare correctly with <.', 'Only booked appointments become done. Appointment 4 is cancelled and must stay cancelled.', 'Leave status out of the INSERT column list, so the DEFAULT is used.']
       },
       {
         id: 'd14-5', level: 3, kind: 'script',
-        prompt: '<strong>Capstone step 5.</strong> The patient history page runs:<pre class="code">SELECT starts_at, status FROM appointments WHERE patient_id = 3 ORDER BY starts_at;</pre>It scans the table. Add one index so the plan becomes <code>SEARCH appointments USING ...</code>.',
+        prompt: '<p><strong>Capstone step 5.</strong> The patient history page runs this query. It scans the whole table:</p><pre class="code">SELECT starts_at, status FROM appointments WHERE patient_id = 3 ORDER BY starts_at;</pre><ul class="spec"><li><b>Create:</b> one index so the plan becomes <code>SEARCH appointments USING ...</code>.</li></ul>',
         setup: FULL,
         solution: `CREATE INDEX idx_appt_patient ON appointments(patient_id, starts_at);`,
         plan: { query: `SELECT starts_at, status FROM appointments WHERE patient_id = 3 ORDER BY starts_at`, mustContain: 'SEARCH appointments USING' },
-        hints: ['patient_id is a foreign key that is not indexed yet.', 'Adding starts_at as the second column also gives the ORDER BY for free.']
+        hints: ['patient_id is a foreign key with no index yet.', 'Add starts_at as the second column. Then the index also gives the ORDER BY for free.']
       },
       {
         id: 'd14-6', level: 1,
-        prompt: '<strong>Clinic query.</strong> (Schema and data loaded.) List all <code>booked</code> appointments on or after <code>\'2026-10-01\'</code> with columns <code>starts_at</code>, <code>patient</code> (patient name), <code>doctor</code> (doctor name), ordered by <code>starts_at</code>.',
+        prompt: '<p><strong>Clinic query.</strong> The tables and data are loaded. List the <code>booked</code> appointments on or after <code>\'2026-10-01\'</code>.</p><ul class="spec"><li><b>Columns:</b> <code>starts_at</code>, <code>patient</code> (the patient name), <code>doctor</code> (the doctor name)</li><li><b>Order:</b> <code>starts_at</code> from early to late</li></ul>',
         setup: FULL,
         solution: `SELECT a.starts_at, p.name AS patient, d.name AS doctor
 FROM appointments a JOIN patients p ON p.patient_id = a.patient_id JOIN doctors d ON d.doctor_id = a.doctor_id
@@ -220,48 +220,48 @@ WHERE a.status = 'booked' AND a.starts_at >= '2026-10-01' ORDER BY a.starts_at;`
       },
       {
         id: 'd14-7', level: 2,
-        prompt: '<strong>Clinic query.</strong> For every doctor return <code>doctor</code> (name) and <code>active_appts</code>: the number of appointments that are not cancelled. Doctors with none must show 0.',
+        prompt: '<p><strong>Clinic query.</strong> For every doctor, count the appointments that are not cancelled.</p><ul class="spec"><li><b>Columns:</b> <code>doctor</code> (the name), <code>active_appts</code> (the number of appointments that are not cancelled)</li><li><b>Note:</b> a doctor with no such appointments must show 0.</li></ul>',
         setup: FULL,
         solution: `SELECT d.name AS doctor, COUNT(a.appt_id) AS active_appts
 FROM doctors d LEFT JOIN appointments a ON a.doctor_id = d.doctor_id AND a.status <> 'cancelled'
 GROUP BY d.doctor_id, d.name;`,
-        hints: ['LEFT JOIN keeps doctors without appointments.', 'Put the status filter in the ON clause. In WHERE it would remove the doctors with no rows.', 'COUNT(a.appt_id), not COUNT(*).']
+        hints: ['LEFT JOIN keeps doctors with no appointments.', 'Put the status filter in the ON clause. In WHERE it would remove the doctors with no rows.', 'Use COUNT(a.appt_id), not COUNT(*).']
       },
       {
         id: 'd14-8', level: 3,
-        prompt: '<strong>Clinic query.</strong> Find patients who have (non-cancelled) appointments with <strong>more than one different doctor</strong>. Return <code>patient</code> and <code>n_doctors</code>.',
+        prompt: '<p><strong>Clinic query.</strong> Find patients who see <strong>more than one different doctor</strong>. Count only appointments that are not cancelled.</p><ul class="spec"><li><b>Columns:</b> <code>patient</code> (the name), <code>n_doctors</code> (the number of different doctors)</li></ul>',
         setup: FULL,
         solution: `SELECT p.name AS patient, COUNT(DISTINCT a.doctor_id) AS n_doctors
 FROM patients p JOIN appointments a ON a.patient_id = p.patient_id
 WHERE a.status <> 'cancelled'
 GROUP BY p.patient_id, p.name HAVING COUNT(DISTINCT a.doctor_id) > 1;`,
-        hints: ['Group by patient.', 'COUNT(DISTINCT doctor_id) counts different doctors.', 'Filter the groups with HAVING ... > 1.']
+        hints: ['Group by patient.', 'COUNT(DISTINCT doctor_id) counts different doctors.', 'Keep only the groups you want with HAVING ... > 1.']
       },
       {
         id: 'd14-9', level: 2,
-        prompt: '<strong>Final exam (university).</strong> For each department that has at least 2 instructors, return <code>department</code> (name), <code>n_instructors</code> and <code>avg_salary</code> (rounded to whole number). Sort by <code>avg_salary</code> descending, then <code>department</code>.',
+        prompt: '<p><strong>Final exam (university).</strong> Show each department that has at least 2 instructors.</p><ul class="spec"><li><b>Columns:</b> <code>department</code> (the name), <code>n_instructors</code>, <code>avg_salary</code> (rounded to a whole number)</li><li><b>Order:</b> <code>avg_salary</code> from high to low, then <code>department</code> A–Z</li></ul>',
         solution: `SELECT d.name AS department, COUNT(*) AS n_instructors, ROUND(AVG(i.salary)) AS avg_salary
 FROM departments d JOIN instructors i ON i.dept_id = d.dept_id
 GROUP BY d.dept_id, d.name HAVING COUNT(*) >= 2
 ORDER BY avg_salary DESC, department;`,
         ordered: true,
-        hints: ['Join departments and instructors.', 'GROUP BY department, HAVING COUNT(*) >= 2.', 'ROUND(AVG(i.salary)) and ORDER BY avg_salary DESC, department.']
+        hints: ['Join departments and instructors.', 'GROUP BY the department, HAVING COUNT(*) >= 2.', 'ROUND(AVG(i.salary)), then ORDER BY avg_salary DESC, department.']
       },
       {
         id: 'd14-10', level: 2,
-        prompt: '<strong>Final exam.</strong> Return <code>student_id</code> and <code>name</code> of students who have <strong>never</strong> enrolled in any section.',
+        prompt: '<p><strong>Final exam.</strong> Find the students who have <strong>never</strong> enrolled in any section.</p><ul class="spec"><li><b>Columns:</b> <code>student_id</code>, <code>name</code></li></ul>',
         solution: `SELECT s.student_id, s.name FROM students s WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.student_id = s.student_id);`,
-        hints: ['"Never" questions: NOT EXISTS, NOT IN, or LEFT JOIN ... IS NULL.', 'SELECT ... FROM students s WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.student_id = s.student_id)']
+        hints: ['For "never" questions use NOT EXISTS, NOT IN, or LEFT JOIN ... IS NULL.', 'SELECT ... FROM students s WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.student_id = s.student_id)']
       },
       {
         id: 'd14-11', level: 2,
-        prompt: '<strong>Final exam.</strong> For every course that has prerequisites, list <code>course</code> (title) and <code>prerequisite</code> (title of the required course). One row per pair.',
+        prompt: '<p><strong>Final exam.</strong> List every course that has prerequisites, with the title of each required course. Show one row for each pair.</p><ul class="spec"><li><b>Columns:</b> <code>course</code> (the course title), <code>prerequisite</code> (the title of the required course)</li></ul>',
         solution: `SELECT c.title AS course, pc.title AS prerequisite FROM prereqs p JOIN courses c ON c.course_id = p.course_id JOIN courses pc ON pc.course_id = p.prereq_id;`,
-        hints: ['courses is needed twice: once for the course, once for the prerequisite. Use two aliases.', 'prereqs connects them: p.course_id and p.prereq_id.']
+        hints: ['You need courses twice: once for the course, once for the prerequisite. Use two aliases.', 'prereqs links them: p.course_id and p.prereq_id.']
       },
       {
         id: 'd14-12', level: 3,
-        prompt: '<strong>Final exam.</strong> For each course, find the student(s) with the highest score in that course (across all its sections). Return <code>course_id</code>, <code>name</code>, <code>score</code>. If two students tie for first place, return both. Ignore NULL scores.',
+        prompt: '<p><strong>Final exam.</strong> For each course, find the student with the highest score. Look at all sections of the course.</p><ul class="spec"><li><b>Columns:</b> <code>course_id</code>, <code>name</code>, <code>score</code></li><li><b>Note:</b> if two students share the top score, show both.</li><li><b>Note:</b> ignore NULL scores.</li></ul>',
         solution: `WITH ranked AS (
   SELECT s.course_id, st.name, e.score,
          RANK() OVER (PARTITION BY s.course_id ORDER BY e.score DESC) AS rnk
@@ -269,17 +269,17 @@ ORDER BY avg_salary DESC, department;`,
   WHERE e.score IS NOT NULL
 )
 SELECT course_id, name, score FROM ranked WHERE rnk = 1;`,
-        hints: ['You need the course of each enrollment: join enrollments to sections.', 'RANK() OVER (PARTITION BY course_id ORDER BY score DESC) gives 1 to the top score of each course, and ties share it.', 'Window functions cannot go in WHERE directly: compute them in a CTE or subquery, then filter rnk = 1.']
+        hints: ['You need the course of each enrollment: join enrollments to sections.', 'RANK() OVER (PARTITION BY course_id ORDER BY score DESC) gives 1 to the top score of each course. Ties share the same rank.', 'You cannot use a window function in WHERE. Compute it in a CTE or subquery first, then keep rnk = 1.']
       },
       {
         id: 'd14-13', level: 3,
-        prompt: '<strong>Final exam.</strong> For every payment show <code>student_id</code>, <code>paid_on</code>, <code>amount</code> and <code>running_total</code>: the sum of that student\'s payments up to and including this one, in date order.',
+        prompt: '<p><strong>Final exam.</strong> For every payment, show a running total for that student.</p><ul class="spec"><li><b>Columns:</b> <code>student_id</code>, <code>paid_on</code>, <code>amount</code>, <code>running_total</code></li><li><b>Note:</b> <code>running_total</code> is the sum of this student\'s payments up to this one, including it, in date order.</li></ul>',
         solution: `SELECT student_id, paid_on, amount, SUM(amount) OVER (PARTITION BY student_id ORDER BY paid_on) AS running_total FROM payments;`,
-        hints: ['A running total is a window SUM with ORDER BY inside OVER.', 'Reset it for each student with PARTITION BY student_id.']
+        hints: ['A running total is a window SUM with ORDER BY inside OVER.', 'Start again for each student with PARTITION BY student_id.']
       },
       {
         id: 'd14-14', level: 3,
-        prompt: '<strong>Final exam.</strong> Return <code>name</code> and <code>avg_score</code> (rounded to 1 decimal) of students whose average score is higher than the average of <strong>all</strong> graded enrollments. Sort by <code>avg_score</code> descending, then <code>name</code>.',
+        prompt: '<p><strong>Final exam.</strong> Find the students whose average score is higher than the average of <strong>all</strong> graded enrollments.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>avg_score</code> (rounded to 1 decimal)</li><li><b>Order:</b> <code>avg_score</code> from high to low, then <code>name</code> A–Z</li></ul>',
         solution: `SELECT s.name, ROUND(AVG(e.score), 1) AS avg_score
 FROM students s JOIN enrollments e ON e.student_id = s.student_id
 WHERE e.score IS NOT NULL
@@ -287,20 +287,20 @@ GROUP BY s.student_id, s.name
 HAVING AVG(e.score) > (SELECT AVG(score) FROM enrollments)
 ORDER BY avg_score DESC, s.name;`,
         ordered: true,
-        hints: ['Compute each student\'s average with GROUP BY.', 'Compare it to a scalar subquery: (SELECT AVG(score) FROM enrollments). AVG ignores NULLs.', 'The comparison on an aggregate goes in HAVING. Compare the unrounded average.']
+        hints: ['Find each student\'s average with GROUP BY.', 'Compare it to one value from a subquery: (SELECT AVG(score) FROM enrollments). AVG skips NULLs.', 'A condition on an aggregate goes in HAVING. Compare the average before rounding.']
       }
     ],
     quiz: [
-      { id: 'd14-q1', q: 'Students take many courses and courses have many students. How is this modeled?', options: ['A course_id column in students', 'A student_id column in courses', 'A junction table with student_id and course_id', 'One table with all columns'], answer: 2, why: 'M:N relationships always need a junction table whose key combines both foreign keys.' },
-      { id: 'd14-q2', q: 'Table R(A, B, C) with key A and the dependency B → C. Which normal form is violated?', options: ['1NF', '2NF', '3NF', 'None'], answer: 2, why: 'C depends on B, a non-key column: a transitive dependency A → B → C. The key is a single column, so 2NF holds, but 3NF fails.' },
-      { id: 'd14-q3', q: 'SELECT dept_id, COUNT(*) FROM students WHERE COUNT(*) > 5 GROUP BY dept_id; What is wrong?', options: ['Nothing', 'Aggregates cannot be used in WHERE; use HAVING', 'GROUP BY must come before WHERE', 'COUNT(*) needs a column name'], answer: 1, why: 'WHERE filters rows before grouping, so group counts do not exist yet. Filter groups with HAVING.' },
-      { id: 'd14-q4', q: 'Which ACID property guarantees that a committed transfer survives a power failure?', options: ['Atomicity', 'Consistency', 'Isolation', 'Durability'], answer: 3, why: 'Durability, usually implemented with a write-ahead log flushed to disk at commit.' },
-      { id: 'd14-q5', q: 'An index exists on (last_name, first_name). Which query benefits most?', options: ["WHERE first_name = 'Ali'", "WHERE last_name = 'Haddad' AND first_name = 'Layla'", "WHERE upper(last_name) = 'HADDAD'", "WHERE first_name LIKE '%a'"], answer: 1, why: 'It uses both columns from the left. The others skip the first column or wrap it in a function.' },
-      { id: 'd14-q6', q: 'LEFT JOIN departments to instructors, then WHERE i.salary > 80000. What happens to departments with no instructors?', options: ['They appear with NULLs', 'They disappear, because NULL > 80000 is not true', 'They appear twice', 'The query fails'], answer: 1, why: 'The WHERE filter removes rows where salary is NULL, which turns the LEFT JOIN into an inner join. Put such conditions in ON.' },
-      { id: 'd14-q7', q: 'T1 reads a row, T2 updates it and commits, T1 reads it again and sees a different value. Which is the weakest level that prevents this?', options: ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ', 'SERIALIZABLE'], answer: 2, why: 'This is a non-repeatable read; REPEATABLE READ is the first level that prevents it.' },
-      { id: 'd14-q8', q: 'In an ER diagram, a weak entity is one that…', options: ['Has few attributes', 'Cannot be identified by its own attributes alone and depends on an owner entity', 'Has no relationships', 'Is optional in every relationship'], answer: 1, why: 'A weak entity\'s key includes the key of its owner, e.g. a section number inside a course, or an apartment number inside a building.' },
-      { id: 'd14-q9', q: 'Which statement about COUNT is true?', options: ['COUNT(*) ignores NULL rows', 'COUNT(col) counts rows where col is not NULL', 'COUNT(DISTINCT col) counts NULL as a value', 'COUNT(col) and COUNT(*) always give the same result'], answer: 1, why: 'COUNT(*) counts rows; COUNT(col) skips NULLs; COUNT(DISTINCT col) also skips NULLs.' },
-      { id: 'd14-q10', q: 'A startup builds a shop with customers, orders and payments, and needs correct money handling. Best default choice?', options: ['A key-value store', 'A graph database', 'A relational database such as PostgreSQL', 'Plain JSON files'], answer: 2, why: 'Related entities, joins, constraints and ACID transactions are exactly what relational databases do best.' }
+      { id: 'd14-q1', q: 'Students take many courses, and courses have many students. How do you model this?', options: ['A course_id column in students', 'A student_id column in courses', 'A junction table with student_id and course_id', 'One table with all columns'], answer: 2, why: 'Many-to-many (M:N) always needs a junction table. Its key combines both foreign keys.' },
+      { id: 'd14-q2', q: 'Table R(A, B, C) has key A and the dependency B → C. Which normal form does it break?', options: ['1NF', '2NF', '3NF', 'None'], answer: 2, why: 'C depends on B, and B is not a key. That is a transitive dependency: A → B → C. The key has one column, so 2NF is fine, but 3NF breaks.' },
+      { id: 'd14-q3', q: 'SELECT dept_id, COUNT(*) FROM students WHERE COUNT(*) > 5 GROUP BY dept_id; What is wrong?', options: ['Nothing', 'You cannot use an aggregate in WHERE; use HAVING', 'GROUP BY must come before WHERE', 'COUNT(*) needs a column name'], answer: 1, why: 'WHERE filters rows before grouping, so group counts do not exist yet. Filter groups with HAVING.' },
+      { id: 'd14-q4', q: 'Which ACID property makes sure a committed transfer survives a power failure?', options: ['Atomicity', 'Consistency', 'Isolation', 'Durability'], answer: 3, why: 'Durability. Databases usually do this with a write-ahead log that is saved to disk at commit.' },
+      { id: 'd14-q5', q: 'There is an index on (last_name, first_name). Which query gets the most help from it?', options: ["WHERE first_name = 'Ali'", "WHERE last_name = 'Haddad' AND first_name = 'Layla'", "WHERE upper(last_name) = 'HADDAD'", "WHERE first_name LIKE '%a'"], answer: 1, why: 'It uses both columns, starting from the left. The others skip the first column or put a function on it.' },
+      { id: 'd14-q6', q: 'You LEFT JOIN departments to instructors, then add WHERE i.salary > 80000. What happens to departments with no instructors?', options: ['They appear with NULLs', 'They disappear, because NULL > 80000 is not true', 'They appear twice', 'The query fails'], answer: 1, why: 'WHERE removes rows where salary is NULL. This turns the LEFT JOIN into an inner join. Put such conditions in ON.' },
+      { id: 'd14-q7', q: 'T1 reads a row. T2 changes it and commits. T1 reads it again and sees a different value. Which is the lowest level that stops this?', options: ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ', 'SERIALIZABLE'], answer: 2, why: 'This is a non-repeatable read. REPEATABLE READ is the first level that stops it.' },
+      { id: 'd14-q8', q: 'In an ER diagram, what is a weak entity?', options: ['It has few attributes', 'Its own attributes cannot identify it; it depends on an owner entity', 'It has no relationships', 'It is optional in every relationship'], answer: 1, why: 'The key of a weak entity includes the key of its owner. Example: an apartment number inside a building.' },
+      { id: 'd14-q9', q: 'Which sentence about COUNT is true?', options: ['COUNT(*) skips NULL rows', 'COUNT(col) counts rows where col is not NULL', 'COUNT(DISTINCT col) counts NULL as a value', 'COUNT(col) and COUNT(*) always give the same result'], answer: 1, why: 'COUNT(*) counts all rows. COUNT(col) skips NULLs. COUNT(DISTINCT col) also skips NULLs.' },
+      { id: 'd14-q10', q: 'A new company builds an online shop with customers, orders and payments. Money must always be correct. What is the best default choice?', options: ['A key-value store', 'A graph database', 'A relational database such as PostgreSQL', 'Plain JSON files'], answer: 2, why: 'Related data, joins, constraints and ACID transactions are what relational databases do best.' }
     ],
     teach: 'You are given the requirement: "A doctor cannot have two appointments at the same time, and a patient cannot receive the same drug twice in one appointment." Explain how you enforce both rules in the schema, and why the database is a better place for them than the application code.',
     rubric: 'UNIQUE (doctor_id, starts_at) on appointments; primary key or UNIQUE (appt_id, drug) on prescriptions; the database enforces rules for every application and every user, even concurrent ones (two app servers booking at the same moment would both pass an application check: race condition); constraints are declarative and cannot be forgotten; optional: exclusion constraints for overlapping time ranges in PostgreSQL.'

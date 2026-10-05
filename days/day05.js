@@ -43,9 +43,14 @@ ORDER BY dept_id, name;`
 FROM instructors
 WHERE instructor_id NOT IN (SELECT instructor_id FROM sections);`,
         q: 'Omar Farouk teaches no section. How many rows does this query return?',
-        options: ['1 row: Omar Farouk', '0 rows', 'All 16 instructors', 'An error, because the list contains NULL'],
+        options: [
+          '1 row: Omar Farouk',
+          '0 rows',
+          'All 16 instructors',
+          'An error, because the list has a NULL'
+        ],
         answer: 1,
-        why: 'The list from sections contains a NULL. Every NOT IN test becomes UNKNOWN or FALSE, so nothing passes. Fix it with NOT EXISTS, or add WHERE instructor_id IS NOT NULL inside the subquery.'
+        why: 'One section has no instructor, so the list contains a NULL. Then every NOT IN test is UNKNOWN or FALSE, and nothing passes. Fix it with NOT EXISTS, or add WHERE instructor_id IS NOT NULL inside the subquery.'
       }
     },
     {
@@ -84,7 +89,7 @@ ORDER BY i.dept_id;`,
     },
     {
       h: 'Subqueries in FROM: derived tables',
-      html: `<p>A subquery in the FROM clause produces a temporary table, called a <strong>derived table</strong>. Most databases require you to give it an alias. This is useful when you need to aggregate twice, for example "the average of per-student counts". You cannot write <code>AVG(COUNT(*))</code> directly, but you can count first and then average the counts.</p>`,
+      html: '<p>A subquery in the FROM clause produces a temporary table, called a <strong>derived table</strong>. Most databases require you to give it an alias. This is useful when you need to aggregate twice, for example "the average of per-student counts". You cannot write <code>AVG(COUNT(*))</code> directly, but you can count first and then average the counts.</p>',
       sql: `SELECT ROUND(AVG(n), 2) AS avg_enrollments, MAX(n) AS most
 FROM (SELECT student_id, COUNT(*) AS n
       FROM enrollments
@@ -101,10 +106,10 @@ FROM students st JOIN enrollments e ON e.student_id = st.student_id;
 SELECT COUNT(*) AS in_rows
 FROM students
 WHERE student_id IN (SELECT student_id FROM enrollments);`,
-        q: '38 students have at least one enrollment, and there are 156 enrollments. What do the two counts return?',
+        q: '38 students have at least one enrollment. There are 156 enrollments. What do the two counts return?',
         options: ['38 and 38', '156 and 156', '156 and 38', '38 and 156'],
         answer: 2,
-        why: 'The JOIN produces one row per enrollment (156). IN keeps each student once (38). If you used a JOIN for filtering, you would need DISTINCT to remove the copies.'
+        why: 'The JOIN makes one row per enrollment (156). IN keeps each student once (38). If you filter with a JOIN, you need DISTINCT to remove the copies.'
       }
     },
     {
@@ -116,10 +121,10 @@ WHERE student_id IN (SELECT student_id FROM enrollments);`,
 UNION
 SELECT mentor_id FROM instructors WHERE mentor_id IS NOT NULL
 ORDER BY 1;`,
-        q: 'Students have 33 non-NULL advisor values and instructors have 9 non-NULL mentor values. Roughly how many rows does UNION return?',
-        options: ['42 rows', 'At most 16 rows, because only 16 instructors exist', '31 rows', '11 rows'],
+        q: 'Students have 33 advisor values (not NULL). Instructors have 9 mentor values (not NULL). About how many rows does UNION return?',
+        options: ['42 rows', 'At most 16 rows, because there are only 16 instructors', '31 rows', '11 rows'],
         answer: 1,
-        why: 'UNION removes duplicates, and every value is an instructor id, so there can be at most 16 different values. UNION ALL would return all 42 values.'
+        why: 'UNION removes repeated values. Every value is an instructor id, so there are at most 16 different values. UNION ALL would return all 42.'
       }
     },
     {
@@ -131,7 +136,22 @@ ORDER BY 1;`,
 SELECT prereq_id FROM prereqs
 EXCEPT
 SELECT course_id FROM prereqs
-ORDER BY 1;`
+ORDER BY 1;`,
+      predict: {
+        sql: `SELECT course_id FROM prereqs
+INTERSECT
+SELECT prereq_id FROM prereqs
+ORDER BY 1;`,
+        q: 'The first query lists courses that <em>have</em> a prerequisite. The second lists courses that <em>are</em> a prerequisite. What does INTERSECT return?',
+        options: [
+          'Every course in prereqs',
+          'Courses that have a prerequisite AND are a prerequisite for another course',
+          'Courses that are in only one of the two lists',
+          'Nothing, because the column names are different'
+        ],
+        answer: 1,
+        why: 'INTERSECT keeps rows that are in both results. For example CS201: it needs CS101, and CS220 needs it. The column names do not need to match. Only the number of columns must match.'
+      }
     },
     {
       h: 'Relational division: "for all" questions',
@@ -168,74 +188,186 @@ WHERE NOT EXISTS (
 </ul>`,
   exercises: [
     {
-      id: 'd5-1', level: 1,
-      prompt: 'List the <code>name</code> and <code>salary</code> of every instructor who earns more than the average salary of all instructors.',
-      solution: `SELECT name, salary FROM instructors WHERE salary > (SELECT AVG(salary) FROM instructors);`,
-      hints: ['First write a query that returns only the average salary.', 'Put that query in parentheses on the right side of a comparison.', 'WHERE salary > (SELECT AVG(...) FROM ...)']
+      id: 'd5-1',
+      level: 1,
+      prompt: '<p>Find the instructors who earn more than the average salary of all instructors.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>salary</code></li></ul>',
+      solution: 'SELECT name, salary FROM instructors WHERE salary > (SELECT AVG(salary) FROM instructors);',
+      hints: [
+        'First write a query that returns only the average salary.',
+        'Put that query in brackets on the right side of >.',
+        'WHERE salary > (SELECT AVG(...) FROM ...)'
+      ]
     },
     {
-      id: 'd5-2', level: 1,
-      prompt: 'List the <code>name</code> of every student whose major department is located in <code>Turing Hall</code> or <code>Tesla Center</code>. Use a subquery, not a join.',
+      id: 'd5-2',
+      level: 1,
+      prompt: '<p>Find the students whose major department is in the building <code>Turing Hall</code> or <code>Tesla Center</code>.</p><ul class="spec"><li><b>Columns:</b> <code>name</code></li><li><b>Note:</b> use a subquery, not a JOIN.</li></ul>',
       solution: `SELECT name FROM students WHERE dept_id IN (SELECT dept_id FROM departments WHERE building IN ('Turing Hall', 'Tesla Center'));`,
-      hints: ['The building is stored in departments, the student in students. Link them with dept_id.', 'The inner query should return a list of dept_id values.', 'WHERE dept_id IN (SELECT dept_id FROM departments WHERE building IN (...))']
+      hints: [
+        'The building is in departments. The student is in students. dept_id links them.',
+        'The inner query should return a list of dept_id values.',
+        'WHERE dept_id IN (SELECT dept_id FROM departments WHERE building IN (...))'
+      ]
     },
     {
-      id: 'd5-3', level: 1,
-      prompt: 'Which courses have never been offered (they have no section at all)? Return <code>course_id</code> and <code>title</code>.',
-      solution: `SELECT course_id, title FROM courses c WHERE NOT EXISTS (SELECT 1 FROM sections s WHERE s.course_id = c.course_id);`,
-      hints: ['"Never" or "no ..." questions are a good fit for NOT EXISTS.', 'The inner query looks for a section of the current course.', 'WHERE NOT EXISTS (SELECT 1 FROM sections s WHERE s.course_id = c.course_id)']
+      id: 'd5-3',
+      level: 1,
+      prompt: '<p>Find the courses that were never offered. These courses have no section at all.</p><ul class="spec"><li><b>Columns:</b> <code>course_id</code>, <code>title</code></li></ul>',
+      solution: 'SELECT course_id, title FROM courses c WHERE NOT EXISTS (SELECT 1 FROM sections s WHERE s.course_id = c.course_id);',
+      hints: [
+        'Questions with "never" or "no" fit NOT EXISTS well.',
+        'The inner query looks for a section of the current course.',
+        'WHERE NOT EXISTS (SELECT 1 FROM sections s WHERE s.course_id = c.course_id)'
+      ]
     },
     {
-      id: 'd5-4', level: 2,
-      prompt: 'Return the <code>name</code> of every instructor who teaches no section. Careful: one section has no instructor (its <code>instructor_id</code> is NULL). Your query must still give the right answer.',
-      solution: `SELECT name FROM instructors i WHERE NOT EXISTS (SELECT 1 FROM sections s WHERE s.instructor_id = i.instructor_id);`,
-      hints: ['If you got zero rows, read the lesson segment about the NOT IN trap.', 'NOT EXISTS is not affected by NULLs.', 'Alternative: keep NOT IN, but add WHERE instructor_id IS NOT NULL inside the subquery.']
+      id: 'd5-4',
+      level: 2,
+      prompt: '<p>Find the instructors who teach no section.</p><ul class="spec"><li><b>Columns:</b> <code>name</code></li><li><b>Note:</b> be careful. One section has no instructor (its <code>instructor_id</code> is NULL). Your query must still give the right answer.</li></ul>',
+      solution: 'SELECT name FROM instructors i WHERE NOT EXISTS (SELECT 1 FROM sections s WHERE s.instructor_id = i.instructor_id);',
+      hints: [
+        'Did you get 0 rows? Read the lesson part about the NOT IN trap.',
+        'NOT EXISTS is safe with NULLs.',
+        'Or keep NOT IN, but add WHERE instructor_id IS NOT NULL inside the subquery.'
+      ]
     },
     {
-      id: 'd5-5', level: 2,
-      prompt: 'List the <code>name</code> of every student who has made at least one payment in <code>cash</code>. Each student should appear once.',
+      id: 'd5-5',
+      level: 2,
+      prompt: `<p>Find the students who made at least one payment in cash.</p><ul class="spec"><li><b>Columns:</b> <code>name</code></li><li><b>Note:</b> show each student only once. Cash payments have <code>method</code> = <code>'cash'</code>.</li></ul>`,
       solution: `SELECT name FROM students st WHERE EXISTS (SELECT 1 FROM payments p WHERE p.student_id = st.student_id AND p.method = 'cash');`,
-      hints: ['A JOIN would repeat students who paid cash twice. EXISTS keeps each student once.', 'The inner query needs two conditions: same student, and method = \'cash\'.', 'WHERE EXISTS (SELECT 1 FROM payments p WHERE p.student_id = st.student_id AND ...)']
+      hints: [
+        'A JOIN repeats a student who paid cash twice. EXISTS keeps each student once.',
+        `The inner query needs two conditions: the same student, and method = 'cash'.`,
+        'WHERE EXISTS (SELECT 1 FROM payments p WHERE p.student_id = st.student_id AND ...)'
+      ]
     },
     {
-      id: 'd5-6', level: 2,
-      prompt: 'Which instructors earn more than the average salary of their own department? Return <code>name</code>, <code>dept_id</code> and <code>salary</code>.',
-      solution: `SELECT i.name, i.dept_id, i.salary FROM instructors i WHERE i.salary > (SELECT AVG(i2.salary) FROM instructors i2 WHERE i2.dept_id = i.dept_id);`,
-      hints: ['The average must be computed per department, so the subquery needs to know the outer row\'s department.', 'Use two aliases for the same table, for example i (outer) and i2 (inner).', 'WHERE i.salary > (SELECT AVG(i2.salary) FROM instructors i2 WHERE i2.dept_id = i.dept_id)']
+      id: 'd5-6',
+      level: 2,
+      prompt: '<p>Find the instructors who earn more than the average salary of their own department.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>dept_id</code>, <code>salary</code></li></ul>',
+      solution: 'SELECT i.name, i.dept_id, i.salary FROM instructors i WHERE i.salary > (SELECT AVG(i2.salary) FROM instructors i2 WHERE i2.dept_id = i.dept_id);',
+      hints: [
+        'The average is different for each department. So the subquery must know the department of the outer row.',
+        'Use two aliases for the same table, for example i (outer) and i2 (inner).',
+        'WHERE i.salary > (SELECT AVG(i2.salary) FROM instructors i2 WHERE i2.dept_id = i.dept_id)'
+      ]
     },
     {
-      id: 'd5-7', level: 2,
-      prompt: 'Consider only students who have at least one enrollment. On average, how many enrollments does such a student have? Return one column <code>avg_enrollments</code>, rounded to 2 decimals.',
-      solution: `SELECT ROUND(AVG(n), 2) AS avg_enrollments FROM (SELECT student_id, COUNT(*) AS n FROM enrollments GROUP BY student_id) AS per_student;`,
-      hints: ['You need two levels of aggregation: count per student, then average the counts.', 'Put the per-student count in a derived table in FROM.', 'SELECT ROUND(AVG(n), 2) FROM (SELECT student_id, COUNT(*) AS n FROM enrollments GROUP BY ...) AS t']
+      id: 'd5-7',
+      level: 2,
+      prompt: '<p>Look only at students who have at least one enrollment. On average, how many enrollments does one such student have?</p><ul class="spec"><li><b>Columns:</b> <code>avg_enrollments</code></li><li><b>Note:</b> one row. Round to 2 decimal places.</li></ul>',
+      solution: 'SELECT ROUND(AVG(n), 2) AS avg_enrollments FROM (SELECT student_id, COUNT(*) AS n FROM enrollments GROUP BY student_id) AS per_student;',
+      hints: [
+        'You need two steps: count per student, then take the average of those counts.',
+        'Put the count per student in a subquery inside FROM.',
+        'SELECT ROUND(AVG(n), 2) FROM (SELECT student_id, COUNT(*) AS n FROM enrollments GROUP BY ...) AS t'
+      ]
     },
     {
-      id: 'd5-8', level: 2,
-      prompt: 'Find the "root" courses: course ids that are a prerequisite of some course but have no prerequisite themselves. Return one column <code>course_id</code>. Use a set operator.',
-      solution: `SELECT prereq_id AS course_id FROM prereqs EXCEPT SELECT course_id FROM prereqs;`,
-      hints: ['Two lists: courses that appear as a prerequisite, and courses that have a prerequisite.', 'You want the first list minus the second.', 'SELECT prereq_id FROM prereqs EXCEPT SELECT course_id FROM prereqs']
+      id: 'd5-8',
+      level: 2,
+      prompt: '<p>Find the "root" courses. A root course is a prerequisite of another course, but it has no prerequisite of its own.</p><ul class="spec"><li><b>Columns:</b> <code>course_id</code></li><li><b>Note:</b> use a set operator (UNION, INTERSECT or EXCEPT).</li></ul>',
+      solution: 'SELECT prereq_id AS course_id FROM prereqs EXCEPT SELECT course_id FROM prereqs;',
+      hints: [
+        'Make two lists: courses that are a prerequisite, and courses that have a prerequisite.',
+        'You want the first list minus the second list.',
+        'SELECT prereq_id FROM prereqs EXCEPT SELECT course_id FROM prereqs'
+      ]
     },
     {
-      id: 'd5-9', level: 3,
-      prompt: 'For each graded enrollment, find the students who scored <strong>above the average score of their own section</strong>. Return <code>name</code>, <code>section_id</code> and <code>score</code>.',
-      solution: `SELECT st.name, e.section_id, e.score FROM enrollments e JOIN students st ON st.student_id = e.student_id WHERE e.score > (SELECT AVG(e2.score) FROM enrollments e2 WHERE e2.section_id = e.section_id);`,
-      hints: ['You need the name, so join enrollments to students.', 'The section average changes per row: a correlated subquery on enrollments with a second alias.', 'AVG ignores NULL scores, and NULL > anything is not TRUE, so in-progress rows drop out by themselves.']
+      id: 'd5-9',
+      level: 3,
+      prompt: '<p>Find the students who scored higher than the average score of their own section.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>section_id</code>, <code>score</code></li><li><b>Note:</b> one row for each such enrollment.</li></ul>',
+      solution: 'SELECT st.name, e.section_id, e.score FROM enrollments e JOIN students st ON st.student_id = e.student_id WHERE e.score > (SELECT AVG(e2.score) FROM enrollments e2 WHERE e2.section_id = e.section_id);',
+      hints: [
+        'You need the name, so join enrollments to students.',
+        'The section average changes for each row. Use a correlated subquery on enrollments with a second alias.',
+        'AVG skips NULL scores, and NULL > anything is not TRUE. So rows with no score drop out by themselves.'
+      ]
     },
     {
-      id: 'd5-10', level: 3,
-      prompt: 'Relational division: which students took <strong>every</strong> Biology course (department 4)? Return <code>name</code>. Count a course as taken if the student enrolled in any section of it.',
-      solution: `SELECT st.name FROM students st WHERE NOT EXISTS (SELECT 1 FROM courses c WHERE c.dept_id = 4 AND NOT EXISTS (SELECT 1 FROM enrollments e JOIN sections s ON s.section_id = e.section_id WHERE e.student_id = st.student_id AND s.course_id = c.course_id));`,
-      hints: ['Rewrite "took every course" as "there is no Biology course they did not take".', 'Two nested NOT EXISTS: the outer one loops over Biology courses, the inner one looks for an enrollment of this student in that course.', 'Alternative: GROUP BY student and compare COUNT(DISTINCT course_id) with (SELECT COUNT(*) FROM courses WHERE dept_id = 4).']
+      id: 'd5-10',
+      level: 3,
+      prompt: '<p>Find the students who took <strong>every</strong> Biology course (department 4). This kind of question is called relational division.</p><ul class="spec"><li><b>Columns:</b> <code>name</code></li><li><b>Note:</b> a course counts as taken if the student enrolled in any section of it.</li></ul>',
+      solution: 'SELECT st.name FROM students st WHERE NOT EXISTS (SELECT 1 FROM courses c WHERE c.dept_id = 4 AND NOT EXISTS (SELECT 1 FROM enrollments e JOIN sections s ON s.section_id = e.section_id WHERE e.student_id = st.student_id AND s.course_id = c.course_id));',
+      hints: [
+        'Change "took every course" into "there is no Biology course that they did not take".',
+        'Use two NOT EXISTS, one inside the other. The outer one goes over the Biology courses. The inner one looks for an enrollment of this student in that course.',
+        'Another way: GROUP BY student and compare COUNT(DISTINCT course_id) with (SELECT COUNT(*) FROM courses WHERE dept_id = 4).'
+      ]
     }
   ],
   quiz: [
-    { id: 'd5-q1', q: 'A subquery used as <code>WHERE salary &gt; (SELECT ...)</code> must return…', options: ['Any number of rows', 'Exactly one column and at most one row', 'Exactly one row with any number of columns', 'A table with an alias'], answer: 1, why: 'A comparison needs a single value. That is a scalar subquery: one column, one row (zero rows gives NULL).' },
-    { id: 'd5-q2', q: 'The list returned by a subquery is (5, 7, NULL). What does <code>3 NOT IN (that list)</code> evaluate to?', options: ['TRUE', 'FALSE', 'UNKNOWN', 'An error'], answer: 2, why: '3 <> 5 is TRUE, 3 <> 7 is TRUE, 3 <> NULL is UNKNOWN. TRUE AND TRUE AND UNKNOWN is UNKNOWN, and WHERE keeps only TRUE.' },
-    { id: 'd5-q3', q: 'What makes a subquery "correlated"?', options: ['It uses an aggregate', 'It appears in the FROM clause', 'It refers to a column of the outer query', 'It returns more than one row'], answer: 2, why: 'A correlated subquery depends on the current outer row, so logically it is evaluated once per outer row.' },
-    { id: 'd5-q4', q: 'Query A returns 10 rows and query B returns 6 rows. 4 rows appear in both. How many rows does <code>A UNION ALL B</code> return?', options: ['12', '16', '10', '4'], answer: 1, why: 'UNION ALL keeps everything: 10 + 6 = 16. UNION (without ALL) would return 12, assuming no duplicates inside A or B.' },
-    { id: 'd5-q5', q: 'With the same A and B, how many rows does <code>A EXCEPT B</code> return (assuming no duplicates inside A)?', options: ['6', '4', '10', '2'], answer: 0, why: 'EXCEPT removes from A the 4 rows that also appear in B: 10 − 4 = 6.' },
-    { id: 'd5-q6', q: 'Which question needs relational division?', options: ['Students with no enrollments', 'Students who took at least one CS course', 'Students who took all CS courses', 'Students in the largest department'], answer: 2, why: '"All" or "every" questions are division. They are usually written with a double NOT EXISTS or with a COUNT comparison.' },
-    { id: 'd5-q7', q: 'Why is <code>EXISTS</code> usually written with <code>SELECT 1</code> inside?', options: ['It is required by the standard', 'EXISTS only checks whether any row exists, so the selected values do not matter', 'It makes the subquery return one row', 'SELECT * would be an error'], answer: 1, why: 'EXISTS is TRUE if at least one row is returned. SELECT 1, SELECT * and SELECT NULL all behave the same.' }
+    {
+      id: 'd5-q1',
+      q: 'You write <code>WHERE salary &gt; (SELECT ...)</code>. What must the subquery return?',
+      options: [
+        'Any number of rows',
+        'One column and at most one row',
+        'One row with any number of columns',
+        'A table with an alias'
+      ],
+      answer: 1,
+      why: 'A comparison needs one single value. So the subquery must return one column and one row. (Zero rows gives NULL.)'
+    },
+    {
+      id: 'd5-q2',
+      q: 'A subquery returns the list (5, 7, NULL). What is <code>3 NOT IN (that list)</code>?',
+      options: ['TRUE', 'FALSE', 'UNKNOWN', 'An error'],
+      answer: 2,
+      why: '3 <> 5 is TRUE. 3 <> 7 is TRUE. 3 <> NULL is UNKNOWN. TRUE AND TRUE AND UNKNOWN is UNKNOWN, and WHERE keeps only TRUE rows.'
+    },
+    {
+      id: 'd5-q3',
+      q: 'What makes a subquery "correlated"?',
+      options: [
+        'It uses an aggregate',
+        'It is in the FROM clause',
+        'It uses a column of the outer query',
+        'It returns more than one row'
+      ],
+      answer: 2,
+      why: 'A correlated subquery depends on the current outer row. So it runs once for each outer row.'
+    },
+    {
+      id: 'd5-q4',
+      q: 'Query A returns 10 rows. Query B returns 6 rows. 4 rows are in both. How many rows does <code>A UNION ALL B</code> return?',
+      options: ['12', '16', '10', '4'],
+      answer: 1,
+      why: 'UNION ALL keeps everything: 10 + 6 = 16. UNION (without ALL) would return 12, if A and B have no repeated rows inside them.'
+    },
+    {
+      id: 'd5-q5',
+      q: 'Same A and B. How many rows does <code>A EXCEPT B</code> return? (A has no repeated rows.)',
+      options: ['6', '4', '10', '2'],
+      answer: 0,
+      why: 'EXCEPT removes from A the 4 rows that are also in B: 10 − 4 = 6.'
+    },
+    {
+      id: 'd5-q6',
+      q: 'Which question needs relational division?',
+      options: [
+        'Students with no enrollments',
+        'Students who took at least one CS course',
+        'Students who took all CS courses',
+        'Students in the largest department'
+      ],
+      answer: 2,
+      why: 'Questions with "all" or "every" are division. You usually write them with two NOT EXISTS, or by comparing counts.'
+    },
+    {
+      id: 'd5-q7',
+      q: 'Why do people often write <code>SELECT 1</code> inside <code>EXISTS</code>?',
+      options: [
+        'The SQL standard requires it',
+        'EXISTS only checks if any row exists, so the selected values do not matter',
+        'It makes the subquery return one row',
+        'SELECT * would give an error'
+      ],
+      answer: 1,
+      why: 'EXISTS is TRUE if the subquery returns at least one row. SELECT 1, SELECT * and SELECT NULL all work the same.'
+    }
   ],
   teach: 'Explain why "WHERE id NOT IN (subquery)" can return no rows when the subquery contains a NULL, and show how to fix it.',
   rubric: 'NOT IN expands to a chain of <> comparisons joined by AND; any comparison with NULL is UNKNOWN; TRUE AND UNKNOWN is UNKNOWN, so no row is ever TRUE; WHERE keeps only TRUE rows; fix with NOT EXISTS (correlated) or by filtering NULLs out of the subquery (WHERE col IS NOT NULL); bonus: a LEFT JOIN ... WHERE right.key IS NULL anti-join also works.'

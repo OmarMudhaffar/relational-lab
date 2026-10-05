@@ -21,11 +21,11 @@ LAB.days.push({
 FROM students
 CROSS JOIN departments;`,
       predict: {
-        sql: `SELECT COUNT(*) FROM courses CROSS JOIN departments;`,
+        sql: 'SELECT COUNT(*) FROM courses CROSS JOIN departments;',
         q: 'There are 23 courses and 8 departments. How many rows does a CROSS JOIN return?',
         options: ['23', '31', '184', '8'],
         answer: 2,
-        why: 'Every course is paired with every department: 23 × 8 = 184.'
+        why: 'Each course is paired with each department: 23 × 8 = 184.'
       }
     },
     {
@@ -80,7 +80,7 @@ ORDER BY s.name;`,
     },
     {
       h: 'LEFT JOIN keeps every row on the left',
-      html: `<p><code>A LEFT JOIN B</code> returns every row of A. When a row of A has no match in B, the B columns are filled with NULL. Use it when the left rows must not disappear, for example "every department, with its students if any".</p>`,
+      html: '<p><code>A LEFT JOIN B</code> returns every row of A. When a row of A has no match in B, the B columns are filled with NULL. Use it when the left rows must not disappear, for example "every department, with its students if any".</p>',
       sql: `SELECT d.name AS department, s.name AS student
 FROM departments d
 LEFT JOIN students s ON s.dept_id = d.dept_id
@@ -96,10 +96,15 @@ FROM courses c
 LEFT JOIN sections x ON x.course_id = c.course_id
 WHERE x.section_id IS NULL;`,
       predict: {
-        q: 'You want students with no enrollments. Which condition completes <code>FROM students s LEFT JOIN enrollments e ON e.student_id = s.student_id WHERE ...</code>?',
-        options: ['e.grade IS NULL', 'e.student_id IS NULL', 's.student_id IS NULL', 'e.student_id <> s.student_id'],
+        q: 'You want students with no enrollments. Which condition completes this query? <code>FROM students s LEFT JOIN enrollments e ON e.student_id = s.student_id WHERE ...</code>',
+        options: [
+          'e.grade IS NULL',
+          'e.student_id IS NULL',
+          's.student_id IS NULL',
+          'e.student_id <> s.student_id'
+        ],
         answer: 1,
-        why: 'e.student_id is part of the primary key of enrollments, so it is NULL only when there was no match. e.grade is also NULL for courses still in progress, so it would return wrong rows.'
+        why: 'e.student_id is part of the primary key of enrollments. So it is NULL only when no enrollment matched. e.grade is also NULL for courses that are still running, so it gives wrong rows.'
       }
     },
     {
@@ -120,10 +125,15 @@ WHERE s.year = 4;</pre>`,
 FROM departments d
 LEFT JOIN students s ON s.dept_id = d.dept_id
 WHERE s.year = 4;`,
-        q: 'Does Philosophy (no students) appear in this result?',
-        options: ['Yes, with a NULL student', 'No', 'Yes, once per 4th-year student', 'The query fails'],
+        q: 'Philosophy has no students. Is Philosophy in the result?',
+        options: [
+          'Yes, with a NULL student',
+          'No',
+          'Yes, once for each 4th-year student',
+          'The query fails'
+        ],
         answer: 1,
-        why: 'For Philosophy, s.year is NULL, so s.year = 4 is UNKNOWN and WHERE removes the row. Move the condition into ON to keep it.'
+        why: 'For Philosophy, s.year is NULL. So s.year = 4 is UNKNOWN, and WHERE removes the row. Put the condition in ON to keep it.'
       }
     },
     {
@@ -147,7 +157,7 @@ ORDER BY mentor, instructor;`
     },
     {
       h: 'Join, then group',
-      html: `<p>Joins and GROUP BY work well together: first build the wide rows, then summarise them. To count students per department <strong>including zero</strong>, combine LEFT JOIN with <code>COUNT(s.student_id)</code>. <code>COUNT(*)</code> would count the NULL-filled row and give Philosophy 1 instead of 0.</p>`,
+      html: '<p>Joins and GROUP BY work well together: first build the wide rows, then summarise them. To count students per department <strong>including zero</strong>, combine LEFT JOIN with <code>COUNT(s.student_id)</code>. <code>COUNT(*)</code> would count the NULL-filled row and give Philosophy 1 instead of 0.</p>',
       sql: `SELECT d.name, COUNT(s.student_id) AS students
 FROM departments d
 LEFT JOIN students s ON s.dept_id = d.dept_id
@@ -159,11 +169,11 @@ ORDER BY students DESC, d.name;`
       html: `<p>When the join columns have the same name on both sides, <code>JOIN enrollments USING (student_id)</code> is a short form of the ON condition.</p>
 <p><code>NATURAL JOIN</code> goes further: it joins on <strong>every</strong> column with the same name. That is dangerous. <code>students</code> and <code>departments</code> share <code>dept_id</code> <strong>and</strong> <code>name</code>, so a natural join also requires the student name to equal the department name.</p>`,
       predict: {
-        sql: `SELECT COUNT(*) FROM students NATURAL JOIN departments;`,
+        sql: 'SELECT COUNT(*) FROM students NATURAL JOIN departments;',
         q: 'How many rows does this return?',
         options: ['37', '40', '320', '0'],
         answer: 3,
-        why: 'NATURAL JOIN matches on dept_id AND name. No student is named "Physics", so nothing matches. Avoid NATURAL JOIN: a new column added later can silently change your results.'
+        why: 'NATURAL JOIN matches on every column with the same name: dept_id AND name. No student is called "Physics", so nothing matches. Avoid NATURAL JOIN: a new column can change your results without any warning.'
       }
     }
   ],
@@ -181,77 +191,177 @@ ORDER BY students DESC, d.name;`
 <li><strong>USING:</strong> supported by PostgreSQL, MySQL, Oracle and SQLite. SQL Server does not support USING or NATURAL JOIN.</li></ul>`,
   exercises: [
     {
-      id: 'd4-1', level: 1,
-      prompt: 'List every course with the name of its department. Return <code>course_id</code>, <code>title</code> and the department name as <code>department</code>.',
-      solution: `SELECT c.course_id, c.title, d.name AS department FROM courses c JOIN departments d ON d.dept_id = c.dept_id;`,
-      hints: ['courses.dept_id points to departments.dept_id.', 'JOIN departments d ON d.dept_id = c.dept_id']
+      id: 'd4-1',
+      level: 1,
+      prompt: '<p>Show every course with the name of its department.</p><ul class="spec"><li><b>Columns:</b> <code>course_id</code>, <code>title</code>, <code>department</code></li><li><b>Note:</b> <code>department</code> is the department name.</li></ul>',
+      solution: 'SELECT c.course_id, c.title, d.name AS department FROM courses c JOIN departments d ON d.dept_id = c.dept_id;',
+      hints: [
+        'courses.dept_id points to departments.dept_id.',
+        'JOIN departments d ON d.dept_id = c.dept_id'
+      ]
     },
     {
-      id: 'd4-2', level: 1,
-      prompt: 'Show each section with the name of the instructor who teaches it. Return <code>section_id</code>, <code>course_id</code> and <code>instructor</code> (the instructor\'s name). Only sections that have an instructor.',
-      solution: `SELECT x.section_id, x.course_id, i.name AS instructor FROM sections x JOIN instructors i ON i.instructor_id = x.instructor_id;`,
-      hints: ['An INNER JOIN drops sections without an instructor automatically.', 'JOIN instructors i ON i.instructor_id = x.instructor_id']
+      id: 'd4-2',
+      level: 1,
+      prompt: `<p>Show each section with the name of its instructor. Skip sections that have no instructor.</p><ul class="spec"><li><b>Columns:</b> <code>section_id</code>, <code>course_id</code>, <code>instructor</code></li><li><b>Note:</b> <code>instructor</code> is the instructor's name.</li></ul>`,
+      solution: 'SELECT x.section_id, x.course_id, i.name AS instructor FROM sections x JOIN instructors i ON i.instructor_id = x.instructor_id;',
+      hints: [
+        'An INNER JOIN drops sections without an instructor by itself.',
+        'JOIN instructors i ON i.instructor_id = x.instructor_id'
+      ]
     },
     {
-      id: 'd4-3', level: 1,
-      prompt: 'Which students have never enrolled in any section? Return <code>student_id</code> and <code>name</code>.',
-      solution: `SELECT s.student_id, s.name FROM students s LEFT JOIN enrollments e ON e.student_id = s.student_id WHERE e.student_id IS NULL;`,
-      hints: ['You need students that have no matching row in enrollments.', 'LEFT JOIN, then keep rows where the right side is missing.', 'WHERE e.student_id IS NULL']
+      id: 'd4-3',
+      level: 1,
+      prompt: '<p>Find the students who never enrolled in any section.</p><ul class="spec"><li><b>Columns:</b> <code>student_id</code>, <code>name</code></li></ul>',
+      solution: 'SELECT s.student_id, s.name FROM students s LEFT JOIN enrollments e ON e.student_id = s.student_id WHERE e.student_id IS NULL;',
+      hints: [
+        'You need students with no matching row in enrollments.',
+        'Use LEFT JOIN. Then keep the rows where the right side is empty.',
+        'WHERE e.student_id IS NULL'
+      ]
     },
     {
-      id: 'd4-4', level: 2,
-      prompt: 'Produce a transcript for student <code>1010</code> (Lina Khalil). Return <code>course_id</code>, <code>title</code>, <code>semester</code>, <code>year</code>, <code>grade</code>, sorted by year, then semester, then course_id.',
-      solution: `SELECT c.course_id, c.title, x.semester, x.year, e.grade FROM enrollments e JOIN sections x ON x.section_id = e.section_id JOIN courses c ON c.course_id = x.course_id WHERE e.student_id = 1010 ORDER BY x.year, x.semester, c.course_id;`,
+      id: 'd4-4',
+      level: 2,
+      prompt: '<p>Make a transcript (a list of courses and grades) for student <code>1010</code>, Lina Khalil.</p><ul class="spec"><li><b>Columns:</b> <code>course_id</code>, <code>title</code>, <code>semester</code>, <code>year</code>, <code>grade</code></li><li><b>Order:</b> by <code>year</code>, then by <code>semester</code> (A to Z), then by <code>course_id</code></li></ul>',
+      solution: 'SELECT c.course_id, c.title, x.semester, x.year, e.grade FROM enrollments e JOIN sections x ON x.section_id = e.section_id JOIN courses c ON c.course_id = x.course_id WHERE e.student_id = 1010 ORDER BY x.year, x.semester, c.course_id;',
       ordered: true,
-      hints: ['Path: enrollments → sections → courses.', 'Filter with WHERE e.student_id = 1010.', 'ORDER BY x.year, x.semester, c.course_id']
+      hints: [
+        'Path: enrollments → sections → courses.',
+        'Filter with WHERE e.student_id = 1010.',
+        'ORDER BY x.year, x.semester, c.course_id'
+      ]
     },
     {
-      id: 'd4-5', level: 2,
-      prompt: 'List every department and how many instructors it has, including departments with zero instructors. Return <code>department</code> (the name) and <code>instructors</code>.',
-      solution: `SELECT d.name AS department, COUNT(i.instructor_id) AS instructors FROM departments d LEFT JOIN instructors i ON i.dept_id = d.dept_id GROUP BY d.dept_id, d.name;`,
-      hints: ['Departments with zero instructors must stay: which join keeps them?', 'Group by the department.', 'COUNT(i.instructor_id), not COUNT(*), so empty departments get 0.']
+      id: 'd4-5',
+      level: 2,
+      prompt: '<p>Show every department and how many instructors it has. Departments with no instructors must show 0.</p><ul class="spec"><li><b>Columns:</b> <code>department</code>, <code>instructors</code></li><li><b>Note:</b> <code>department</code> is the department name.</li></ul>',
+      solution: 'SELECT d.name AS department, COUNT(i.instructor_id) AS instructors FROM departments d LEFT JOIN instructors i ON i.dept_id = d.dept_id GROUP BY d.dept_id, d.name;',
+      hints: [
+        'Departments with 0 instructors must stay. Which join keeps them?',
+        'Group by the department.',
+        'Use COUNT(i.instructor_id), not COUNT(*). Then empty departments get 0.'
+      ]
     },
     {
-      id: 'd4-6', level: 2,
-      prompt: 'Show each instructor with their mentor\'s name. Return <code>instructor</code> and <code>mentor</code>. Instructors without a mentor must appear with mentor NULL.',
-      solution: `SELECT i.name AS instructor, m.name AS mentor FROM instructors i LEFT JOIN instructors m ON m.instructor_id = i.mentor_id;`,
-      hints: ['Join instructors to itself with two aliases.', 'Which join keeps instructors without a mentor?', 'ON m.instructor_id = i.mentor_id']
+      id: 'd4-6',
+      level: 2,
+      prompt: '<p>Show each instructor with the name of their mentor.</p><ul class="spec"><li><b>Columns:</b> <code>instructor</code>, <code>mentor</code></li><li><b>Note:</b> instructors with no mentor must also appear. Their <code>mentor</code> is NULL.</li></ul>',
+      solution: 'SELECT i.name AS instructor, m.name AS mentor FROM instructors i LEFT JOIN instructors m ON m.instructor_id = i.mentor_id;',
+      hints: [
+        'Join instructors to itself. Use two aliases.',
+        'Which join keeps instructors who have no mentor?',
+        'ON m.instructor_id = i.mentor_id'
+      ]
     },
     {
-      id: 'd4-7', level: 2,
-      prompt: 'For every course that has prerequisites, list the course title and the title of each prerequisite. Return <code>course</code> and <code>requires</code>.',
-      solution: `SELECT c.title AS course, p.title AS requires FROM prereqs r JOIN courses c ON c.course_id = r.course_id JOIN courses p ON p.course_id = r.prereq_id;`,
-      hints: ['prereqs only stores codes. You need courses twice: once for the course, once for the prerequisite.', 'Use two aliases for courses, e.g. c and p.', 'JOIN courses p ON p.course_id = r.prereq_id']
+      id: 'd4-7',
+      level: 2,
+      prompt: '<p>For each course that has prerequisites, show the course title and the title of each prerequisite. A prerequisite is a course you must take first.</p><ul class="spec"><li><b>Columns:</b> <code>course</code>, <code>requires</code></li></ul>',
+      solution: 'SELECT c.title AS course, p.title AS requires FROM prereqs r JOIN courses c ON c.course_id = r.course_id JOIN courses p ON p.course_id = r.prereq_id;',
+      hints: [
+        'prereqs stores only codes. You need courses twice: once for the course, once for the prerequisite.',
+        'Use two aliases for courses, for example c and p.',
+        'JOIN courses p ON p.course_id = r.prereq_id'
+      ]
     },
     {
-      id: 'd4-8', level: 3,
-      prompt: 'How many students has each instructor taught (count enrollments in their sections)? Return <code>instructor</code> (name) and <code>enrollments</code>, for instructors with at least 10 enrollments, sorted by enrollments descending, then instructor name.',
-      solution: `SELECT i.name AS instructor, COUNT(*) AS enrollments FROM instructors i JOIN sections x ON x.instructor_id = i.instructor_id JOIN enrollments e ON e.section_id = x.section_id GROUP BY i.instructor_id, i.name HAVING COUNT(*) >= 10 ORDER BY enrollments DESC, instructor;`,
+      id: 'd4-8',
+      level: 3,
+      prompt: `<p>For each instructor, count the enrollments in all of their sections. Show only instructors with 10 or more enrollments.</p><ul class="spec"><li><b>Columns:</b> <code>instructor</code>, <code>enrollments</code></li><li><b>Order:</b> most <code>enrollments</code> first, then by <code>instructor</code>, A to Z</li><li><b>Note:</b> <code>instructor</code> is the instructor's name.</li></ul>`,
+      solution: 'SELECT i.name AS instructor, COUNT(*) AS enrollments FROM instructors i JOIN sections x ON x.instructor_id = i.instructor_id JOIN enrollments e ON e.section_id = x.section_id GROUP BY i.instructor_id, i.name HAVING COUNT(*) >= 10 ORDER BY enrollments DESC, instructor;',
       ordered: true,
-      hints: ['Path: instructors → sections → enrollments.', 'Group by the instructor, then filter groups.', 'HAVING COUNT(*) >= 10 ORDER BY enrollments DESC, instructor']
+      hints: [
+        'Path: instructors → sections → enrollments.',
+        'Group by the instructor. Then filter the groups.',
+        'HAVING COUNT(*) >= 10 ORDER BY enrollments DESC, instructor'
+      ]
     },
     {
-      id: 'd4-9', level: 3,
-      prompt: 'List every department with the number of its students in year 4, showing 0 for departments with none. Return <code>department</code> and <code>seniors</code>, sorted by seniors descending, then department name.',
-      solution: `SELECT d.name AS department, COUNT(s.student_id) AS seniors FROM departments d LEFT JOIN students s ON s.dept_id = d.dept_id AND s.year = 4 GROUP BY d.dept_id, d.name ORDER BY seniors DESC, department;`,
+      id: 'd4-9',
+      level: 3,
+      prompt: '<p>For every department, count its students in year 4. Departments with none must show 0.</p><ul class="spec"><li><b>Columns:</b> <code>department</code>, <code>seniors</code></li><li><b>Order:</b> most <code>seniors</code> first, then by <code>department</code>, A to Z</li><li><b>Note:</b> <code>department</code> is the department name.</li></ul>',
+      solution: 'SELECT d.name AS department, COUNT(s.student_id) AS seniors FROM departments d LEFT JOIN students s ON s.dept_id = d.dept_id AND s.year = 4 GROUP BY d.dept_id, d.name ORDER BY seniors DESC, department;',
       ordered: true,
-      hints: ['Every department must appear, so start from departments and LEFT JOIN.', 'If you filter year = 4 in WHERE, the departments with zero seniors disappear.', 'Put s.year = 4 inside the ON condition and count s.student_id.']
+      hints: [
+        'Every department must appear. So start from departments and use LEFT JOIN.',
+        'If you put year = 4 in WHERE, departments with 0 seniors disappear.',
+        'Put s.year = 4 inside ON, and count s.student_id.'
+      ]
     },
     {
-      id: 'd4-10', level: 3,
-      prompt: 'Find students who took at least one section taught by their own advisor. Return each such student once: <code>student</code> (name) and <code>advisor</code> (the advisor\'s name).',
-      solution: `SELECT DISTINCT s.name AS student, i.name AS advisor FROM students s JOIN enrollments e ON e.student_id = s.student_id JOIN sections x ON x.section_id = e.section_id JOIN instructors i ON i.instructor_id = s.advisor_id WHERE x.instructor_id = s.advisor_id;`,
-      hints: ['Path: students → enrollments → sections. Compare the section\'s instructor with the student\'s advisor.', 'Join instructors on s.advisor_id to get the advisor\'s name.', 'A student may share several sections with the advisor: use DISTINCT.']
+      id: 'd4-10',
+      level: 3,
+      prompt: `<p>Find the students who took at least one section taught by their own advisor.</p><ul class="spec"><li><b>Columns:</b> <code>student</code>, <code>advisor</code></li><li><b>Note:</b> <code>student</code> is the student's name. <code>advisor</code> is the advisor's name. Show each student only once.</li></ul>`,
+      solution: 'SELECT DISTINCT s.name AS student, i.name AS advisor FROM students s JOIN enrollments e ON e.student_id = s.student_id JOIN sections x ON x.section_id = e.section_id JOIN instructors i ON i.instructor_id = s.advisor_id WHERE x.instructor_id = s.advisor_id;',
+      hints: [
+        `Path: students → enrollments → sections. Compare the section's instructor with the student's advisor.`,
+        `Join instructors on s.advisor_id to get the advisor's name.`,
+        'A student can share several sections with the advisor. Use DISTINCT.'
+      ]
     }
   ],
   quiz: [
-    { id: 'd4-q1', q: 'Table A has 5 rows and table B has 4 rows. How many rows does <code>A CROSS JOIN B</code> return?', options: ['9', '20', '5', '4'], answer: 1, why: 'A Cartesian product pairs every row of A with every row of B: 5 × 4 = 20.' },
-    { id: 'd4-q2', q: 'Which join keeps every row of the first table, even rows with no match?', options: ['INNER JOIN', 'LEFT JOIN', 'CROSS JOIN', 'NATURAL JOIN'], answer: 1, why: 'LEFT (OUTER) JOIN keeps all left rows and fills the right side with NULL when nothing matches.' },
-    { id: 'd4-q3', q: 'After <code>departments d LEFT JOIN students s ON ...</code>, you add <code>WHERE s.year = 2</code>. What happens to departments with no students?', options: ['They stay, with NULLs', 'They are removed', 'They appear twice', 'The query fails'], answer: 1, why: 's.year is NULL for them, so the WHERE test is UNKNOWN and the rows are removed. The LEFT JOIN behaves like an INNER JOIN.' },
-    { id: 'd4-q4', q: 'Why do you need two aliases in a self join?', options: ['For speed', 'To refer to two different rows of the same table', 'Because SQL forbids joining a table to itself without them', 'Both B and C'], answer: 3, why: 'The two aliases let the query talk about two different rows (e.g. instructor and mentor). Without them the table name would be ambiguous and the query is rejected.' },
-    { id: 'd4-q5', q: 'You count students per department with LEFT JOIN. Which expression gives 0 for an empty department?', options: ['COUNT(*)', 'COUNT(s.student_id)', 'COUNT(d.dept_id)', 'SUM(1)'], answer: 1, why: 'An empty department has one row with s.student_id = NULL. COUNT(*) and COUNT(d.dept_id) count that row as 1. COUNT(s.student_id) skips the NULL and returns 0.' },
-    { id: 'd4-q6', q: 'Why is NATURAL JOIN risky?', options: ['It is slow', 'It joins on every column with the same name, which may include columns you did not mean', 'It only works in Oracle', 'It removes NULLs'], answer: 1, why: 'Shared names like name, id or updated_at become join conditions too. Adding a column later can change the result without any error.' },
-    { id: 'd4-q7', q: '<code>A RIGHT JOIN B</code> returns the same rows as…', options: ['A LEFT JOIN B', 'B LEFT JOIN A', 'A INNER JOIN B', 'A FULL JOIN B'], answer: 1, why: 'A RIGHT JOIN keeps every row of B; that is B LEFT JOIN A (only the column order differs).' }
+    {
+      id: 'd4-q1',
+      q: 'Table A has 5 rows and table B has 4 rows. How many rows does <code>A CROSS JOIN B</code> return?',
+      options: ['9', '20', '5', '4'],
+      answer: 1,
+      why: 'A CROSS JOIN pairs every row of A with every row of B: 5 × 4 = 20.'
+    },
+    {
+      id: 'd4-q2',
+      q: 'Which join keeps every row of the first table, even rows with no match?',
+      options: ['INNER JOIN', 'LEFT JOIN', 'CROSS JOIN', 'NATURAL JOIN'],
+      answer: 1,
+      why: 'LEFT JOIN keeps all rows of the left table. When there is no match, the right side is NULL.'
+    },
+    {
+      id: 'd4-q3',
+      q: 'You write <code>departments d LEFT JOIN students s ON ...</code>. Then you add <code>WHERE s.year = 2</code>. What happens to departments with no students?',
+      options: ['They stay, with NULLs', 'They are removed', 'They appear twice', 'The query fails'],
+      answer: 1,
+      why: 'For them, s.year is NULL. So the WHERE test is UNKNOWN, and the rows are removed. The LEFT JOIN now works like an INNER JOIN.'
+    },
+    {
+      id: 'd4-q4',
+      q: 'Why do you need two aliases in a self join?',
+      options: [
+        'To make it faster',
+        'To talk about two different rows of the same table',
+        'Because SQL does not allow joining a table to itself without them',
+        'Both B and C'
+      ],
+      answer: 3,
+      why: 'The two aliases let you talk about two different rows, like an instructor and a mentor. Without aliases, the table name is unclear and the query fails.'
+    },
+    {
+      id: 'd4-q5',
+      q: 'You count students per department with LEFT JOIN. Which expression gives 0 for a department with no students?',
+      options: ['COUNT(*)', 'COUNT(s.student_id)', 'COUNT(d.dept_id)', 'SUM(1)'],
+      answer: 1,
+      why: 'An empty department has one row where s.student_id is NULL. COUNT(*) and COUNT(d.dept_id) count that row as 1. COUNT(s.student_id) skips the NULL and gives 0.'
+    },
+    {
+      id: 'd4-q6',
+      q: 'Why is NATURAL JOIN risky?',
+      options: [
+        'It is slow',
+        'It joins on every column with the same name, even ones you did not want',
+        'It works only in Oracle',
+        'It removes NULLs'
+      ],
+      answer: 1,
+      why: 'Columns like name or id can become join conditions without you noticing. A new column added later can change the result, with no error.'
+    },
+    {
+      id: 'd4-q7',
+      q: '<code>A RIGHT JOIN B</code> gives the same rows as…',
+      options: ['A LEFT JOIN B', 'B LEFT JOIN A', 'A INNER JOIN B', 'A FULL JOIN B'],
+      answer: 1,
+      why: 'A RIGHT JOIN B keeps every row of B. That is the same as B LEFT JOIN A. Only the column order is different.'
+    }
   ],
   teach: 'Explain the difference between INNER JOIN and LEFT JOIN, and show how to use a LEFT JOIN to find courses that were never offered.',
   rubric: 'INNER JOIN keeps only rows with a match on both sides; LEFT JOIN keeps all rows of the left table and fills right columns with NULL when there is no match; a join is a Cartesian product filtered by the ON condition; anti-join pattern: courses LEFT JOIN sections ON course_id ... WHERE sections.section_id IS NULL; test a right-side column that is never NULL in a real match (the key); bonus: conditions on the right table in WHERE turn a LEFT JOIN into an INNER JOIN.'

@@ -129,10 +129,15 @@ HAVING COUNT(DISTINCT instructor_id) > 1;`,
 <p>Start with the "must" group. If its closure is all of R, it is the only candidate key. Otherwise add "maybe" attributes one at a time, then two at a time, and keep only the minimal sets whose closure is R.</p>
 <p>Example: R(A, B, C, D) with F = { AB → C, C → D, D → A }. B is never on a right side, so B is in every key. {B}⁺ = {B}. Try adding one: {A,B}⁺ = ABCD ✓, {B,C}⁺ = BCDA ✓, {B,D}⁺ = BDA, then AB → C gives ABCD ✓. Candidate keys: AB, BC, BD.</p>`,
       predict: {
-        q: 'R(A, B, C, D, E) with F = { A → C, B → D, AB → E }. What is the only candidate key?',
-        options: ['{A}', '{A, B}', '{A, B, E}', '{C, D, E}'],
+        q: "R(A, B, C, D, E) with F = { A → C, B → D, AB → E }. What is the only candidate key?",
+        options: [
+        "{A}",
+        "{A, B}",
+        "{A, B, E}",
+        "{C, D, E}"
+      ],
         answer: 1,
-        why: 'A and B never appear on a right side, so both are in every key. {A,B}⁺ = {A,B,C,D,E} = all of R, so AB is the only candidate key. Adding E would make a superkey that is not minimal.'
+        why: "A and B are never on a right side, so every key contains both. {A,B}⁺ = {A,B,C,D,E}, all of R. So AB is the only candidate key. AB plus E is a superkey, but it is not minimal."
       }
     },
     {
@@ -160,10 +165,15 @@ SELECT student_id, skills FROM skills_bad WHERE skills LIKE '%SQL%';`,
 <p>The formal definition (use this one in exams): for every non-trivial FD X → A, either <strong>X is a superkey</strong>, or <strong>A is a prime attribute</strong> (A is part of some candidate key).</p>
 <p>A short way to remember 1NF to 3NF: every non-key attribute depends on "the key (1NF), the whole key (2NF), and nothing but the key (3NF)".</p>`,
       predict: {
-        q: 'students(student_id, name, dept_id, dept_building). Key: student_id. Which normal form does it break first?',
-        options: ['1NF', '2NF', '3NF', 'None, it is in BCNF'],
+        q: "students(student_id, name, dept_id, dept_building) has the key student_id. Which normal form does it break first?",
+        options: [
+        "1NF",
+        "2NF",
+        "3NF",
+        "None, it is in BCNF"
+      ],
         answer: 2,
-        why: 'The key is a single column, so 2NF holds. But student_id → dept_id → dept_building is transitive: dept_building depends on a non-key attribute. That breaks 3NF. Our real schema avoids it by keeping building in departments.'
+        why: "The key has one column, so 2NF holds. But student_id → dept_id → dept_building is transitive: dept_building depends on a column that is not a key. That breaks 3NF. Our real schema avoids this: the building is in departments."
       }
     },
     {
@@ -178,10 +188,15 @@ SELECT student_id, skills FROM skills_bad WHERE skills LIKE '%SQL%';`,
 -- tutor → course holds: every tutor teaches exactly one course
 SELECT tutor, COUNT(DISTINCT course) AS courses FROM tutoring GROUP BY tutor;`,
       predict: {
-        q: 'R(A, B, C) with F = { AB → C, C → B }. Candidate keys: AB and AC. What is the highest normal form?',
-        options: ['1NF', '2NF', '3NF', 'BCNF'],
+        q: "R(A, B, C) with F = { AB → C, C → B }. The candidate keys are AB and AC. What is the highest normal form?",
+        options: [
+        "1NF",
+        "2NF",
+        "3NF",
+        "BCNF"
+      ],
         answer: 2,
-        why: 'C → B: C is not a superkey, so it is not BCNF. But B is prime (it is in key AB), so the 3NF condition holds. Same shape as the tutoring example.'
+        why: "C → B, and C is not a superkey. So it is not BCNF. But B is part of a key (AB), so 3NF still holds. This is the same shape as the tutoring example."
       }
     },
     {
@@ -212,61 +227,76 @@ SELECT (SELECT COUNT(*) FROM students WHERE city IS NOT NULL) AS original_rows,
     {
       id: 'd10-1', level: 1,
       setup: FLAT_DIRTY,
-      prompt: 'The table <code>orders_flat</code> was edited carelessly. Find the update anomaly: return <code>customer_id</code> and <code>cities</code> (the number of different <code>customer_city</code> values) for every customer that appears with more than one city.',
+      prompt: "<p>The table <code>orders_flat</code> was edited carelessly. Now some customers have more than one city. This is an update anomaly. Find these customers.</p><ul class=\"spec\"><li><b>Columns:</b> <code>customer_id</code>, <code>cities</code> (the number of different <code>customer_city</code> values)</li><li><b>Note:</b> Show only the customers with more than one city.</li></ul>",
       solution: `SELECT customer_id, COUNT(DISTINCT customer_city) AS cities
 FROM orders_flat
 GROUP BY customer_id
 HAVING COUNT(DISTINCT customer_city) > 1;`,
-      hints: ['One group per customer: GROUP BY customer_id', 'COUNT(DISTINCT customer_city) counts the different cities.', 'Keep only the broken groups with HAVING ... > 1']
+      hints: [
+        "Make one group per customer: GROUP BY customer_id",
+        "COUNT(DISTINCT customer_city) counts the different cities.",
+        "Keep only the broken groups with HAVING ... > 1"
+      ]
     },
     {
       id: 'd10-2', level: 1,
-      prompt: 'Does the FD <code>city → dept_id</code> hold in <code>students</code>? Return every non-NULL <code>city</code> whose students are in more than one department, with <code>departments</code> = the number of different non-NULL dept_id values.',
+      prompt: "<p>Does the functional dependency <code>city → dept_id</code> hold in <code>students</code>? It holds if all students from one city are in the same department. Find the cities where it breaks.</p><ul class=\"spec\"><li><b>Columns:</b> <code>city</code>, <code>departments</code> (the number of different dept_id values, not counting NULL)</li><li><b>Note:</b> Ignore students whose city is NULL. Show only the cities with more than one department.</li></ul>",
       solution: `SELECT city, COUNT(DISTINCT dept_id) AS departments
 FROM students
 WHERE city IS NOT NULL
 GROUP BY city
 HAVING COUNT(DISTINCT dept_id) > 1;`,
-      hints: ['Same pattern as the lesson: GROUP BY the left side, count distinct values of the right side.', 'Remove NULL cities with WHERE before grouping.', 'COUNT(DISTINCT dept_id) already ignores NULL dept_id values.']
+      hints: [
+        "Same pattern as the lesson: GROUP BY the left side. Then count the different values of the right side.",
+        "Remove NULL cities with WHERE before grouping.",
+        "COUNT(DISTINCT dept_id) already ignores NULL dept_id values."
+      ]
     },
     {
       id: 'd10-3', level: 2,
       setup: FLAT_DIRTY,
-      prompt: 'In <code>orders_flat</code>, <code>product_id → unit_price</code> should hold. Return <code>product_id</code>, <code>prices</code> (number of different unit_price values) and <code>lowest</code> and <code>highest</code> (the smallest and largest unit_price) for every product that breaks the FD.',
+      prompt: "<p>In <code>orders_flat</code>, each product should have one price (<code>product_id → unit_price</code>). Find the products that have more than one price.</p><ul class=\"spec\"><li><b>Columns:</b> <code>product_id</code>, <code>prices</code> (the number of different unit_price values), <code>lowest</code> (the smallest unit_price), <code>highest</code> (the largest unit_price)</li></ul>",
       solution: `SELECT product_id, COUNT(DISTINCT unit_price) AS prices, MIN(unit_price) AS lowest, MAX(unit_price) AS highest
 FROM orders_flat
 GROUP BY product_id
 HAVING COUNT(DISTINCT unit_price) > 1;`,
-      hints: ['GROUP BY product_id', 'Add MIN(unit_price) and MAX(unit_price) next to the COUNT(DISTINCT ...).', 'Filter with HAVING COUNT(DISTINCT unit_price) > 1']
+      hints: [
+        "GROUP BY product_id",
+        "Add MIN(unit_price) and MAX(unit_price) next to COUNT(DISTINCT ...).",
+        "Keep the broken groups with HAVING COUNT(DISTINCT unit_price) > 1"
+      ]
     },
     {
       id: 'd10-4', level: 2,
-      prompt: 'Is (student_id, course_id) a key of <code>enrollments</code> joined with <code>sections</code>? Find counterexamples: return <code>student_id</code>, <code>course_id</code> and <code>times</code> for every student who enrolled in the same course more than once (in different sections).',
+      prompt: "<p>Join <code>enrollments</code> with <code>sections</code>. Is (student_id, course_id) a key there? Find the counterexamples: students who took the same course more than once (in different sections).</p><ul class=\"spec\"><li><b>Columns:</b> <code>student_id</code>, <code>course_id</code>, <code>times</code> (how many times they took it)</li><li><b>Note:</b> Show only the pairs that appear more than once.</li></ul>",
       solution: `SELECT e.student_id, s.course_id, COUNT(*) AS times
 FROM enrollments e JOIN sections s ON s.section_id = e.section_id
 GROUP BY e.student_id, s.course_id
 HAVING COUNT(*) > 1;`,
-      hints: ['course_id lives in sections, so join enrollments to sections.', 'GROUP BY both columns of the candidate key.', 'A group with more than one row is a counterexample.']
+      hints: [
+        "course_id is in sections, so join enrollments to sections.",
+        "GROUP BY both columns of the possible key.",
+        "A group with more than one row is a counterexample."
+      ]
     },
     {
       id: 'd10-5', level: 2, kind: 'script',
       setup: FLAT,
-      prompt: 'Start the 3NF decomposition of <code>orders_flat</code>. Create <code>customers(customer_id INTEGER PRIMARY KEY, name TEXT NOT NULL, city TEXT)</code> and fill it from <code>orders_flat</code> with one row per customer, using <code>INSERT ... SELECT DISTINCT</code>.',
+      prompt: "<p>Start splitting <code>orders_flat</code> into 3NF tables. First, the customers.</p><ul class=\"spec\"><li><b>Create:</b> <code>customers(customer_id INTEGER PRIMARY KEY, name TEXT NOT NULL, city TEXT)</code></li><li><b>Then:</b> fill it from <code>orders_flat</code> with one row per customer. Use <code>INSERT ... SELECT DISTINCT</code>.</li></ul>",
       solution: `CREATE TABLE customers (customer_id INTEGER PRIMARY KEY, name TEXT NOT NULL, city TEXT);
 INSERT INTO customers (customer_id, name, city)
 SELECT DISTINCT customer_id, customer_name, customer_city FROM orders_flat;`,
       check: `SELECT customer_id, name, city FROM customers ORDER BY customer_id;`,
-      hints: ['First CREATE TABLE, then INSERT ... SELECT.', 'SELECT DISTINCT customer_id, customer_name, customer_city FROM orders_flat', 'The column names differ: name in customers comes from customer_name in orders_flat.']
+      hints: [
+        "First CREATE TABLE, then INSERT ... SELECT.",
+        "SELECT DISTINCT customer_id, customer_name, customer_city FROM orders_flat",
+        "The names are different: name in customers comes from customer_name in orders_flat."
+      ]
     },
     {
       id: 'd10-6', level: 3, kind: 'script',
       setup: FLAT,
-      prompt: `Finish the decomposition of <code>orders_flat</code> into 3NF. Create and fill exactly these four tables:
-<ul><li><code>customers(customer_id PK, name, city)</code></li>
-<li><code>products(product_id PK, name, unit_price)</code></li>
-<li><code>orders(order_id PK, order_date, customer_id FK → customers)</code></li>
-<li><code>order_items(order_id FK → orders, product_id FK → products, qty)</code> with primary key (order_id, product_id)</li></ul>
-The grader joins your four tables back together and compares the result with <code>orders_flat</code>, so the decomposition must be lossless and store each customer, product and order only once.`,
+      prompt: "<p>Finish splitting <code>orders_flat</code> into 3NF. Create and fill exactly these four tables.</p><ul class=\"spec\"><li><b>Create:</b> <code>customers(customer_id PK, name, city)</code></li><li><b>Create:</b> <code>products(product_id PK, name, unit_price)</code></li><li><b>Create:</b> <code>orders(order_id PK, order_date, customer_id FK → customers)</code></li><li><b>Create:</b> <code>order_items(order_id FK → orders, product_id FK → products, qty)</code>, with primary key (order_id, product_id)</li><li><b>Note:</b> The grader joins your four tables back together and compares the result with <code>orders_flat</code>. So no data may be lost, and each customer, product and order is stored only once.</li></ul>",
       solution: `CREATE TABLE customers (customer_id INTEGER PRIMARY KEY, name TEXT NOT NULL, city TEXT);
 CREATE TABLE products  (product_id TEXT PRIMARY KEY, name TEXT NOT NULL, unit_price REAL NOT NULL);
 CREATE TABLE orders    (order_id INTEGER PRIMARY KEY, order_date TEXT NOT NULL,
@@ -292,13 +322,18 @@ JOIN orders o    ON o.order_id = i.order_id
 JOIN customers c ON c.customer_id = o.customer_id
 JOIN products p  ON p.product_id = i.product_id
 ORDER BY o.order_id, p.product_id;`,
-      hints: ['List the FDs: customer_id → name, city; product_id → name, price; order_id → date, customer_id; (order_id, product_id) → qty.', 'One table per determinant. Create parents (customers, products) before children (orders, order_items).', 'Fill each table with INSERT ... SELECT DISTINCT from orders_flat, parents first.', 'order_items does not need DISTINCT: (order_id, product_id) is already unique in orders_flat.']
+      hints: [
+        "List the dependencies: customer_id → name, city; product_id → name, price; order_id → date, customer_id; (order_id, product_id) → qty.",
+        "Make one table per left side. Create the parents (customers, products) before the children (orders, order_items).",
+        "Fill each table with INSERT ... SELECT DISTINCT from orders_flat, parents first.",
+        "order_items does not need DISTINCT: (order_id, product_id) is already unique in orders_flat."
+      ]
     },
     {
       id: 'd10-7', level: 3, kind: 'script',
       setup: `CREATE TABLE skills_raw (student_id INTEGER PRIMARY KEY, skills TEXT);
 INSERT INTO skills_raw VALUES (1001, 'SQL,Python,Excel'), (1002, 'Python'), (1003, 'Excel,SQL');`,
-      prompt: 'The table <code>skills_raw(student_id, skills)</code> breaks 1NF: <code>skills</code> holds comma-separated lists. Create <code>student_skills(student_id, skill)</code> with the pair as primary key and <code>student_id</code> referencing <code>students</code>, then fill it with one row per student per skill (6 rows). Typing the INSERT by hand is fine; splitting the strings with a recursive CTE is the bonus challenge.',
+      prompt: "<p>The table <code>skills_raw(student_id, skills)</code> breaks 1NF: one <code>skills</code> cell holds several skills, separated by commas. Fix it with a new table.</p><ul class=\"spec\"><li><b>Create:</b> <code>student_skills(student_id, skill)</code>. The pair is the primary key. <code>student_id</code> references <code>students</code>.</li><li><b>Then:</b> fill it with one row per student per skill (6 rows).</li><li><b>Note:</b> You may type the INSERT by hand. Bonus: split the text with a recursive CTE.</li></ul>",
       solution: `CREATE TABLE student_skills (
   student_id INTEGER REFERENCES students(student_id),
   skill      TEXT,
@@ -316,15 +351,17 @@ SELECT student_id, skill FROM split WHERE skill <> '';`,
 UNION ALL
 SELECT 'data', 'row', student_id, skill, NULL FROM student_skills
 ORDER BY 1, 2, 3, 4;`,
-      hints: ['The new table has one value per cell: (student_id, skill).', 'PRIMARY KEY (student_id, skill) and student_id REFERENCES students(student_id)', "Manual way: INSERT INTO student_skills VALUES (1001, 'SQL'), (1001, 'Python'), ...", 'CTE way: repeatedly take the text before the first comma with substr and instr, and keep the rest for the next step.']
+      hints: [
+        "The new table has one value per cell: (student_id, skill).",
+        "PRIMARY KEY (student_id, skill) and student_id REFERENCES students(student_id)",
+        "By hand: INSERT INTO student_skills VALUES (1001, 'SQL'), (1001, 'Python'), ...",
+        "With a CTE: take the text before the first comma with substr and instr. Keep the rest for the next step."
+      ]
     },
     {
       id: 'd10-8', level: 3, kind: 'script',
       setup: TUTORING,
-      prompt: `<code>tutoring(student, course, tutor)</code> is in 3NF but not in BCNF because <code>tutor → course</code> and tutor is not a key. Decompose it into BCNF:
-<ul><li><code>tutor_course(tutor TEXT PRIMARY KEY, course TEXT NOT NULL)</code></li>
-<li><code>student_tutor(student TEXT, tutor TEXT REFERENCES tutor_course(tutor))</code> with primary key (student, tutor)</li></ul>
-Fill both from <code>tutoring</code>.`,
+      prompt: "<p><code>tutoring(student, course, tutor)</code> is in 3NF but not in BCNF. The reason: <code>tutor → course</code>, and tutor is not a key. Split it into BCNF.</p><ul class=\"spec\"><li><b>Create:</b> <code>tutor_course(tutor TEXT PRIMARY KEY, course TEXT NOT NULL)</code></li><li><b>Create:</b> <code>student_tutor(student TEXT, tutor TEXT REFERENCES tutor_course(tutor))</code>, with primary key (student, tutor)</li><li><b>Then:</b> fill both tables from <code>tutoring</code>.</li></ul>",
       solution: `CREATE TABLE tutor_course (tutor TEXT PRIMARY KEY, course TEXT NOT NULL);
 CREATE TABLE student_tutor (
   student TEXT,
@@ -338,11 +375,15 @@ UNION ALL
 SELECT 'data', 'rejoin', st.student, tc.course, st.tutor
 FROM student_tutor st JOIN tutor_course tc ON tc.tutor = st.tutor
 ORDER BY 1, 2, 3, 4;`,
-      hints: ['Decompose on the violating FD: one table for tutor → course, one for the rest.', 'The shared column (tutor) is the key of tutor_course, so the split is lossless.', 'INSERT INTO tutor_course SELECT DISTINCT tutor, course FROM tutoring;']
+      hints: [
+        "Split on the dependency that breaks BCNF: one table for tutor → course, one for the rest.",
+        "The shared column (tutor) is the key of tutor_course. So no data is lost when you join them back.",
+        "INSERT INTO tutor_course SELECT DISTINCT tutor, course FROM tutoring;"
+      ]
     },
     {
       id: 'd10-9', level: 3,
-      prompt: 'Measure a lossy decomposition. Project <code>students</code> into A = DISTINCT (<code>name</code>, <code>dept_id</code>) and B = DISTINCT (<code>dept_id</code>, <code>city</code>), keeping only rows where both dept_id and city are not NULL. Join A and B on dept_id. Return one row with <code>original_rows</code> (students with non-NULL dept_id and city), <code>joined_rows</code> and <code>spurious_rows</code> (the difference).',
+      prompt: "<p>See how a bad split creates fake rows (a \"lossy\" decomposition). Use only the students that have both a dept_id and a city.</p><ul class=\"spec\"><li><b>Steps:</b> From those students, make A = DISTINCT (<code>name</code>, <code>dept_id</code>) and B = DISTINCT (<code>dept_id</code>, <code>city</code>). Join A and B on dept_id.</li><li><b>Columns:</b> <code>original_rows</code> (students with a non-NULL dept_id and city), <code>joined_rows</code> (rows after the join), <code>spurious_rows</code> (joined_rows minus original_rows)</li><li><b>Note:</b> Return one row.</li></ul>",
       solution: `WITH base AS (SELECT * FROM students WHERE dept_id IS NOT NULL AND city IS NOT NULL),
      a AS (SELECT DISTINCT name, dept_id FROM base),
      b AS (SELECT DISTINCT dept_id, city FROM base),
@@ -350,18 +391,62 @@ ORDER BY 1, 2, 3, 4;`,
 SELECT (SELECT COUNT(*) FROM base) AS original_rows,
        (SELECT COUNT(*) FROM j) AS joined_rows,
        (SELECT COUNT(*) FROM j) - (SELECT COUNT(*) FROM base) AS spurious_rows;`,
-      hints: ['Use WITH to name each step: base, a, b, and the join j.', 'a and b are SELECT DISTINCT projections of base.', 'Scalar subqueries let you return three counts in one row: SELECT (SELECT COUNT(*) FROM base) AS original_rows, ...']
+      hints: [
+        "Use WITH to name each step: base, a, b, and the join j.",
+        "a and b are SELECT DISTINCT from base.",
+        "Subqueries inside SELECT let you return three counts in one row: SELECT (SELECT COUNT(*) FROM base) AS original_rows, ..."
+      ]
     }
   ],
   quiz: [
-    { id: 'd10-q1', q: 'R(A, B, C, D) with F = { A → B, B → C, C → D }. What is {B}⁺?', options: ['{B}', '{B, C}', '{B, C, D}', '{A, B, C, D}'], answer: 2, why: 'Start {B}. B → C adds C. C → D adds D. A → B cannot fire because A is not in the set.' },
-    { id: 'd10-q2', q: 'R(A, B, C, D, E) with F = { AB → C, C → D, D → E }. Which is a candidate key?', options: ['{A}', '{A, B}', '{C}', '{A, B, C}'], answer: 1, why: 'A and B are never on a right side, so they are in every key. {A,B}⁺ = ABCDE. {A,B,C} is a superkey but not minimal.' },
-    { id: 'd10-q3', q: 'R(A, B, C) with F = { A → B, B → A, A → C }. What are the candidate keys?', options: ['Only {A}', 'Only {B}', '{A} and {B}', '{A, B}'], answer: 2, why: '{A}⁺ = ABC and {B}⁺ = BAC. Both single attributes determine everything, so both are candidate keys.' },
-    { id: 'd10-q4', q: 'enroll(student_id, course_id, grade, course_title) with key (student_id, course_id). Which normal form is violated?', options: ['1NF', '2NF', '3NF but not 2NF', 'None'], answer: 1, why: 'course_id → course_title depends on part of the key: a partial dependency, so 2NF fails.' },
-    { id: 'd10-q5', q: 'employee(emp_id, dept_id, dept_name), key emp_id, with dept_id → dept_name. The table is…', options: ['Not in 1NF', 'In 2NF but not 3NF', 'In 3NF but not BCNF', 'In BCNF'], answer: 1, why: 'Single-column key, so 2NF holds. emp_id → dept_id → dept_name is transitive, so 3NF fails.' },
-    { id: 'd10-q6', q: 'Which statement about BCNF and 3NF is true?', options: ['Every 3NF relation is in BCNF', 'Every BCNF relation is in 3NF', 'They are the same', 'BCNF allows partial dependencies'], answer: 1, why: 'BCNF is stricter. 3NF has an extra escape clause (A is prime) that BCNF removes.' },
-    { id: 'd10-q7', q: 'R(A, B, C) is split into R1(A, B) and R2(B, C). When is this lossless?', options: ['Always', 'When B → A or B → C holds', 'When A → C holds', 'Never'], answer: 1, why: 'Lossless if the common attributes (B) are a key of at least one part: B → AB (i.e. B → A) or B → BC (i.e. B → C).' },
-    { id: 'd10-q8', q: 'You cannot record a new course until at least one student enrolls in it. This is…', options: ['An update anomaly', 'An insertion anomaly', 'A deletion anomaly', 'A spurious tuple'], answer: 1, why: 'The design forces you to have unrelated data (an enrollment) before you can insert a fact (the course). That is an insertion anomaly.' }
+    { id: 'd10-q1', q: "R(A, B, C, D) with F = { A → B, B → C, C → D }. What is {B}⁺ (everything B determines)?", options: [
+        "{B}",
+        "{B, C}",
+        "{B, C, D}",
+        "{A, B, C, D}"
+      ], answer: 2, why: "Start with {B}. B → C adds C. C → D adds D. A → B cannot be used, because A is not in the set." },
+    { id: 'd10-q2', q: "R(A, B, C, D, E) with F = { AB → C, C → D, D → E }. Which is a candidate key?", options: [
+        "{A}",
+        "{A, B}",
+        "{C}",
+        "{A, B, C}"
+      ], answer: 1, why: "A and B are never on a right side, so every key contains them. {A,B}⁺ = ABCDE. {A,B,C} is a superkey, but it is not minimal." },
+    { id: 'd10-q3', q: "R(A, B, C) with F = { A → B, B → A, A → C }. What are the candidate keys?", options: [
+        "Only {A}",
+        "Only {B}",
+        "{A} and {B}",
+        "{A, B}"
+      ], answer: 2, why: "{A}⁺ = ABC and {B}⁺ = BAC. Each one alone determines everything, so both are candidate keys." },
+    { id: 'd10-q4', q: "enroll(student_id, course_id, grade, course_title) has the key (student_id, course_id). Which normal form does it break?", options: [
+        "1NF",
+        "2NF",
+        "3NF but not 2NF",
+        "None"
+      ], answer: 1, why: "course_id → course_title depends on only part of the key. That is a partial dependency, so 2NF fails." },
+    { id: 'd10-q5', q: "employee(emp_id, dept_id, dept_name) has the key emp_id, and dept_id → dept_name. Which is true?", options: [
+        "It is not in 1NF",
+        "It is in 2NF but not in 3NF",
+        "It is in 3NF but not in BCNF",
+        "It is in BCNF"
+      ], answer: 1, why: "The key has one column, so 2NF holds. emp_id → dept_id → dept_name is transitive, so 3NF fails." },
+    { id: 'd10-q6', q: "Which sentence about BCNF and 3NF is true?", options: [
+        "Every 3NF relation is in BCNF",
+        "Every BCNF relation is in 3NF",
+        "They are the same",
+        "BCNF allows partial dependencies"
+      ], answer: 1, why: "BCNF is stricter. 3NF has one extra exception (A is prime). BCNF removes it." },
+    { id: 'd10-q7', q: "R(A, B, C) is split into R1(A, B) and R2(B, C). When is the split lossless (no data lost)?", options: [
+        "Always",
+        "When B → A or B → C holds",
+        "When A → C holds",
+        "Never"
+      ], answer: 1, why: "It is lossless if the shared column B is a key of at least one part. That means B → A or B → C." },
+    { id: 'd10-q8', q: "You cannot add a new course until at least one student enrolls in it. What is this?", options: [
+        "An update anomaly",
+        "An insertion anomaly",
+        "A deletion anomaly",
+        "A spurious tuple"
+      ], answer: 1, why: "The design forces you to have other data (an enrollment) before you can store a fact (the course). That is an insertion anomaly." }
   ],
   teach: 'Explain the difference between 2NF, 3NF and BCNF using one small example table for each violation. For each, say which dependency causes the problem and how you would split the table.',
   rubric: '2NF: no partial dependency of a non-key attribute on part of a composite key (example: course_title depends on course_id in enroll(student_id, course_id, ...)); 3NF: no transitive dependency key → non-key → non-key, formal rule X superkey or A prime (example: student → dept → building); BCNF: every determinant is a superkey, no prime exception (example: tutor → course); split on the violating FD into (X, A) and the rest; mentions lossless join (shared column is a key of one part).'

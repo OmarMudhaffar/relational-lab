@@ -110,10 +110,15 @@ JOIN instructors AS mentor ON mentor.instructor_id = mentee.mentor_id;`
 </tbody></table>
 <p>To decide, ask two questions: "Can one department have many instructors?" (yes) and "Can one instructor belong to many departments?" (in our design, no). Yes + no = 1:N.</p>`,
       predict: {
-        q: 'In this database, what is the cardinality ratio between <strong>students</strong> and <strong>sections</strong>?',
-        options: ['1:1', '1:N (one student, many sections)', 'N:1 (many students, one section)', 'M:N'],
+        q: "In this database, what is the cardinality between <strong>students</strong> and <strong>sections</strong>?",
+        options: [
+        "1:1",
+        "1:N (one student, many sections)",
+        "N:1 (many students, one section)",
+        "M:N"
+      ],
         answer: 3,
-        why: 'A student takes many sections and a section has many students. Relational tables cannot store M:N directly, so the junction table enrollments holds one row per (student, section) pair.'
+        why: "A student takes many sections. A section has many students. Tables cannot store M:N directly. So the junction table enrollments has one row per (student, section) pair."
       }
     },
     {
@@ -148,10 +153,15 @@ INSERT INTO orders VALUES (5001, '2026-10-01'), (5002, '2026-10-02');
 INSERT INTO order_lines VALUES (5001, 1, 'pen', 3), (5001, 2, 'book', 1), (5002, 1, 'pen', 10);
 SELECT * FROM order_lines;`,
       predict: {
-        q: 'Which statement about a weak entity is true?',
-        options: ['It has no attributes', 'Its primary key includes the key of its owner entity', 'It always has a 1:1 relationship with its owner', 'It must be stored in the same table as its owner'],
+        q: "Which sentence about a weak entity is true?",
+        options: [
+        "It has no attributes",
+        "Its primary key includes the key of its owner entity",
+        "It always has a 1:1 relationship with its owner",
+        "It must be stored in the same table as its owner"
+      ],
         answer: 1,
-        why: 'A weak entity is identified by (owner key + partial key). The relationship to its owner is usually 1:N: one order has many lines.'
+        why: "A weak entity is identified by owner key + partial key. Its link to the owner is usually 1:N: one order has many order lines."
       }
     },
     {
@@ -171,11 +181,22 @@ ${ERD}`
 <li><strong>M:N relationship</strong> → a new <strong>junction table</strong> with both foreign keys. Its primary key is the pair. Relationship attributes (grade) live here.</li>
 <li><strong>Multivalued attribute</strong> → a new table (owner key, value) with the pair as primary key.</li>
 <li><strong>N-ary relationship</strong> (degree 3 or more) → a new table with a foreign key to every participant.</li></ol>`,
+      sql: `-- The database keeps your relationships in its catalog.
+-- pragma_foreign_key_list('t') lists the foreign keys of table t:
+-- "from" is the column, "table" is the table it points to.
+SELECT "from" AS column_name, "table" AS points_to, "to" AS target_column
+FROM pragma_foreign_key_list('students');`,
+      note: 'Change students to enrollments or sections to see their relationships. Each row is one line in the ER diagram.',
       predict: {
-        q: 'One department has many courses; each course belongs to one department. Where does the foreign key go?',
-        options: ['departments.course_id', 'courses.dept_id', 'A junction table department_courses', 'Either side, it does not matter'],
+        q: "One department has many courses. Each course belongs to one department. Where does the foreign key go?",
+        options: [
+        "departments.course_id",
+        "courses.dept_id",
+        "A junction table department_courses",
+        "Either side, it does not matter"
+      ],
         answer: 1,
-        why: 'For 1:N the foreign key goes on the N side. A course_id column in departments could hold only one course per department.'
+        why: "For 1:N, the foreign key goes on the N side. A course_id column in departments could hold only one course per department."
       }
     },
     {
@@ -225,57 +246,77 @@ LEFT JOIN ta_staff f ON f.person_id = p.person_id;`
   exercises: [
     {
       id: 'd9-1', level: 1,
-      prompt: 'Read the relationships of <code>enrollments</code> from the database catalog. Query <code>pragma_foreign_key_list(\'enrollments\')</code> and return two columns: <code>from_column</code> (the column named <code>"from"</code>) and <code>to_table</code> (the column named <code>"table"</code>).',
+      prompt: "<p>The database stores its foreign keys in a catalog. Read the foreign keys of <code>enrollments</code> with <code>pragma_foreign_key_list('enrollments')</code>.</p><ul class=\"spec\"><li><b>Columns:</b> <code>from_column</code> (the catalog column <code>\"from\"</code>), <code>to_table</code> (the catalog column <code>\"table\"</code>)</li></ul>",
       solution: `SELECT "from" AS from_column, "table" AS to_table FROM pragma_foreign_key_list('enrollments');`,
-      hints: ['A pragma function can be used like a table: SELECT ... FROM pragma_foreign_key_list(\'enrollments\')', 'from and table are SQL keywords, so wrap them in double quotes: "from", "table".']
+      hints: [
+        "Use the pragma function like a table: SELECT ... FROM pragma_foreign_key_list('enrollments')",
+        "from and table are SQL keywords. So put them in double quotes: \"from\", \"table\"."
+      ]
     },
     {
       id: 'd9-2', level: 1,
-      prompt: 'Departments take part in the "works in" relationship only partially. List the <code>name</code> of every department that has <strong>no</strong> instructors.',
+      prompt: "<p>Some departments have no instructors. Find them.</p><ul class=\"spec\"><li><b>Columns:</b> <code>name</code></li></ul>",
       solution: `SELECT name FROM departments d WHERE NOT EXISTS (SELECT 1 FROM instructors i WHERE i.dept_id = d.dept_id);`,
-      hints: ['You need departments for which no matching instructor row exists.', 'NOT EXISTS (SELECT 1 FROM instructors i WHERE i.dept_id = d.dept_id)', 'A LEFT JOIN with WHERE i.instructor_id IS NULL also works.']
+      hints: [
+        "You need the departments with no matching instructor row.",
+        "NOT EXISTS (SELECT 1 FROM instructors i WHERE i.dept_id = d.dept_id)",
+        "A LEFT JOIN with WHERE i.instructor_id IS NULL also works."
+      ]
     },
     {
       id: 'd9-3', level: 2,
-      prompt: 'Read the recursive "mentors" relationship. For every instructor who has a mentor, return <code>instructor</code> (their name) and <code>mentor</code> (the mentor\'s name).',
+      prompt: "<p>The \"mentors\" relationship links instructors to other instructors. Show each instructor who has a mentor, with the mentor's name.</p><ul class=\"spec\"><li><b>Columns:</b> <code>instructor</code>, <code>mentor</code></li></ul>",
       solution: `SELECT i.name AS instructor, m.name AS mentor FROM instructors i JOIN instructors m ON m.instructor_id = i.mentor_id;`,
-      hints: ['Use the instructors table twice with two aliases.', 'Join the mentee\'s mentor_id to the mentor\'s instructor_id.', 'An inner JOIN drops instructors without a mentor, which is what you want.']
+      hints: [
+        "Use the instructors table twice, with two aliases.",
+        "Join the instructor's mentor_id to the mentor's instructor_id.",
+        "An inner JOIN drops the instructors without a mentor. That is what you want."
+      ]
     },
     {
       id: 'd9-4', level: 2,
-      prompt: 'Read the M:N "requires" relationship stored in <code>prereqs</code>. Return <code>course</code> (title of the course) and <code>requires</code> (title of the prerequisite) for every prerequisite pair.',
+      prompt: "<p>The <code>prereqs</code> table stores which course needs which other course (an M:N relationship). Show every pair with the course titles.</p><ul class=\"spec\"><li><b>Columns:</b> <code>course</code> (title of the course), <code>requires</code> (title of the course it needs)</li></ul>",
       solution: `SELECT c.title AS course, p.title AS requires
 FROM prereqs r
 JOIN courses c ON c.course_id = r.course_id
 JOIN courses p ON p.course_id = r.prereq_id;`,
-      hints: ['Start FROM prereqs; it holds the pairs.', 'Join courses twice: once for course_id, once for prereq_id.', 'Alias the two copies, e.g. c and p, and select c.title and p.title.']
+      hints: [
+        "Start FROM prereqs. It holds the pairs.",
+        "Join courses twice: once for course_id, once for prereq_id.",
+        "Give the two copies aliases, for example c and p. Select c.title and p.title."
+      ]
     },
     {
       id: 'd9-5', level: 2,
-      prompt: 'Check the cardinality of "advises" in the data. For <strong>every</strong> instructor return <code>name</code> and <code>advisees</code> (the number of students they advise, 0 if none). Sort by advisees from most to fewest, then by name.',
+      prompt: "<p>How many students does each instructor advise?</p><ul class=\"spec\"><li><b>Columns:</b> <code>name</code>, <code>advisees</code> (the number of students they advise)</li><li><b>Order:</b> by <code>advisees</code>, most first. Then by <code>name</code>.</li><li><b>Note:</b> Show every instructor. An instructor who advises nobody shows 0.</li></ul>",
       solution: `SELECT i.name, COUNT(s.student_id) AS advisees
 FROM instructors i LEFT JOIN students s ON s.advisor_id = i.instructor_id
 GROUP BY i.instructor_id, i.name
 ORDER BY advisees DESC, i.name;`,
       ordered: true,
-      hints: ['"Every instructor, 0 if none" means LEFT JOIN from instructors.', 'COUNT(s.student_id) counts only matched students; COUNT(*) would count 1 for unmatched instructors.', 'ORDER BY advisees DESC, name']
+      hints: [
+        "\"Every instructor, 0 if none\" means LEFT JOIN from instructors.",
+        "COUNT(s.student_id) counts only matched students. COUNT(*) would give 1 to instructors with no students.",
+        "ORDER BY advisees DESC, name"
+      ]
     },
     {
       id: 'd9-6', level: 3,
-      prompt: 'Draw the ER diagram from the catalog. For each table in <code>sqlite_master</code> with <code>type = \'table\'</code>, return <code>table_name</code> and <code>fk_count</code>: how many foreign-key columns it has (0 if none). A pragma function can take a column from the outer table as its argument: <code>pragma_foreign_key_list(m.name)</code>.',
+      prompt: "<p>Count the foreign keys of every table. This is the number of lines that leave each box in the ER diagram.</p><ul class=\"spec\"><li><b>Columns:</b> <code>table_name</code>, <code>fk_count</code> (the number of foreign-key columns, 0 if none)</li><li><b>Note:</b> Use the rows of <code>sqlite_master</code> where <code>type = 'table'</code>.</li><li><b>Note:</b> A pragma function can take a column of the outer table: <code>pragma_foreign_key_list(m.name)</code>.</li></ul>",
       solution: `SELECT m.name AS table_name, COUNT(f."from") AS fk_count
 FROM sqlite_master m
 LEFT JOIN pragma_foreign_key_list(m.name) f
 WHERE m.type = 'table'
 GROUP BY m.name;`,
-      hints: ['FROM sqlite_master m, keep only type = \'table\'.', 'LEFT JOIN pragma_foreign_key_list(m.name) f — no ON clause is needed, the argument links them.', 'GROUP BY m.name and COUNT(f."from") so tables without FKs show 0.']
+      hints: [
+        "FROM sqlite_master m. Keep only type = 'table'.",
+        "LEFT JOIN pragma_foreign_key_list(m.name) f. You need no ON clause: the argument links them.",
+        "GROUP BY m.name and COUNT(f.\"from\"), so tables without foreign keys show 0."
+      ]
     },
     {
       id: 'd9-7', level: 2, kind: 'script',
-      prompt: `Map this library description to tables. Create exactly these three tables:
-<ul><li><code>members</code>: <code>member_id</code> integer primary key, <code>name</code> required text, <code>email</code> required text that is unique</li>
-<li><code>books</code>: <code>isbn</code> text primary key, <code>title</code> required text, <code>published_year</code> optional integer</li>
-<li><code>loans</code>: a member borrows a book many times over the years, so each loan is its own row: <code>loan_id</code> integer primary key, <code>member_id</code> required FK to members, <code>isbn</code> required FK to books, <code>loaned_on</code> required text, <code>returned_on</code> optional text</li></ul>`,
+      prompt: "<p>Turn this library description into tables. Create exactly these three tables.</p><ul class=\"spec\"><li><b>Create:</b> <code>members</code>: <code>member_id</code> integer primary key, <code>name</code> required text, <code>email</code> required text, unique</li><li><b>Create:</b> <code>books</code>: <code>isbn</code> text primary key, <code>title</code> required text, <code>published_year</code> optional integer</li><li><b>Create:</b> <code>loans</code>: one row per loan (a member can borrow the same book many times). Columns: <code>loan_id</code> integer primary key, <code>member_id</code> required, foreign key to members, <code>isbn</code> required, foreign key to books, <code>loaned_on</code> required text, <code>returned_on</code> optional text</li></ul>",
       solution: `CREATE TABLE members (
   member_id INTEGER PRIMARY KEY,
   name      TEXT NOT NULL,
@@ -294,16 +335,17 @@ CREATE TABLE loans (
   returned_on TEXT
 );`,
       check: schemaCheck(['members', 'books', 'loans']),
-      hints: ['Create the parent tables (members, books) before the child (loans).', 'Required = NOT NULL. The FKs in loans are required too.', 'member_id INTEGER NOT NULL REFERENCES members(member_id)']
+      hints: [
+        "Create the parent tables (members, books) before the child table (loans).",
+        "Required = NOT NULL. The foreign keys in loans are required too.",
+        "member_id INTEGER NOT NULL REFERENCES members(member_id)"
+      ]
     },
     {
       id: 'd9-8', level: 3, kind: 'script',
       setup: `CREATE TABLE books (isbn TEXT PRIMARY KEY, title TEXT NOT NULL);
 INSERT INTO books VALUES ('978-0131873254', 'Database Systems'), ('978-1449373320', 'Designing Data-Intensive Applications');`,
-      prompt: `A <code>books(isbn, title)</code> table exists. A book can have many authors and an author can write many books. Create:
-<ul><li><code>authors</code>: <code>author_id</code> integer primary key, <code>name</code> required text</li>
-<li><code>book_authors</code>: <code>isbn</code> (FK to books), <code>author_id</code> (FK to authors), <code>author_order</code> required integer (1 = first author). The primary key is the pair (isbn, author_id).</li></ul>
-Then insert authors <code>1 Hector Garcia-Molina</code>, <code>2 Jeffrey Ullman</code>, <code>3 Jennifer Widom</code>, <code>4 Martin Kleppmann</code> and link them: authors 1, 2, 3 (in that order) wrote <code>978-0131873254</code>; author 4 wrote <code>978-1449373320</code>.`,
+      prompt: "<p>A <code>books(isbn, title)</code> table exists. A book can have many authors, and an author can write many books. Create two tables, then add the data.</p><ul class=\"spec\"><li><b>Create:</b> <code>authors</code>: <code>author_id</code> integer primary key, <code>name</code> required text</li><li><b>Create:</b> <code>book_authors</code>: <code>isbn</code> (foreign key to books), <code>author_id</code> (foreign key to authors), <code>author_order</code> required integer (1 = first author). The primary key is the pair (isbn, author_id).</li><li><b>Then:</b> insert the authors <code>1 Hector Garcia-Molina</code>, <code>2 Jeffrey Ullman</code>, <code>3 Jennifer Widom</code>, <code>4 Martin Kleppmann</code>.</li><li><b>Then:</b> link them: authors 1, 2 and 3 (in that order) wrote <code>978-0131873254</code>. Author 4 wrote <code>978-1449373320</code>.</li></ul>",
       solution: `CREATE TABLE authors (author_id INTEGER PRIMARY KEY, name TEXT NOT NULL);
 CREATE TABLE book_authors (
   isbn         TEXT REFERENCES books(isbn),
@@ -320,11 +362,15 @@ UNION ALL
 SELECT 'data', 'link', b.title, a.name, ba.author_order
 FROM book_authors ba JOIN books b ON b.isbn = ba.isbn JOIN authors a ON a.author_id = ba.author_id
 ORDER BY 1, 2, 3, 4;`,
-      hints: ['M:N → junction table with both foreign keys.', 'The composite key goes on its own line: PRIMARY KEY (isbn, author_id)', 'Insert into authors before book_authors, or the foreign keys fail.']
+      hints: [
+        "M:N → a junction table with both foreign keys.",
+        "The key on two columns goes on its own line: PRIMARY KEY (isbn, author_id)",
+        "Insert into authors before book_authors. Otherwise the foreign keys fail."
+      ]
     },
     {
       id: 'd9-9', level: 3, kind: 'script',
-      prompt: `Phone number is a <strong>multivalued attribute</strong> of a student. Following mapping step 6, create <code>student_phones</code> with <code>student_id</code> (FK to students) and <code>phone</code> (text), where the pair is the primary key. If a student is deleted, their phone numbers are deleted too. Then store two numbers for student <code>1001</code> (<code>+964 770 111 2222</code>, <code>+964 750 333 4444</code>) and one for student <code>1002</code> (<code>+20 100 555 6666</code>).`,
+      prompt: "<p>A student can have several phone numbers. This is a <strong>multivalued attribute</strong>. Store it in its own table (mapping step 6).</p><ul class=\"spec\"><li><b>Create:</b> <code>student_phones</code> with <code>student_id</code> (foreign key to students) and <code>phone</code> (text). The pair is the primary key.</li><li><b>Note:</b> If a student is deleted, delete their phone numbers too.</li><li><b>Then:</b> store two numbers for student <code>1001</code> (<code>+964 770 111 2222</code>, <code>+964 750 333 4444</code>) and one for student <code>1002</code> (<code>+20 100 555 6666</code>).</li></ul>",
       solution: `CREATE TABLE student_phones (
   student_id INTEGER REFERENCES students(student_id) ON DELETE CASCADE,
   phone      TEXT,
@@ -336,13 +382,15 @@ INSERT INTO student_phones VALUES
 UNION ALL
 SELECT 'data', 'row', student_id, phone, NULL FROM student_phones
 ORDER BY 1, 2, 3, 4;`,
-      hints: ['Multivalued attribute → table (owner key, value).', 'PRIMARY KEY (student_id, phone) stops the same number being stored twice.', 'REFERENCES students(student_id) ON DELETE CASCADE']
+      hints: [
+        "Multivalued attribute → a table (owner key, value).",
+        "PRIMARY KEY (student_id, phone) stops the same number being stored twice.",
+        "REFERENCES students(student_id) ON DELETE CASCADE"
+      ]
     },
     {
       id: 'd9-10', level: 3, kind: 'script',
-      prompt: `Model a clinic. A <strong>visit</strong> is a weak entity owned by a patient: visits are numbered 1, 2, 3 … separately for each patient. Create:
-<ul><li><code>patients</code>: <code>patient_id</code> integer primary key, <code>name</code> required text</li>
-<li><code>visits</code>: <code>patient_id</code> (FK to patients, visits disappear with their patient), <code>visit_no</code> integer (the partial key), <code>visit_date</code> required text, <code>reason</code> optional text. Choose the primary key a weak entity needs.</li></ul>`,
+      prompt: "<p>Model a clinic. A <strong>visit</strong> is a weak entity: it belongs to a patient. Visits are numbered 1, 2, 3 … for each patient separately.</p><ul class=\"spec\"><li><b>Create:</b> <code>patients</code>: <code>patient_id</code> integer primary key, <code>name</code> required text</li><li><b>Create:</b> <code>visits</code>: <code>patient_id</code> (foreign key to patients), <code>visit_no</code> integer (the partial key), <code>visit_date</code> required text, <code>reason</code> optional text</li><li><b>Note:</b> When a patient is deleted, delete their visits too. Choose the primary key that a weak entity needs.</li></ul>",
       solution: `CREATE TABLE patients (patient_id INTEGER PRIMARY KEY, name TEXT NOT NULL);
 CREATE TABLE visits (
   patient_id INTEGER REFERENCES patients(patient_id) ON DELETE CASCADE,
@@ -352,18 +400,62 @@ CREATE TABLE visits (
   PRIMARY KEY (patient_id, visit_no)
 );`,
       check: schemaCheck(['patients', 'visits'], { onDelete: true }),
-      hints: ['A weak entity\'s key = owner key + partial key.', 'PRIMARY KEY (patient_id, visit_no)', '"Disappear with their patient" means ON DELETE CASCADE.']
+      hints: [
+        "A weak entity's key = owner key + partial key.",
+        "PRIMARY KEY (patient_id, visit_no)",
+        "\"Delete their visits too\" means ON DELETE CASCADE."
+      ]
     }
   ],
   quiz: [
-    { id: 'd9-q1', q: 'In Chen notation, a double oval represents…', options: ['A key attribute', 'A derived attribute', 'A multivalued attribute', 'A weak entity'], answer: 2, why: 'Double oval = multivalued. Dashed oval = derived, underlined = key, double rectangle = weak entity.' },
-    { id: 'd9-q2', q: 'Students and courses have an M:N relationship with attribute grade. How many tables does the mapping produce?', options: ['2', '3', '4', '1'], answer: 1, why: 'students, courses, and one junction table (student_id, course_id, grade) with the pair as primary key.' },
-    { id: 'd9-q3', q: 'An employee manages at most one department and every department has exactly one manager. Where is the best place for the foreign key?', options: ['employees.managed_dept_id', 'departments.manager_id (NOT NULL, UNIQUE)', 'A junction table', 'Both tables'], answer: 1, why: 'For 1:1, put the FK on the side with total participation. Every department has a manager, so departments.manager_id can be NOT NULL; UNIQUE keeps it 1:1. On the employee side most rows would be NULL.' },
-    { id: 'd9-q4', q: 'A weak entity DEPENDENT (name, birth_date) is owned by EMPLOYEE (emp_id). What is the primary key of the DEPENDENT table?', options: ['name', 'emp_id', '(emp_id, name)', 'A new dependent_id only'], answer: 2, why: 'Owner key + partial key. name is the partial key: it is unique only among one employee\'s dependents.' },
-    { id: 'd9-q5', q: '"Every section must be taught by an instructor, but an instructor may teach no sections." The participation of SECTION in TEACHES is…', options: ['Partial', 'Total', 'Recursive', 'Derived'], answer: 1, why: 'Every section takes part, so it is total (double line in Chen, NOT NULL foreign key in SQL). The instructor side is partial.' },
-    { id: 'd9-q6', q: 'A Person superclass has subclasses Student and Employee, and a teaching assistant is both. The specialization is…', options: ['Disjoint', 'Overlapping', 'Weak', 'Ternary'], answer: 1, why: 'Overlapping means one entity can belong to more than one subclass. Table-per-type handles this naturally.' },
-    { id: 'd9-q7', q: 'Which attribute should usually NOT be stored as a column?', options: ['birth_date', 'age', 'email', 'student_id'], answer: 1, why: 'age is derived from birth_date and the current date. Storing it means it is wrong one year later.' },
-    { id: 'd9-q8', q: 'What is the degree of the relationship "course requires course"?', options: ['0', '1 (unary / recursive)', '2', 'M:N'], answer: 1, why: 'Degree counts entity types: only COURSE takes part, in two roles. Its cardinality ratio is M:N, which is a different property.' }
+    { id: 'd9-q1', q: "In Chen notation, what does a double oval show?", options: [
+        "A key attribute",
+        "A derived attribute",
+        "A multivalued attribute",
+        "A weak entity"
+      ], answer: 2, why: "Double oval = multivalued. Dashed oval = derived. Underlined = key. Double rectangle = weak entity." },
+    { id: 'd9-q2', q: "Students and courses have an M:N relationship with the attribute grade. How many tables does the mapping make?", options: [
+        "2",
+        "3",
+        "4",
+        "1"
+      ], answer: 1, why: "students, courses, and one junction table (student_id, course_id, grade). The pair is its primary key." },
+    { id: 'd9-q3', q: "An employee manages at most one department. Every department has exactly one manager. Where should the foreign key go?", options: [
+        "employees.managed_dept_id",
+        "departments.manager_id (NOT NULL, UNIQUE)",
+        "A junction table",
+        "Both tables"
+      ], answer: 1, why: "For 1:1, put the foreign key on the side where every row takes part. Every department has a manager, so departments.manager_id can be NOT NULL. UNIQUE keeps it 1:1. On the employee side, most rows would be NULL." },
+    { id: 'd9-q4', q: "A weak entity DEPENDENT (name, birth_date) belongs to EMPLOYEE (emp_id). What is the primary key of the DEPENDENT table?", options: [
+        "name",
+        "emp_id",
+        "(emp_id, name)",
+        "A new dependent_id only"
+      ], answer: 2, why: "Owner key + partial key. name is the partial key: it is unique only among the dependents of one employee." },
+    { id: 'd9-q5', q: "\"Every section must have an instructor, but an instructor may teach no sections.\" What is the participation of SECTION in TEACHES?", options: [
+        "Partial",
+        "Total",
+        "Recursive",
+        "Derived"
+      ], answer: 1, why: "Every section takes part, so it is total. In Chen notation that is a double line. In SQL it is a NOT NULL foreign key. The instructor side is partial." },
+    { id: 'd9-q6', q: "Person has two subclasses: Student and Employee. A teaching assistant is both. What kind of specialization is this?", options: [
+        "Disjoint",
+        "Overlapping",
+        "Weak",
+        "Ternary"
+      ], answer: 1, why: "Overlapping means one entity can be in more than one subclass. One table per type handles this well." },
+    { id: 'd9-q7', q: "Which attribute should usually NOT be stored as a column?", options: [
+        "birth_date",
+        "age",
+        "email",
+        "student_id"
+      ], answer: 1, why: "age comes from birth_date and today's date. A stored age is wrong one year later." },
+    { id: 'd9-q8', q: "What is the degree of the relationship \"course requires course\"?", options: [
+        "0",
+        "1 (unary / recursive)",
+        "2",
+        "M:N"
+      ], answer: 1, why: "Degree counts entity types. Only COURSE takes part, in two roles. Its cardinality is M:N, which is a different thing." }
   ],
   teach: 'You are given an ER diagram with a 1:N relationship, an M:N relationship with an attribute, and a multivalued attribute. Explain how each one becomes tables, and why the foreign key of a 1:N relationship goes on the N side.',
   rubric: '1:N → FK column on the N-side table referencing the 1-side PK (an FK column holds one value, so it can only point to one parent; putting it on the 1 side would need many values); M:N → junction table with both FKs, composite PK of the pair, relationship attribute stored there; multivalued → separate table (owner key, value) with composite PK; mentions NOT NULL for total participation; concrete example.'

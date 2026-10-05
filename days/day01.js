@@ -36,14 +36,14 @@ LAB.days.push({
     },
     {
       h: 'SELECT and FROM',
-      html: `<p>The smallest useful query names the columns you want and the table they come from. <code>*</code> means every column. In real applications, list the columns you need: it is clearer and it does not break when someone adds a column later.</p>`,
+      html: '<p>The smallest useful query names the columns you want and the table they come from. <code>*</code> means every column. In real applications, list the columns you need: it is clearer and it does not break when someone adds a column later.</p>',
       sql: `SELECT name, email, year
 FROM students;`,
       note: 'Press Run (or Ctrl/Cmd + Enter). Then edit the column list and run it again.'
     },
     {
       h: 'Expressions and aliases',
-      html: `<p>A column in the SELECT list can be any expression: arithmetic, text concatenation (<code>||</code> in standard SQL and SQLite), or a function call. Use <code>AS</code> to give the result column a readable name. An alias with spaces needs double quotes.</p>`,
+      html: '<p>A column in the SELECT list can be any expression: arithmetic, or a function call like <code>ROUND()</code>. Use <code>AS</code> to give the result column a readable name. An alias with spaces needs double quotes.</p>',
       sql: `SELECT name,
        salary,
        salary / 12 AS monthly_salary,
@@ -51,20 +51,43 @@ FROM students;`,
 FROM instructors;`
     },
     {
-      h: 'Removing duplicates with DISTINCT',
-      html: `<p>A query result can contain duplicate rows even though a table should not. <code>DISTINCT</code> keeps one copy of each different row. It applies to the whole row, not to the first column only.</p>`,
+      h: 'Joining text together with ||',
+      html: `<p>Two vertical bars <code>||</code> glue pieces of text into one. Use it to build labels, full sentences or contact lines. Fixed text, such as a space or a bracket, goes in single quotes.</p>
+<pre class="code">name || ' (' || email || ')'</pre>
+<p>Read it as: the name, then a space and an opening bracket, then the email, then a closing bracket.</p>`,
+      sql: `SELECT name || ' (' || email || ')' AS contact,
+       'Year ' || year AS study_year
+FROM students
+ORDER BY name;`,
+      note: 'Change the text inside the quotes and run it again. MySQL uses CONCAT(a, b) instead of ||.',
       predict: {
-        sql: `SELECT DISTINCT city FROM students;`,
-        q: 'Some students have no city (NULL). How does DISTINCT treat several NULL cities?',
-        options: ['It removes all NULL rows', 'It keeps one NULL row', 'It keeps every NULL row because NULL is never equal to NULL', 'It raises an error'],
+        sql: `SELECT 'Room ' || 'A' || '101' AS label;`,
+        q: 'What does this query return?',
+        options: ['Room A101', 'Room || A || 101', 'RoomA101', 'An error: you cannot join text'],
+        answer: 0,
+        why: '|| joins the three pieces in order. The first piece is "Room " with a space at the end. So the result is "Room A101".'
+      }
+    },
+    {
+      h: 'Removing duplicates with DISTINCT',
+      html: '<p>A query result can contain duplicate rows even though a table should not. <code>DISTINCT</code> keeps one copy of each different row. It applies to the whole row, not to the first column only.</p>',
+      predict: {
+        sql: 'SELECT DISTINCT city FROM students;',
+        q: 'Some students have no city (NULL). What does DISTINCT do with many NULL cities?',
+        options: [
+          'It removes all the NULL rows',
+          'It keeps one NULL row',
+          'It keeps every NULL row, because NULL never equals NULL',
+          'It gives an error'
+        ],
         answer: 1,
-        why: 'DISTINCT and GROUP BY treat all NULLs as one group, so exactly one NULL row remains. This is one of the few places where NULLs are treated as "the same".'
+        why: 'DISTINCT puts all the NULLs together. So exactly one NULL row stays. This is one of the few places where SQL treats NULLs as "the same".'
       }
     },
     {
       h: 'ORDER BY and LIMIT',
       html: `<p>Because tables have no order, the only way to get a guaranteed order is <code>ORDER BY</code>. You can sort by several columns, each <code>ASC</code> (default) or <code>DESC</code>. The second column only breaks ties in the first.</p>
-<p><code>LIMIT n</code> keeps the first n rows after sorting. <code>LIMIT n OFFSET m</code> skips m rows first, which is how page 2, page 3 and so on are built.</p>`,
+<p><code>LIMIT n</code> keeps only the first n rows after sorting.</p>`,
       sql: `SELECT name, dept_id, salary
 FROM instructors
 ORDER BY dept_id ASC, salary DESC
@@ -72,73 +95,180 @@ LIMIT 5;`,
       note: 'Dialects: SQL Server writes SELECT TOP 5 ..., Oracle and the SQL standard write FETCH FIRST 5 ROWS ONLY.'
     },
     {
+      h: 'Pages of results with OFFSET',
+      html: `<p>Websites show long lists in pages: 10 students on page 1, the next 10 on page 2, and so on. <code>OFFSET m</code> skips the first m rows, then <code>LIMIT n</code> takes the next n.</p>
+<table class="mini"><thead><tr><th>Page (10 per page)</th><th>Rows</th><th>SQL</th></tr></thead><tbody>
+<tr><td>Page 1</td><td>1 to 10</td><td><code>LIMIT 10 OFFSET 0</code></td></tr>
+<tr><td>Page 2</td><td>11 to 20</td><td><code>LIMIT 10 OFFSET 10</code></td></tr>
+<tr><td>Page 3</td><td>21 to 30</td><td><code>LIMIT 10 OFFSET 20</code></td></tr>
+</tbody></table>
+<p>Always sort with <code>ORDER BY</code> first. Without it, page 2 could contain different rows each time.</p>`,
+      sql: `-- page 2 of the instructor list, 5 per page
+SELECT name, salary
+FROM instructors
+ORDER BY name
+LIMIT 5 OFFSET 5;`,
+      note: 'Change OFFSET 5 to OFFSET 10 to see page 3.',
+      predict: {
+        q: 'A list shows 10 students on each page. Which SQL shows page 3?',
+        options: ['LIMIT 10 OFFSET 3', 'LIMIT 10 OFFSET 30', 'LIMIT 10 OFFSET 20', 'LIMIT 30 OFFSET 10'],
+        answer: 2,
+        why: 'Pages 1 and 2 have 20 rows. So you skip 20 rows (OFFSET 20) and take 10 (LIMIT 10). The rule: OFFSET = (page − 1) × rows per page.'
+      }
+    },
+    {
       h: 'How the database reads your query',
       html: `<p>You write SELECT first, but the database evaluates the clauses in a different order. Learn this order now. It explains many errors you will meet later.</p>
 <ol class="steps"><li><code>FROM</code>: pick the table(s)</li><li><code>WHERE</code>: filter rows</li><li><code>GROUP BY</code>: form groups</li><li><code>HAVING</code>: filter groups</li><li><code>SELECT</code>: compute the output columns</li><li><code>DISTINCT</code>: remove duplicates</li><li><code>ORDER BY</code>: sort</li><li><code>LIMIT</code>: cut</li></ol>
 <p>So an alias made in SELECT is not yet known in WHERE (step 2 runs before step 5), but it can be used in ORDER BY (step 7).</p>`,
       predict: {
-        q: 'Which query fails in PostgreSQL and SQL Server?',
-        options: ['SELECT salary/12 AS m FROM instructors ORDER BY m', 'SELECT salary/12 AS m FROM instructors WHERE m > 7000', 'SELECT name FROM instructors ORDER BY salary', 'SELECT DISTINCT dept_id FROM instructors'],
+        q: 'Which query gives an error in PostgreSQL and SQL Server?',
+        options: [
+          'SELECT salary/12 AS m FROM instructors ORDER BY m',
+          'SELECT salary/12 AS m FROM instructors WHERE m > 7000',
+          'SELECT name FROM instructors ORDER BY salary',
+          'SELECT DISTINCT dept_id FROM instructors'
+        ],
         answer: 1,
-        why: 'WHERE runs before SELECT, so the alias m does not exist yet. SQLite is lenient and accepts it, but most databases reject it. Repeat the expression instead: WHERE salary/12 > 7000.'
+        why: 'WHERE runs before SELECT. So the alias m does not exist yet in WHERE. SQLite accepts it, but most databases do not. Write the full expression instead: WHERE salary/12 > 7000.'
       }
     }
   ],
   pitfalls: [
     'Expecting rows to come back in insertion order. Without ORDER BY the order is not guaranteed and can change between runs.',
-    'Writing text values with double quotes. In standard SQL, <code>\'Cairo\'</code> is a string and <code>"Cairo"</code> is a column name.',
+    `Writing text values with double quotes. In standard SQL, <code>'Cairo'</code> is a string and <code>"Cairo"</code> is a column name.`,
     'Thinking DISTINCT applies to one column. <code>SELECT DISTINCT a, b</code> removes rows where both a and b repeat.',
     'Using SELECT * in application code. It hides which columns you rely on.'
   ],
-  dialect: `<ul><li><strong>Limit rows:</strong> SQLite, PostgreSQL, MySQL use <code>LIMIT 5</code>. SQL Server uses <code>SELECT TOP 5</code>. Oracle 12c+ and the standard use <code>FETCH FIRST 5 ROWS ONLY</code>.</li><li><strong>Concatenation:</strong> <code>||</code> in SQLite, PostgreSQL, Oracle. MySQL uses <code>CONCAT(a, b)</code>. SQL Server uses <code>+</code> or <code>CONCAT</code>.</li><li><strong>Integer division:</strong> SQLite, PostgreSQL and SQL Server truncate <code>7/2</code> to 3. MySQL returns 3.5. Write <code>7/2.0</code> when you want a decimal.</li></ul>`,
+  dialect: '<ul><li><strong>Limit rows:</strong> SQLite, PostgreSQL, MySQL use <code>LIMIT 5</code>. SQL Server uses <code>SELECT TOP 5</code>. Oracle 12c+ and the standard use <code>FETCH FIRST 5 ROWS ONLY</code>.</li><li><strong>Concatenation:</strong> <code>||</code> in SQLite, PostgreSQL, Oracle. MySQL uses <code>CONCAT(a, b)</code>. SQL Server uses <code>+</code> or <code>CONCAT</code>.</li><li><strong>Integer division:</strong> SQLite, PostgreSQL and SQL Server truncate <code>7/2</code> to 3. MySQL returns 3.5. Write <code>7/2.0</code> when you want a decimal.</li></ul>',
   exercises: [
     {
-      id: 'd1-1', level: 1,
-      prompt: 'List the <code>name</code> and <code>budget</code> of every department.',
-      solution: `SELECT name, budget FROM departments;`,
-      hints: ['You only need one table: departments.', 'SELECT column1, column2 FROM table;']
+      id: 'd1-1',
+      level: 1,
+      prompt: '<p>Show the name and budget of every department.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>budget</code></li></ul>',
+      solution: 'SELECT name, budget FROM departments;',
+      hints: [
+        'You need only one table: departments.',
+        'The pattern is: SELECT column1, column2 FROM table;'
+      ]
     },
     {
-      id: 'd1-2', level: 1,
-      prompt: 'List every course <code>title</code> with its <code>credits</code>, sorted by credits from highest to lowest, then by title alphabetically.',
-      solution: `SELECT title, credits FROM courses ORDER BY credits DESC, title ASC;`,
+      id: 'd1-2',
+      level: 1,
+      prompt: '<p>Show every course with its number of credits.</p><ul class="spec"><li><b>Columns:</b> <code>title</code>, <code>credits</code></li><li><b>Order:</b> most <code>credits</code> first, then by <code>title</code>, A to Z</li></ul>',
+      solution: 'SELECT title, credits FROM courses ORDER BY credits DESC, title ASC;',
       ordered: true,
-      hints: ['Sort by two columns. The second one only breaks ties.', 'ORDER BY credits DESC, title']
+      hints: [
+        'Sort by two columns. The second column is used only when the first one is equal.',
+        'ORDER BY credits DESC, title'
+      ]
     },
     {
-      id: 'd1-3', level: 1,
-      prompt: 'Which cities do our students come from? Return each city once (include the NULL city if it appears).',
-      solution: `SELECT DISTINCT city FROM students;`,
-      hints: ['One keyword removes duplicate rows.', 'SELECT DISTINCT city FROM ...']
+      id: 'd1-3',
+      level: 1,
+      prompt: '<p>Which cities do our students come from? Show each city only once.</p><ul class="spec"><li><b>Columns:</b> <code>city</code></li><li><b>Note:</b> some students have no city (NULL). Keep that NULL row too.</li></ul>',
+      solution: 'SELECT DISTINCT city FROM students;',
+      hints: ['One keyword removes repeated rows.', 'SELECT DISTINCT city FROM ...']
     },
     {
-      id: 'd1-4', level: 2,
-      prompt: 'Show each instructor\'s <code>name</code> and their salary per month as <code>monthly</code>, rounded to 2 decimal places. Put the best-paid instructor first.',
-      solution: `SELECT name, ROUND(salary / 12.0, 2) AS monthly FROM instructors ORDER BY salary DESC;`,
+      id: 'd1-4',
+      level: 2,
+      prompt: '<p>Show the monthly salary of each instructor.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>monthly</code></li><li><b>Order:</b> highest salary first</li><li><b>Note:</b> <code>monthly</code> is the salary divided by 12. Round it to 2 decimal places.</li></ul>',
+      solution: 'SELECT name, ROUND(salary / 12.0, 2) AS monthly FROM instructors ORDER BY salary DESC;',
       ordered: true,
-      hints: ['salary / 12 does integer division in SQLite. Divide by 12.0 instead.', 'ROUND(value, 2) rounds to two decimals.', 'Sort by salary (or by monthly) descending.']
+      hints: [
+        'In SQLite, salary / 12 drops the decimals. Divide by 12.0 instead.',
+        'ROUND(value, 2) keeps two decimals.',
+        'Sort by salary (or by monthly) with DESC.'
+      ]
     },
     {
-      id: 'd1-5', level: 2,
-      prompt: 'Return the three most recently hired instructors: <code>name</code> and <code>hire_date</code>, newest first.',
-      solution: `SELECT name, hire_date FROM instructors ORDER BY hire_date DESC LIMIT 3;`,
+      id: 'd1-5',
+      level: 2,
+      prompt: '<p>Find the three instructors who joined the university most recently.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>hire_date</code></li><li><b>Order:</b> newest <code>hire_date</code> first</li><li><b>Note:</b> show only 3 rows.</li></ul>',
+      solution: 'SELECT name, hire_date FROM instructors ORDER BY hire_date DESC LIMIT 3;',
       ordered: true,
-      hints: ['Dates are stored as text in YYYY-MM-DD format, so they sort correctly as text.', 'ORDER BY ... DESC, then LIMIT 3.']
+      hints: [
+        'Dates are text like 2024-08-26. They sort correctly as text.',
+        'ORDER BY ... DESC, then LIMIT 3.'
+      ]
     },
     {
-      id: 'd1-6', level: 3,
-      prompt: 'Build a "contact line" for each student in the form <code>Ahmed Al-Sayed &lt;ahmed.alsayed@uni.edu&gt;</code>, in a single column called <code>contact</code>. Show page 2 of the list when it is sorted by student name and each page holds 10 rows (rows 11 to 20).',
-      solution: `SELECT name || ' <' || email || '>' AS contact FROM students ORDER BY name LIMIT 10 OFFSET 10;`,
+      id: 'd1-6',
+      level: 2,
+      prompt: '<p>Make a "contact line" for each student, like this: <code>Ahmed Al-Sayed &lt;ahmed.alsayed@uni.edu&gt;</code></p><ul class="spec"><li><b>Columns:</b> <code>contact</code></li><li><b>Order:</b> by student <code>name</code>, A to Z</li><li><b>Note:</b> one column only. The form is: name, one space, then the email inside &lt; and &gt;.</li></ul>',
+      solution: `SELECT name || ' <' || email || '>' AS contact FROM students ORDER BY name;`,
       ordered: true,
-      hints: ['Concatenate with ||. Literal text goes in single quotes.', 'Page 2 means skip 10 rows, then take 10.', 'ORDER BY name LIMIT 10 OFFSET 10']
+      hints: [
+        'Read the lesson part "Joining text together with ||".',
+        `The fixed pieces are ' <' (a space and <) and '>'. Put them in single quotes.`,
+        `name || ' <' || email || '>' AS contact, then ORDER BY name`
+      ]
+    },
+    {
+      id: 'd1-7',
+      level: 3,
+      prompt: '<p>The website shows 10 students on each page, sorted by name. Show <strong>page 2</strong>. That is rows 11 to 20.</p><ul class="spec"><li><b>Columns:</b> <code>student_id</code>, <code>name</code></li><li><b>Order:</b> by <code>name</code>, A to Z</li></ul>',
+      solution: 'SELECT student_id, name FROM students ORDER BY name LIMIT 10 OFFSET 10;',
+      ordered: true,
+      hints: [
+        'Read the lesson part "Pages of results with OFFSET".',
+        'Page 2 means: skip the first 10 rows, then take 10.',
+        'ORDER BY name LIMIT 10 OFFSET 10'
+      ]
     }
   ],
   quiz: [
-    { id: 'd1-q1', q: 'In relational terms, a row of a table is called a…', options: ['Relation', 'Tuple', 'Attribute', 'Domain'], answer: 1, why: 'A relation is the table, an attribute is a column, a domain is the set of allowed values. A row is a tuple.' },
-    { id: 'd1-q2', q: 'What does a foreign key guarantee?', options: ['The column values are unique', 'The column is never NULL', 'Every non-NULL value matches a key value in the referenced table', 'The table is sorted by that column'], answer: 2, why: 'That is referential integrity. A foreign key can repeat and can be NULL unless you add NOT NULL.' },
-    { id: 'd1-q3', q: 'You run the same SELECT without ORDER BY twice and get rows in a different order. Is that a bug?', options: ['Yes, the database is broken', 'No, row order is not defined without ORDER BY', 'Only if the table has a primary key', 'Only in SQLite'], answer: 1, why: 'Tables are sets. The engine may return rows in any order it finds convenient unless you ask for one.' },
-    { id: 'd1-q4', q: 'A candidate key is…', options: ['Any column that has no NULLs', 'A minimal set of columns that uniquely identifies a row', 'A foreign key that might become a primary key', 'The primary key of a child table'], answer: 1, why: 'Minimal means you cannot remove a column and keep uniqueness. The primary key is one chosen candidate key.' },
-    { id: 'd1-q5', q: 'In which clause can you use an alias defined in the SELECT list (portable across databases)?', options: ['WHERE', 'GROUP BY', 'ORDER BY', 'FROM'], answer: 2, why: 'ORDER BY is evaluated after SELECT. WHERE, GROUP BY and FROM run before it.' }
+    {
+      id: 'd1-q1',
+      q: 'In relational theory, what is a row of a table called?',
+      options: ['Relation', 'Tuple', 'Attribute', 'Domain'],
+      answer: 1,
+      why: 'A relation is a table. An attribute is a column. A domain is the set of allowed values. A row is a tuple.'
+    },
+    {
+      id: 'd1-q2',
+      q: 'What does a foreign key promise?',
+      options: [
+        'The values in the column are all different',
+        'The column is never NULL',
+        'Every value (that is not NULL) exists as a key in the other table',
+        'The table is sorted by that column'
+      ],
+      answer: 2,
+      why: 'This rule is called referential integrity. A foreign key value can repeat. It can also be NULL, unless you add NOT NULL.'
+    },
+    {
+      id: 'd1-q3',
+      q: 'You run the same SELECT twice, without ORDER BY. The rows come back in a different order. Is this a bug?',
+      options: [
+        'Yes, the database is broken',
+        'No, without ORDER BY the order is not fixed',
+        'Only if the table has a primary key',
+        'Only in SQLite'
+      ],
+      answer: 1,
+      why: 'A table is a set of rows with no order. The database can return the rows in any order, unless you use ORDER BY.'
+    },
+    {
+      id: 'd1-q4',
+      q: 'What is a candidate key?',
+      options: [
+        'Any column with no NULLs',
+        'The smallest set of columns that is unique for every row',
+        'A foreign key that may become a primary key',
+        'The primary key of a child table'
+      ],
+      answer: 1,
+      why: '"Smallest" means: if you remove any column, it is no longer unique. The primary key is the candidate key that you choose.'
+    },
+    {
+      id: 'd1-q5',
+      q: 'You give a column a new name in SELECT with AS. In which clause can you use that name in every database?',
+      options: ['WHERE', 'GROUP BY', 'ORDER BY', 'FROM'],
+      answer: 2,
+      why: 'ORDER BY runs after SELECT, so it knows the new name. WHERE, GROUP BY and FROM run before SELECT.'
+    }
   ],
   teach: 'Explain to a first-year student the difference between a primary key and a foreign key, using the students and departments tables as your example.',
   rubric: 'PK uniquely identifies each row and cannot be NULL; FK refers to a PK in another (or the same) table; FK enforces referential integrity (no student in a non-existent department); FK values may repeat and may be NULL; concrete example with students.dept_id -> departments.dept_id.'

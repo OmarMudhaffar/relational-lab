@@ -1,7 +1,7 @@
 <title>Relational Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Mrs+Saint+Delafield&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
 /* Layout: syllabus rail on the left, a reading column for lessons, console-style editors and result grids inside it, tutor drawer on the right. */
 :root {
@@ -358,12 +358,9 @@ table.grid tbody tr:nth-child(2) { animation-delay: 20ms; } table.grid tbody tr:
 .saved.flash { animation: flash 1.6s ease; }
 .xpfloat { position: absolute; z-index: 70; pointer-events: none; font: 700 15px var(--f-mono); color: var(--hl); animation: floatup 1.3s ease-out forwards; text-shadow: 0 1px 0 var(--surface); }
 
-/* ---------- signature footer ---------- */
+/* ---------- main column ---------- */
 .maincol { min-width: 0; display: flex; flex-direction: column; }
 .maincol main { flex: 1; }
-.sig { border-top: 1px solid var(--line); padding-block: 26px 40px; padding-inline: clamp(16px, 4vw, 48px); text-align: center; color: var(--muted); }
-.sig-name { font-family: "Mrs Saint Delafield", "Snell Roundhand", "Brush Script MT", cursive; font-size: 30px; line-height: 1.1; color: var(--ink); letter-spacing: .01em; }
-.sig-meta { font: 500 12px var(--f-mono); letter-spacing: .03em; margin-top: 4px; }
 
 /* ---------- 3D ---------- */
 .l3-wrap { min-width: 0; }
@@ -499,6 +496,47 @@ button.pill.link:hover { border-color: var(--accent); }
 .sp-legend { border-top: 1px solid var(--line); padding: 10px 16px; font-size: 13px; color: var(--muted); line-height: 2; }
 .sp-legend .pill { margin: 0 4px 0 0; }
 
+/* ---------- table viewer ---------- */
+.tv { position: fixed; z-index: 70; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(1100px, calc(100vw - 24px)); height: min(820px, calc(100vh - 32px)); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.35); display: flex; flex-direction: column; overflow: hidden; }
+body.modal-open { overflow: hidden; }
+.tv-h { display: flex; gap: 16px; align-items: flex-start; padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+.tv-title { flex: 1; min-width: 0; }
+.tv-title h3 { font: 700 24px var(--f-mono); margin: 2px 0 4px; }
+.tv-title p { margin: 0; color: var(--muted); font-size: 15px; max-width: 70ch; }
+.tv-bar { display: flex; gap: 12px; align-items: center; padding: 10px 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.tv-tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.tv-tabs button { border: 0; background: var(--surface); padding: 7px 14px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--muted); }
+.tv-tabs button.on { background: var(--accent); color: var(--surface); }
+#tvFind { flex: 1; min-width: 180px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: 15px var(--f-body); }
+.tv-filter { padding: 8px 18px; background: var(--hl-soft); font-size: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tv-body { flex: 1; overflow: auto; padding: 12px 18px; }
+.tv-count { font: 500 13px var(--f-mono); color: var(--muted); margin-bottom: 8px; }
+.tv-fkdemo { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.tv-grid { border: 1px solid var(--line); border-radius: 8px; overflow: auto; max-height: calc(100% - 26px); }
+.tv-grid table.grid { font-size: 14px; }
+.tv-grid table.grid th { padding: 0; }
+.tv-th { border: 0; background: none; width: 100%; text-align: left; padding: 8px 12px; font: 600 13.5px var(--f-mono); color: var(--ink); cursor: pointer; white-space: nowrap; }
+.tv-th:hover { color: var(--accent); }
+.tv-th .pill { font-size: 10px; margin-left: 2px; }
+.tv-grid table.grid td { padding: 7px 12px; max-width: 320px; }
+.tv-grid table.grid tbody tr:nth-child(even) td { background: var(--bg); }
+.tv-grid table.grid tbody tr:hover td { background: var(--accent-soft); }
+.tv-grid table.grid tbody tr { animation: none; }
+.tv-grid td.hit { background: var(--hl-soft) !important; }
+.tv-fk { border: 0; background: none; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.tv-cols { font-size: 15px; }
+.tv-cols td { padding: 10px 8px; }
+.tv-mean { color: var(--muted); font-size: 14px; }
+.tv-links { border-top: 1px solid var(--line); padding: 10px 18px; display: flex; gap: 8px 22px; flex-wrap: wrap; align-items: center; font-size: 13.5px; color: var(--muted); }
+.tv-lk { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tv-lk b { font: 600 12px var(--f-mono); letter-spacing: .05em; text-transform: uppercase; margin-right: 2px; }
+.tv-lk small { margin-right: 8px; font-size: 12px; }
+.sp-open { margin-top: 12px; }
+ul.spec { list-style: none; margin: 8px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; display: grid; gap: 4px; }
+ul.spec li { margin: 0; font-size: 14.5px; }
+ul.spec b { display: inline-block; min-width: 72px; font: 600 12px var(--f-mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+@media (max-width: 640px) { .tv { width: 100vw; height: 100%; top: 0; left: 0; transform: none; border-radius: 0; padding-top: env(safe-area-inset-top, 0px); } .tv-title h3 { font-size: 20px; } }
+
 /* ---------- cleaner layout ---------- */
 .intro { margin-bottom: 28px; display: grid; gap: 14px; }
 .intro-role p { margin: 4px 0 0; font-size: 15.5px; max-width: 68ch; }
@@ -617,7 +655,6 @@ button.pill.link:hover { border-color: var(--accent); }
   .xr-row { grid-template-columns: 92px minmax(0, 1fr) 64px; }
   .xr-row .xr-t { display: none; }
   .hero3d .l3 { height: 280px; }
-  .sig-name { font-size: 26px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; transition: none !important; }
@@ -637,8 +674,7 @@ button.pill.link:hover { border-color: var(--accent); }
 </div>
 <div class="layout">
   <nav class="rail" id="rail" aria-label="Course"></nav>
-  <div class="maincol"><main id="main"><div class="loading" id="boot">Starting the SQL engine…</div></main>
-  <footer class="sig"><div class="sig-name">Omar Alzori</div><div class="sig-meta">Designed and built by Omar Alzori · <a href="https://github.com/OmarMudhaffar/relational-lab" target="_blank" rel="noopener">Source on GitHub</a> · Relational Lab, 2026</div></footer></div>
+  <div class="maincol"><main id="main"><div class="loading" id="boot">Starting the SQL engine…</div></main></div>
 </div>
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="schemaDrawer" aria-label="Database schema">
@@ -666,8 +702,21 @@ button.pill.link:hover { border-color: var(--accent); }
   <div class="dock-body l3-wrap"><div class="l3" id="dock3d"></div></div>
 </div>
 <div class="big3d" id="big3d" hidden role="dialog" aria-label="Live database, full screen">
-  <div class="big3d-h"><b>Live database</b><span>Each cylinder is a table: taller means more rows. Each line is a foreign key. Drag to turn, scroll to zoom, click a table to open it.</span><button class="btn small" id="big3dClose">Close ✕</button></div>
+  <div class="big3d-h"><b>Live database</b><span>Each cylinder is a table: taller means more rows. Each line is a link (foreign key). Drag to turn, scroll to zoom. <b>Click a table to read its data.</b></span><button class="btn small" id="big3dClose">Close ✕</button></div>
   <div class="l3" id="big3dHost"></div>
+</div>
+<div class="tv" id="tv" hidden role="dialog" aria-modal="true" aria-labelledby="tvName">
+  <div class="tv-h">
+    <div class="tv-title"><div class="eyebrow">Table</div><h3 id="tvName">table</h3><p id="tvNote"></p></div>
+    <button class="btn small" id="tvClose">Close ✕</button>
+  </div>
+  <div class="tv-bar">
+    <div class="tv-tabs" role="tablist"><button data-tvtab="data" class="on" role="tab">Data</button><button data-tvtab="cols" role="tab">Columns</button></div>
+    <input type="search" id="tvFind" placeholder="Search in this table" aria-label="Search in this table" autocomplete="off">
+  </div>
+  <div class="tv-filter" id="tvFilter" hidden></div>
+  <div class="tv-body" id="tvBody"></div>
+  <div class="tv-links" id="tvLinks"></div>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -1010,7 +1059,7 @@ function viewHome() {
     '<section class="hero"><div><div class="eyebrow">Your personal database course</div><h1>Fourteen days to <em>fluent SQL</em> and solid database design.</h1>' +
     '<p>A real SQL engine runs in this page. You read a short idea, predict what happens, run it, then solve graded problems on a university database.' + (HOSTED ? ' A professor is one click away when you get stuck.' : ' Hints and model solutions are there when you get stuck.') + '</p>' +
     '<div class="actions"><a class="btn primary" href="#day-' + nd + '">' + (started ? 'Continue with Day ' + nd : 'Start Day 1') + '</a><a class="btn" href="#playground">Open the playground</a>' + (dueCards().length ? '<a class="btn" href="#review">Review ' + dueCards().length + ' cards</a>' : '') + '</div></div>' +
-    '<div class="l3-wrap hero3d"><div class="l3" id="home3d"><button class="btn small l3-expand" data-big3d="1">⤢ Full screen</button></div><p class="l3-cap">The database you will work with, live. Each cylinder is a table (taller = more rows), each line a foreign key. Drag to turn it, scroll to zoom, click a table to see its columns.</p></div></section>' +
+    '<div class="l3-wrap hero3d"><div class="l3" id="home3d"><button class="btn small l3-expand" data-big3d="1">⤢ Full screen</button></div><p class="l3-cap">The database you will work with, live. Each cylinder is a table (taller = more rows), each line a foreign key. Drag to turn it, scroll to zoom. Click a table to read its data.</p></div></section>' +
     factHTML(false) +
     '<section class="section"><h2>Your progress</h2><p class="lead">Every request you solve earns XP and moves you up the ranks. ' + (P.start ? 'Calendar day ' + pd + ' of 14.' : 'Your 14 days start when you begin Day 1.') + '</p>' + progressHTML() + '<div class="map" style="margin-top:18px">' + map + '</div><div class="map-caption"><span>Fill = progress per day</span><span>Orange outline = your next day</span></div></section>' +
     '<section class="section"><h2>The daily routine</h2><p class="lead">About 2.5 hours a day. Do the blocks in this order: the first and last blocks are where most of the remembering happens.</p><div class="routine">' +
@@ -1053,8 +1102,9 @@ function markSeen(day, i) {
   const a = P.seen[day.n] || (P.seen[day.n] = []);
   if (!a.includes(i)) { a.push(i); save(); renderRail(); }
 }
+function predKey(p) { return 'Q:' + String(p.q).replace(/<[^>]+>/g, '').slice(0, 90); }
 function predictHTML(key, p) {
-  const ans = P.predict[key];
+  const ans = P.predict[predKey(p)];
   let h = '<div class="predict" data-pk="' + esc(key) + '"><div class="ph">Predict first</div><div class="pb"><div class="q">' + p.q + '</div>';
   if (p.sql) h += '<pre class="code">' + hl(p.sql) + '</pre>';
   h += '<div class="opts">' + p.options.map((o, i) => {
@@ -1101,7 +1151,7 @@ function renderLearn(day, body) {
     else if (t.dataset.reset) { const key = t.dataset.reset; delete editors[key]; delete lessonRuns[key]; renderLearn(day, body); }
     else if (t.dataset.opt !== undefined) {
       const box = t.closest('.predict'); const key = box.dataset.pk; const i = Number(key.split('-').pop());
-      P.predict[key] = Number(t.dataset.opt); save(); markSeen(day, i);
+      P.predict[predKey(day.lesson[i].predict)] = Number(t.dataset.opt); save(); markSeen(day, i);
       box.outerHTML = predictHTML(key, day.lesson[i].predict);
     } else if (t.dataset.runpredict) {
       const key = t.dataset.runpredict; const i = Number(key.split('-').pop());
@@ -1125,7 +1175,7 @@ function exHTML(ex, idx) {
   const rq = requesterFor(ex);
   let h = '<article class="ex' + (rec.done ? ' done' : '') + '" id="ex-' + esc(ex.id) + '"><div class="ex-h"><span class="av" aria-hidden="true">' + rq[1] + '</span><span class="req"><b>' + esc(rq[0]) + '</b><small>REQ-' + esc(ex.id.toUpperCase()) + ' · ' + xpOfEx(ex) + ' XP</small></span><span class="id">' + pad2(idx + 1) + '</span><span class="lvl" title="Level ' + ex.level + '">' + [1, 2, 3].map(l => '<i class="' + (l <= ex.level ? 'on' : '') + '"></i>').join('') + '</span>' + (ex.kind === 'script' ? '<span class="eyebrow">' + (ex.plan ? 'index task' : 'build task') + '</span>' : '') + status + '</div>';
   const tl = tablesFor(ex);
-  h += '<div class="ex-p prose">' + ex.prompt + (tl.length ? '<div class="tables-line">Tables: ' + tl.map(t => '<button class="tchip" data-schema="' + esc(t) + '" data-setupof="' + esc(ex.id) + '" title="Show the columns of ' + esc(t) + '">' + esc(t) + '</button>').join('') + '</div>' : '') + (ex.ordered ? '<p class="note">Row order is checked.</p>' : '') + (ex.setup ? '<details><summary class="note" style="cursor:pointer">Setup SQL that runs before yours</summary><pre class="code">' + hl(ex.setup) + '</pre></details>' : '') + '</div>';
+  h += '<div class="ex-p prose">' + ex.prompt + (tl.length ? '<div class="tables-line">Tables: ' + tl.map(t => '<button class="tchip" data-schema="' + esc(t) + '" data-setupof="' + esc(ex.id) + '" title="Show the columns of ' + esc(t) + '">' + esc(t) + '</button>').join('') + '</div>' : '') + '' + (ex.setup ? '<details><summary class="note" style="cursor:pointer">Setup SQL that runs before yours</summary><pre class="code">' + hl(ex.setup) + '</pre></details>' : '') + '</div>';
   const fbBlock = (s.fb ? fbHTML(s.fb, rec) : '') + (hintsShown ? '<div class="hints">' + ex.hints.slice(0, hintsShown).map((t, i) => '<div' + (i === hintsShown - 1 ? ' class="new"' : '') + '><b>HINT ' + (i + 1) + ' of ' + ex.hints.length + '</b><span>' + t + '</span></div>').join('') + '</div>' : '');
   h += '<div class="console">' + editorHTML('ex:' + ex.id, draft, 4) + '<div class="toolbar ex-tb"><div class="tb-main"><button class="btn small" data-exrun="' + ex.id + '">Run</button><button class="btn primary small" data-excheck="' + ex.id + '">Check answer</button></div><div class="tb-side"><button class="btn small tb-hint" data-exhint="' + ex.id + '"' + (hintsShown >= ex.hints.length ? ' disabled' : '') + '>' + (hintsShown >= ex.hints.length ? 'All hints shown' : 'Hint ' + (hintsShown + 1) + ' of ' + ex.hints.length) + '</button>' + (ex.kind !== 'script' ? '<button class="btn ghost small" data-exexp="' + ex.id + '">' + (s.showExp ? 'Hide expected' : 'Expected result') + '</button>' : '') + '<button class="btn ghost small" data-exsol="' + ex.id + '"' + (canSolve ? '' : ' disabled title="Unlocks after 2 checks or after all hints"') + '>' + (s.showSol ? 'Hide solution' : canSolve ? 'Solution' : 'Solution (locked)') + '</button><button class="btn ghost small tutor-only" data-exask="' + ex.id + '" hidden>Ask the professor</button></div></div>' +
     fbBlock + '<div class="out"' + (s.run && !(s.fb && s.fb.kind === 'error') ? '' : ' hidden') + '>' + (s.run ? (s.fb ? '<div class="out-lab">Your result</div>' : '') + runResultHTML(s.run) + (s.run.ok ? xrayWidget('ex:' + ex.id) : '') : '') + (s.plan ? '<div class="meta"><span>Plan: ' + esc(s.plan) + '</span></div>' : '') + '</div></div>';
@@ -1375,7 +1425,7 @@ function schemaPanelHTML(db, focus) {
       cols.map(([c, ty, pk, nn]) => '<tr data-col="' + esc(c.toLowerCase()) + '"><td class="sp-c">' + esc(c) + '</td><td>' + esc(PLAIN_TYPE[(ty || '').toLowerCase()] || (ty || '').toLowerCase()) + '</td><td class="sp-tags">' + (pk ? '<span class="pill key">KEY</span>' : '') + (fk[c] ? '<button class="pill link" data-spgo="' + esc(fk[c]) + '" title="Open ' + esc(fk[c]) + '">→ ' + esc(fk[c]) + '</button>' : '') + (nn && !pk ? '<span class="pill req">required</span>' : '') + '</td></tr>').join('') +
       '</tbody></table>' +
       (refBy[t] ? '<p class="sp-refby">Other tables point here: ' + refBy[t].map(r => '<code>' + esc(r) + '</code>').join(' ') + '</p>' : '') +
-      '<div class="sp-ex" data-ex="' + esc(t) + '"></div></div></section>';
+      '<div class="sp-ex" data-ex="' + esc(t) + '"></div><button class="btn small sp-open" data-tvopen="' + esc(t) + '">Open the full table →</button></div></section>';
   }).join('');
 }
 function spFillExample(sec) {
@@ -1399,6 +1449,8 @@ function openSchema(focus, setup) {
   $('#schemaDrawer').classList.add('open'); $('#scrim').hidden = false;
   if (focus) { const sec = $('#schemaBody .sp-t[data-table="' + CSS.escape(focus) + '"]'); if (sec) { spOpen(sec, true); setTimeout(() => sec.scrollIntoView({ block: 'start' }), 30); } }
   $('#schemaBody').onclick = e => {
+    const tvo = e.target.closest('[data-tvopen]');
+    if (tvo) { openTable(tvo.dataset.tvopen, spSetup); return; }
     const go = e.target.closest('[data-spgo]');
     if (go) { const sec = $('#schemaBody .sp-t[data-table="' + CSS.escape(go.dataset.spgo) + '"]'); if (sec) { spOpen(sec, true); sec.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' }); sec.classList.remove('flash'); void sec.offsetWidth; sec.classList.add('flash'); } return; }
     const h = e.target.closest('[data-sptoggle]');
@@ -1410,7 +1462,7 @@ document.addEventListener('click', e => {
   const c = e.target.closest('[data-schema]'); if (!c) return;
   const exId = c.dataset.setupof; let setup = null;
   if (exId) { const ex = DAYS.flatMap(d => d.exercises).find(x => x.id === exId); setup = ex && ex.setup; }
-  openSchema(c.dataset.schema, setup);
+  openTable(c.dataset.schema, setup);
 });
 function viewPlayground() {
   if (!PG) PG = freshDB();
@@ -1724,7 +1776,7 @@ function xpTotal() {
     d.quiz.forEach(q => { if (P.quiz[q.id] && P.quiz[q.id].first) x += 5; });
     if (P.teach[d.n]) x += 10;
   });
-  x += 2 * Object.keys(P.predict).length;
+  x += 2 * Object.keys(P.predict).filter(k => k.startsWith('Q:')).length;
   return Math.round(x);
 }
 function rankOf(x) { let r = RANKS[0], next = null; RANKS.forEach((k, i) => { if (x >= k[0]) { r = k; next = RANKS[i + 1] || null; } }); return { name: r[1], at: r[0], next }; }
@@ -1804,7 +1856,7 @@ const Live3D = (function () {
       ring.rotation.x = -Math.PI / 2; ring.position.y = -0.14; g.add(ring);
       root.add(g);
       const lab = document.createElement('button'); lab.className = 'l3-lab'; lab.type = 'button'; lab.innerHTML = esc(t) + '<small>' + info[t].n + '</small>';
-      lab.onclick = () => openSchema(t);
+      lab.onclick = () => openTable(t);
       labels.appendChild(lab);
       nodes[t] = { g, mats, ring, lab, heat: 0, top: (discs - 1) * 0.26 + 0.3, info: info[t] };
     });
@@ -1824,7 +1876,7 @@ const Live3D = (function () {
       if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true; rotY = drag.ry + dx * 0.008; rotX = Math.max(0.12, Math.min(1.1, drag.rx + dy * 0.005)); loop(performance.now()); }
       pick(e);
     });
-    el.addEventListener('pointerup', () => { if (drag && !drag.moved && hover) openSchema(hover); drag = null; });
+    el.addEventListener('pointerup', () => { if (drag && !drag.moved && hover) openTable(hover); drag = null; });
     el.addEventListener('pointerleave', () => { tip.hidden = true; hover = null; });
     el.addEventListener('wheel', e => { if (!host || !host.closest('.big3d, .hero3d')) return; e.preventDefault(); zoom = Math.max(0.55, Math.min(1.7, zoom * (e.deltaY > 0 ? 1.07 : 0.93))); loop(performance.now()); }, { passive: false });
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -1986,6 +2038,74 @@ function wireProgress() {
   };
 }
 
+/* ---------------- table viewer ---------------- */
+const TV = { t: null, setup: null, tab: 'data', sort: null, dir: 1, q: '', filter: null, cols: [], fk: {}, refBy: [], rows: [], hist: [] };
+function openTable(t, setup, filter) {
+  if (TV.t && !$('#tv').hidden && TV.t !== t) TV.hist.push({ t: TV.t, filter: TV.filter });
+  const db = freshDB(setup || null);
+  const q = t.replace(/'/g, "''");
+  TV.cols = (db.exec("SELECT name, type, pk, \"notnull\" FROM pragma_table_info('" + q + "')")[0] || { values: [] }).values;
+  TV.fk = {}; (db.exec("SELECT \"from\", \"table\", \"to\" FROM pragma_foreign_key_list('" + q + "')")[0] || { values: [] }).values.forEach(([f, tt, to]) => { TV.fk[f] = { t: tt, to: to || 'rowid' }; });
+  TV.refBy = [];
+  (db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")[0] || { values: [] }).values.forEach(([o]) => {
+    (db.exec("SELECT \"from\", \"table\" FROM pragma_foreign_key_list('" + o.replace(/'/g, "''") + "')")[0] || { values: [] }).values.forEach(([f, tt]) => { if (tt === t && o !== t) TV.refBy.push({ t: o, col: f }); });
+  });
+  const r = db.exec('SELECT * FROM "' + t.replace(/"/g, '""') + '"');
+  TV.rows = r.length ? r[0].values : [];
+  db.close();
+  Object.assign(TV, { t, setup: setup || null, sort: null, dir: 1, q: '', filter: filter || null, tab: 'data' });
+  $('#tvFind').value = '';
+  $('#tv').hidden = false; $('#scrim').hidden = false; document.body.classList.add('modal-open');
+  tvRender();
+  setTimeout(() => $('#tvClose').focus(), 30);
+}
+function closeTable() { if ($('#tv').hidden) return false; $('#tv').hidden = true; TV.hist = []; document.body.classList.remove('modal-open'); if (!$('#drawer').classList.contains('open') && !$('#schemaDrawer').classList.contains('open') && $('#big3d').hidden) $('#scrim').hidden = true; return true; }
+function tvRender() {
+  const names = TV.cols.map(c => c[0]);
+  $('#tvName').textContent = TV.t;
+  $('#tvNote').textContent = (LAB.TABLE_NOTES[TV.t] || '') ;
+  $$('#tv [data-tvtab]').forEach(b => { b.classList.toggle('on', b.dataset.tvtab === TV.tab); b.setAttribute('aria-selected', b.dataset.tvtab === TV.tab); });
+  $('[data-tvtab="data"]').textContent = 'Data · ' + TV.rows.length + ' rows';
+  $('[data-tvtab="cols"]').textContent = 'Columns · ' + TV.cols.length;
+  $('#tvFind').hidden = TV.tab !== 'data';
+  const f = TV.filter;
+  $('#tvFilter').hidden = !f;
+  if (f) $('#tvFilter').innerHTML = 'Showing only rows where <code>' + esc(f.col) + ' = ' + esc(f.val) + '</code>' + (f.from ? ' (the row that <code>' + esc(f.from) + '</code> points to)' : '') + ' <button class="btn small" data-tvclear="1">Show all rows</button>';
+  let body = '';
+  if (TV.tab === 'cols') {
+    body = '<table class="sp-cols tv-cols"><thead><tr><th>Column</th><th>Holds</th><th>Rules</th><th>Meaning</th></tr></thead><tbody>' + TV.cols.map(([c, ty, pk, nn]) => {
+      const fk = TV.fk[c];
+      return '<tr><td class="sp-c">' + esc(c) + '</td><td>' + esc(PLAIN_TYPE[(ty || '').toLowerCase()] || (ty || '').toLowerCase()) + '</td><td>' + (pk ? '<span class="pill key">KEY</span>' : '') + (nn && !pk ? '<span class="pill req">required</span>' : '') + (fk ? '<button class="pill link" data-tvgo="' + esc(fk.t) + '">→ ' + esc(fk.t) + '</button>' : '') + '</td><td class="tv-mean">' + (pk ? 'Identifies each row. No two rows have the same value.' : fk ? 'Points to a row in <b>' + esc(fk.t) + '</b> (its <code>' + esc(fk.to) + '</code>).' : nn ? 'Must have a value.' : 'Can be empty (NULL).') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+  } else {
+    let rows = TV.rows.map((r, i) => ({ r, i }));
+    if (f) { const k = names.indexOf(f.col); rows = rows.filter(x => String(x.r[k]) === String(f.val)); }
+    const q = TV.q.trim().toLowerCase();
+    if (q) rows = rows.filter(x => x.r.some(v => v !== null && String(v).toLowerCase().includes(q)));
+    if (TV.sort !== null) { const k = TV.sort, d = TV.dir; rows.sort((a, b) => { const x = a.r[k], y = b.r[k]; if (x === y) return 0; if (x === null) return 1; if (y === null) return -1; return (typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y))) * d; }); }
+    const shown = rows.slice(0, 500);
+    body = '<div class="tv-count">' + (q || f ? rows.length + ' of ' + TV.rows.length + ' rows' : TV.rows.length + ' rows') + (rows.length > 500 ? ' · showing the first 500' : '') + ' · click a column name to sort' + (Object.keys(TV.fk).length ? ' · click a <span class="tv-fkdemo">linked value</span> to open the row it points to' : '') + '</div>' +
+      '<div class="tv-grid"><table class="grid"><thead><tr>' + TV.cols.map(([c, ty, pk], k) => '<th><button class="tv-th" data-tvsort="' + k + '">' + esc(c) + (pk ? ' <span class="pill key">KEY</span>' : '') + (TV.fk[c] ? ' <span class="pill link">→ ' + esc(TV.fk[c].t) + '</span>' : '') + (TV.sort === k ? (TV.dir > 0 ? ' ▲' : ' ▼') : '') + '</button></th>').join('') + '</tr></thead><tbody>' +
+      (shown.length ? shown.map(x => '<tr>' + x.r.map((v, k) => { const c = names[k], fk = TV.fk[c]; if (v === null) return '<td class="null">NULL</td>'; const txt = typeof v === 'number' ? Math.round(v * 100) / 100 : v; const mark = q && String(v).toLowerCase().includes(q) ? ' class="hit"' : ''; return fk ? '<td' + mark + '><button class="tv-fk" data-tvfk="' + esc(c) + '" data-v="' + esc(v) + '" title="Open the ' + esc(fk.t) + ' row with ' + esc(fk.to) + ' = ' + esc(v) + '">' + esc(txt) + '</button></td>' : '<td' + (typeof v === 'number' ? ' class="n' + (mark ? ' hit' : '') + '"' : mark) + '>' + esc(txt) + '</td>'; }).join('') + '</tr>').join('') : '<tr><td colspan="' + TV.cols.length + '" class="null">No rows match.</td></tr>') +
+      '</tbody></table></div>';
+  }
+  $('#tvBody').innerHTML = body;
+  const out = Object.entries(TV.fk).map(([c, v]) => '<button class="pill link" data-tvgo="' + esc(v.t) + '">→ ' + esc(v.t) + '</button><small>via ' + esc(c) + '</small>');
+  const inn = TV.refBy.map(r => '<button class="pill link" data-tvgo="' + esc(r.t) + '">← ' + esc(r.t) + '</button><small>via ' + esc(r.col) + '</small>');
+  $('#tvLinks').innerHTML = (TV.hist.length ? '<button class="btn small" data-tvback="1">← Back to ' + esc(TV.hist[TV.hist.length - 1].t) + '</button>' : '') + (out.length ? '<span class="tv-lk"><b>Points to</b>' + out.join('') + '</span>' : '') + (inn.length ? '<span class="tv-lk"><b>Pointed to by</b>' + inn.join('') + '</span>' : '') + (!out.length && !inn.length && !TV.hist.length ? '<span class="tv-lk">This table has no links to other tables.</span>' : '');
+}
+$('#tv').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'tvClose') { closeTable(); return; }
+  if (b.dataset.tvtab) { TV.tab = b.dataset.tvtab; tvRender(); }
+  else if (b.dataset.tvsort !== undefined) { const k = Number(b.dataset.tvsort); if (TV.sort === k) TV.dir = -TV.dir; else { TV.sort = k; TV.dir = 1; } tvRender(); }
+  else if (b.dataset.tvgo) openTable(b.dataset.tvgo, TV.setup);
+  else if (b.dataset.tvfk) { const fk = TV.fk[b.dataset.tvfk]; const v = b.dataset.v; openTable(fk.t, TV.setup, { col: fk.to, val: v, from: TV.t + '.' + b.dataset.tvfk }); }
+  else if (b.dataset.tvclear) { TV.filter = null; tvRender(); }
+  else if (b.dataset.tvback) { const h = TV.hist.pop(); const keep = TV.hist.slice(); openTable(h.t, TV.setup, h.filter); TV.hist = keep; tvRender(); }
+});
+$('#tvFind').addEventListener('input', () => { TV.q = $('#tvFind').value; tvRender(); });
+
 /* ---------------- router ---------------- */
 function route() {
   const h = (location.hash || '#home').slice(1);
@@ -2000,7 +2120,7 @@ function route() {
 }
 window.addEventListener('hashchange', () => { route(); window.scrollTo({ top: 0 }); });
 $('#menuBtn').onclick = () => { $('#rail').classList.add('open'); $('#scrim').hidden = false; };
-$('#scrim').onclick = () => { closeRail(); closeTutor(); closeSchema(); closeBig3D(); };
+$('#scrim').onclick = () => { if (closeTable()) return; closeRail(); closeTutor(); closeSchema(); closeBig3D(); };
 $('#schemaBtn').onclick = () => openSchema(null);
 $('#dockBig').onclick = openBig3D;
 $('#big3dClose').onclick = closeBig3D;
@@ -2015,7 +2135,7 @@ $('#spFind').addEventListener('input', () => {
     if (q && hit) spOpen(sec, true);
   });
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeBig3D(); closeSchema(); closeTutor(); closeRail(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (closeTable()) return; closeBig3D(); closeSchema(); closeTutor(); closeRail(); } });
 $('#tutorBtn').onclick = openTutor;
 $('#closeTutor').onclick = closeTutor;
 $('#sendTutor').onclick = () => { const t = $('#tutorInput'); const v = t.value; t.value = ''; askTutor(v); };

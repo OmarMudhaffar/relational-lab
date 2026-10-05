@@ -65,18 +65,26 @@ SELECT n, typeof(n), price, typeof(price), label FROM demo;`,
   room_code TEXT PRIMARY KEY,
   building  TEXT NOT NULL,
   seats     INTEGER NOT NULL CHECK (seats > 0),
-  has_projector INTEGER NOT NULL DEFAULT 1 CHECK (has_projector IN (0, 1))
+  has_projector INTEGER NOT NULL DEFAULT 1 CHECK (has_projector IN (0, 1)),
+  nickname  TEXT UNIQUE
 );
 INSERT INTO rooms (room_code, building, seats) VALUES ('A101', 'Turing Hall', 40);
 -- INSERT INTO rooms VALUES ('A102', 'Turing Hall', -5, 1);     -- fails CHECK
 -- INSERT INTO rooms VALUES ('A101', 'Curie Building', 30, 0);  -- fails PRIMARY KEY
 -- INSERT INTO rooms (room_code, seats) VALUES ('B1', 20);      -- fails NOT NULL
+INSERT INTO rooms (room_code, building, seats, nickname) VALUES ('B201', 'Noether Hall', 60, 'The Big One');
+-- INSERT INTO rooms (room_code, building, seats, nickname) VALUES ('C10', 'Curie Building', 25, 'The Big One');  -- fails UNIQUE
 SELECT * FROM rooms;`,
       predict: {
-        q: 'A table has <code>gpa REAL CHECK (gpa BETWEEN 0 AND 4)</code> and no NOT NULL. What happens to <code>INSERT ... VALUES (NULL)</code> for gpa?',
-        options: ['It fails the CHECK', 'It is accepted', 'gpa is set to 0', 'It depends on the DEFAULT'],
+        q: "A table has <code>gpa REAL CHECK (gpa BETWEEN 0 AND 4)</code>, and no NOT NULL. What happens when you insert NULL for gpa?",
+        options: [
+        "It fails the CHECK",
+        "It is accepted",
+        "gpa is set to 0",
+        "It depends on the DEFAULT"
+      ],
         answer: 1,
-        why: 'NULL BETWEEN 0 AND 4 is UNKNOWN, not FALSE. A CHECK only rejects rows where the condition is FALSE. If NULL must be refused, add NOT NULL.'
+        why: "NULL BETWEEN 0 AND 4 is UNKNOWN, not FALSE. A CHECK refuses a row only when the condition is FALSE. To refuse NULL, add NOT NULL."
       }
     },
     {
@@ -127,10 +135,15 @@ SELECT 'player' AS kind, player_id AS id, team_id AS ref FROM players
 UNION ALL
 SELECT 'goal', goal_id, player_id FROM goals;`,
       predict: {
-        q: 'In the example, what would happen to goals 100 and 101 if you ran <code>DELETE FROM players WHERE player_id = 10</code>?',
-        options: ['Nothing, they stay with player_id 10', 'Their player_id becomes NULL', 'They are deleted', 'The DELETE is refused'],
+        q: "In the example, what happens to goals 100 and 101 if you run <code>DELETE FROM players WHERE player_id = 10</code>?",
+        options: [
+        "Nothing, they stay with player_id 10",
+        "Their player_id becomes NULL",
+        "They are deleted",
+        "The DELETE is refused"
+      ],
         answer: 2,
-        why: 'goals.player_id is declared ON DELETE CASCADE, so deleting the player deletes their goals. (SET NULL would also be impossible here because the column is NOT NULL.)'
+        why: "goals.player_id has ON DELETE CASCADE. So deleting the player deletes their goals too. (SET NULL is not possible here anyway, because the column is NOT NULL.)"
       }
     },
     {
@@ -159,10 +172,15 @@ UPDATE instructors SET salary = salary + 3000 WHERE dept_id = 6;
 -- Check
 SELECT instructor_id, name, salary FROM instructors WHERE dept_id = 6;`,
       predict: {
-        q: 'Table t has one row with a = 1, b = 2. After <code>UPDATE t SET a = b, b = a;</code> what are a and b in standard SQL (and SQLite)?',
-        options: ['a = 2, b = 2', 'a = 2, b = 1', 'a = 1, b = 1', 'An error'],
+        q: "Table t has one row: a = 1, b = 2. You run <code>UPDATE t SET a = b, b = a;</code>. What are a and b in standard SQL (and SQLite)?",
+        options: [
+        "a = 2, b = 2",
+        "a = 2, b = 1",
+        "a = 1, b = 1",
+        "An error"
+      ],
         answer: 1,
-        why: 'Every expression on the right reads the old row, so the values swap. (MySQL is the famous exception: it applies assignments left to right and gives a = 2, b = 2.)'
+        why: "Every value on the right side reads the old row, so the two values swap. MySQL is different: it works left to right and gives a = 2, b = 2."
       }
     },
     {
@@ -218,33 +236,41 @@ SELECT dept_id, name, main_building, phone FROM departments;`
   exercises: [
     {
       id: 'd8-1', level: 1, kind: 'script',
-      prompt: 'The university opens a new department. Insert it into <code>departments</code>: id <code>9</code>, name <code>Data Science</code>, building <code>Turing Hall</code>, budget <code>300000</code>.',
+      prompt: "<p>The university opens a new department. Add it to the <code>departments</code> table.</p><ul class=\"spec\"><li><b>Steps:</b> Insert one row: <code>dept_id</code> <code>9</code>, <code>name</code> <code>Data Science</code>, <code>building</code> <code>Turing Hall</code>, <code>budget</code> <code>300000</code>.</li></ul>",
       solution: `INSERT INTO departments (dept_id, name, building, budget) VALUES (9, 'Data Science', 'Turing Hall', 300000);`,
       check: `SELECT dept_id, name, building, budget FROM departments ORDER BY dept_id;`,
-      hints: ['INSERT INTO table (columns) VALUES (values);', 'Text values go in single quotes; numbers do not.', "INSERT INTO departments (dept_id, name, building, budget) VALUES (9, 'Data Science', ...);"]
+      hints: [
+        "INSERT INTO table (columns) VALUES (values);",
+        "Text values go in single quotes. Numbers do not.",
+        "INSERT INTO departments (dept_id, name, building, budget) VALUES (9, 'Data Science', ...);"
+      ]
     },
     {
       id: 'd8-2', level: 1, kind: 'script',
-      prompt: 'Give every instructor in the <strong>History</strong> department a raise of <code>4000</code>. Find the department by its name, not by typing its id.',
+      prompt: "<p>Give every instructor in the <strong>History</strong> department a raise of <code>4000</code>.</p><ul class=\"spec\"><li><b>Steps:</b> Add 4000 to the <code>salary</code> of each History instructor.</li><li><b>Note:</b> Find the department by its name. Do not type its id.</li></ul>",
       solution: `UPDATE instructors SET salary = salary + 4000
 WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History');`,
       check: `SELECT instructor_id, salary FROM instructors ORDER BY instructor_id;`,
-      hints: ['First write a SELECT that returns only History instructors.', 'The new value can use the old one: SET salary = salary + 4000', "WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History')"]
+      hints: [
+        "First write a SELECT that returns only the History instructors.",
+        "The new value can use the old one: SET salary = salary + 4000",
+        "WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History')"
+      ]
     },
     {
       id: 'd8-3', level: 1, kind: 'script',
-      prompt: 'A bank audit found that cash payments recorded before <code>2025-07-01</code> were entered twice by mistake. Delete every payment with method <code>cash</code> and <code>paid_on</code> before <code>2025-07-01</code>. Leave all other payments.',
+      prompt: "<p>Some cash payments were entered twice by mistake. Delete them.</p><ul class=\"spec\"><li><b>Steps:</b> Delete every payment with <code>method</code> <code>cash</code> and <code>paid_on</code> before <code>2025-07-01</code>.</li><li><b>Note:</b> Do not delete any other payment.</li></ul>",
       solution: `DELETE FROM payments WHERE method = 'cash' AND paid_on < '2025-07-01';`,
       check: `SELECT payment_id FROM payments ORDER BY payment_id;`,
-      hints: ['Preview the rows with SELECT * FROM payments WHERE ... first.', "Two conditions joined by AND. Dates in YYYY-MM-DD compare correctly as text.", "DELETE FROM payments WHERE method = 'cash' AND paid_on < '2025-07-01';"]
+      hints: [
+        "First preview the rows: SELECT * FROM payments WHERE ...",
+        "Join the two conditions with AND. Dates in YYYY-MM-DD form compare correctly as text.",
+        "DELETE FROM payments WHERE method = 'cash' AND paid_on < '2025-07-01';"
+      ]
     },
     {
       id: 'd8-4', level: 2, kind: 'script',
-      prompt: `Create a table <code>clubs</code> with these columns:
-<ul><li><code>club_id</code>: integer primary key</li>
-<li><code>name</code>: text, required, and no two clubs may share a name</li>
-<li><code>founded_year</code>: integer, optional, must be 1950 or later when given</li>
-<li><code>dept_id</code>: optional integer that references <code>departments(dept_id)</code></li></ul>`,
+      prompt: "<p>Create a table for student clubs.</p><ul class=\"spec\"><li><b>Create:</b> table <code>clubs</code> with these columns:</li><li><code>club_id</code>: integer, primary key</li><li><code>name</code>: text, required, unique (no two clubs have the same name)</li><li><code>founded_year</code>: integer, optional. When it is given, it must be 1950 or later.</li><li><code>dept_id</code>: integer, optional, references <code>departments(dept_id)</code></li></ul>",
       solution: `CREATE TABLE clubs (
   club_id      INTEGER PRIMARY KEY,
   name         TEXT NOT NULL UNIQUE,
@@ -252,17 +278,17 @@ WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History');`,
   dept_id      INTEGER REFERENCES departments(dept_id)
 );`,
       check: schemaCheck(['clubs']),
-      hints: ['One line per column: name TYPE constraints.', 'Required means NOT NULL. "No two share" means UNIQUE.', 'A foreign key on one column: dept_id INTEGER REFERENCES departments(dept_id)', 'The CHECK is not graded automatically, but write it: CHECK (founded_year >= 1950)']
+      hints: [
+        "Write one line per column: name TYPE rules.",
+        "Required means NOT NULL. \"No two the same\" means UNIQUE.",
+        "A foreign key on one column: dept_id INTEGER REFERENCES departments(dept_id)",
+        "The CHECK is not graded, but write it: CHECK (founded_year >= 1950)"
+      ]
     },
     {
       id: 'd8-5', level: 2, kind: 'script',
       setup: `CREATE TABLE clubs (club_id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE);`,
-      prompt: `A <code>clubs</code> table already exists. Students can join many clubs and clubs have many students. Create the table <code>club_members</code> with:
-<ul><li><code>club_id</code>: references <code>clubs(club_id)</code></li>
-<li><code>student_id</code>: references <code>students(student_id)</code></li>
-<li><code>role</code>: text, required, default value <code>'member'</code></li>
-<li><code>joined_on</code>: text, optional</li></ul>
-A student can be in the same club only once, so the primary key is the pair (<code>club_id</code>, <code>student_id</code>).`,
+      prompt: "<p>A <code>clubs</code> table exists. A student can join many clubs, and a club has many students. Create the table that links them.</p><ul class=\"spec\"><li><b>Create:</b> table <code>club_members</code> with these columns:</li><li><code>club_id</code>: references <code>clubs(club_id)</code></li><li><code>student_id</code>: references <code>students(student_id)</code></li><li><code>role</code>: text, required, default value <code>'member'</code></li><li><code>joined_on</code>: text, optional</li><li><b>Note:</b> A student can join the same club only once. So the primary key is the pair (<code>club_id</code>, <code>student_id</code>).</li></ul>",
       solution: `CREATE TABLE club_members (
   club_id    INTEGER REFERENCES clubs(club_id),
   student_id INTEGER REFERENCES students(student_id),
@@ -271,7 +297,11 @@ A student can be in the same club only once, so the primary key is the pair (<co
   PRIMARY KEY (club_id, student_id)
 );`,
       check: schemaCheck(['club_members'], { defaults: true }),
-      hints: ['A composite primary key is a separate line at the end: PRIMARY KEY (a, b)', "DEFAULT 'member' uses single quotes.", 'Each id column gets its own REFERENCES clause.']
+      hints: [
+        "A primary key on two columns goes on its own line at the end: PRIMARY KEY (a, b)",
+        "DEFAULT 'member' uses single quotes.",
+        "Each id column needs its own REFERENCES."
+      ]
     },
     {
       id: 'd8-6', level: 2, kind: 'script',
@@ -279,23 +309,31 @@ A student can be in the same club only once, so the primary key is the pair (<co
   student_id INTEGER PRIMARY KEY REFERENCES students(student_id),
   avg_score  REAL NOT NULL
 );`,
-      prompt: 'The table <code>honor_roll(student_id, avg_score)</code> exists and is empty. With one <code>INSERT ... SELECT</code>, fill it with every student whose average <code>score</code> in <code>enrollments</code> is <strong>80 or more</strong> (ignore courses still in progress, which have NULL scores). Store the average rounded to 1 decimal place.',
+      prompt: "<p>The table <code>honor_roll(student_id, avg_score)</code> exists and is empty. Fill it with the best students.</p><ul class=\"spec\"><li><b>Steps:</b> Use one <code>INSERT ... SELECT</code>. Add every student whose average <code>score</code> in <code>enrollments</code> is 80 or more.</li><li><b>Note:</b> Ignore courses still in progress (their score is NULL). Store the average rounded to 1 decimal.</li></ul>",
       solution: `INSERT INTO honor_roll (student_id, avg_score)
 SELECT student_id, ROUND(AVG(score), 1)
 FROM enrollments
 GROUP BY student_id
 HAVING AVG(score) >= 80;`,
       check: `SELECT student_id, avg_score FROM honor_roll ORDER BY student_id;`,
-      hints: ['Write the SELECT on its own first and check its rows.', 'AVG already ignores NULL values.', 'Filter groups with HAVING AVG(score) >= 80, then put INSERT INTO honor_roll (student_id, avg_score) in front.']
+      hints: [
+        "First write the SELECT alone and check its rows.",
+        "AVG already ignores NULL values.",
+        "Keep the groups with HAVING AVG(score) >= 80. Then put INSERT INTO honor_roll (student_id, avg_score) in front."
+      ]
     },
     {
       id: 'd8-7', level: 2, kind: 'script',
-      prompt: 'Add an optional text column <code>phone</code> to <code>students</code>. Then set the phone of student <code>1001</code> to <code>+964 770 100 1001</code> and of student <code>1002</code> to <code>+20 100 100 1002</code>.',
+      prompt: "<p>Add a phone number column to the students table and fill in two numbers.</p><ul class=\"spec\"><li><b>Steps:</b> Add an optional text column <code>phone</code> to <code>students</code>.</li><li><b>Then:</b> Set the phone of student <code>1001</code> to <code>+964 770 100 1001</code>.</li><li><b>Then:</b> Set the phone of student <code>1002</code> to <code>+20 100 100 1002</code>.</li></ul>",
       solution: `ALTER TABLE students ADD COLUMN phone TEXT;
 UPDATE students SET phone = '+964 770 100 1001' WHERE student_id = 1001;
 UPDATE students SET phone = '+20 100 100 1002' WHERE student_id = 1002;`,
       check: `SELECT student_id, phone FROM students WHERE phone IS NOT NULL ORDER BY student_id;`,
-      hints: ['ALTER TABLE students ADD COLUMN phone TEXT;', 'One UPDATE per student, each with its own WHERE.', 'Phone numbers are text, so use single quotes.']
+      hints: [
+        "ALTER TABLE students ADD COLUMN phone TEXT;",
+        "Use one UPDATE per student, each with its own WHERE.",
+        "Phone numbers are text, so use single quotes."
+      ]
     },
     {
       id: 'd8-8', level: 3, kind: 'script',
@@ -304,16 +342,21 @@ UPDATE students SET phone = '+20 100 100 1002' WHERE student_id = 1002;`,
   section_count INTEGER NOT NULL
 );
 INSERT INTO course_stats VALUES ('CS101', 99), ('MA101', 99), ('PH101', 99);`,
-      prompt: 'The table <code>course_stats(course_id, section_count)</code> has three out-of-date rows. Write <strong>one</strong> statement that stores the correct number of sections for every course that has at least one section: insert rows that are missing and update rows that already exist.',
+      prompt: "<p>The table <code>course_stats(course_id, section_count)</code> has three old rows. Make it correct with <strong>one</strong> statement.</p><ul class=\"spec\"><li><b>Steps:</b> For every course that has at least one section, store its number of sections.</li><li><b>Note:</b> Insert the rows that are missing. Update the rows that already exist. This is an \"upsert\".</li></ul>",
       solution: `INSERT INTO course_stats (course_id, section_count)
 SELECT course_id, COUNT(*) FROM sections GROUP BY course_id
 ON CONFLICT (course_id) DO UPDATE SET section_count = excluded.section_count;`,
       check: `SELECT course_id, section_count FROM course_stats ORDER BY course_id;`,
-      hints: ['First write the SELECT that counts sections per course.', 'Put INSERT INTO course_stats (course_id, section_count) in front of it.', 'Add ON CONFLICT (course_id) DO UPDATE SET section_count = excluded.section_count', 'If SQLite says "near DO: syntax error", the SELECT needs a GROUP BY or a WHERE true before ON CONFLICT.']
+      hints: [
+        "First write the SELECT that counts the sections of each course.",
+        "Put INSERT INTO course_stats (course_id, section_count) in front of it.",
+        "Add ON CONFLICT (course_id) DO UPDATE SET section_count = excluded.section_count",
+        "If SQLite says \"near DO: syntax error\", the SELECT needs a GROUP BY (or WHERE true) before ON CONFLICT."
+      ]
     },
     {
       id: 'd8-9', level: 3, kind: 'script',
-      prompt: 'The <strong>Philosophy</strong> department (id 8) is closing. Remove the department and everything that depends on it: its courses, the sections of those courses, and the enrollments in those sections. Foreign keys are switched on, so the order of your DELETE statements matters.',
+      prompt: "<p>The <strong>Philosophy</strong> department (dept_id 8) is closing. Remove it and everything that depends on it.</p><ul class=\"spec\"><li><b>Steps:</b> Delete the enrollments in its sections, the sections of its courses, its courses, and then the department.</li><li><b>Note:</b> Foreign keys are on. So the order of your DELETE statements matters.</li></ul>",
       solution: `DELETE FROM enrollments WHERE section_id IN (
   SELECT section_id FROM sections WHERE course_id IN (SELECT course_id FROM courses WHERE dept_id = 8));
 DELETE FROM sections WHERE course_id IN (SELECT course_id FROM courses WHERE dept_id = 8);
@@ -326,15 +369,16 @@ DELETE FROM departments WHERE dept_id = 8;`,
        (SELECT COUNT(*) FROM sections) AS sections,
        (SELECT COUNT(*) FROM enrollments) AS enrollments,
        (SELECT COUNT(*) FROM courses WHERE dept_id = 8) AS philosophy_courses_left;`,
-      hints: ['Draw the chain: departments ← courses ← sections ← enrollments.', 'Delete from the bottom of the chain upwards: children before parents.', 'Use nested IN subqueries to find the sections of the Philosophy courses.', 'Check prereqs too: does any prerequisite row mention a Philosophy course?']
+      hints: [
+        "Draw the chain: departments ← courses ← sections ← enrollments.",
+        "Delete from the bottom of the chain up: children before parents.",
+        "Use nested IN subqueries to find the sections of the Philosophy courses.",
+        "Check prereqs too: does any prerequisite row use a Philosophy course?"
+      ]
     },
     {
       id: 'd8-10', level: 3, kind: 'script',
-      prompt: `Create a table <code>theses</code> for final-year theses:
-<ul><li><code>thesis_id</code>: integer primary key</li>
-<li><code>student_id</code>: required, references <code>students(student_id)</code>; a student writes at most one thesis; if the student is deleted, the thesis is deleted too</li>
-<li><code>supervisor_id</code>: optional, references <code>instructors(instructor_id)</code>; if the instructor is deleted, the thesis stays without a supervisor</li>
-<li><code>title</code>: text, required</li></ul>`,
+      prompt: "<p>Create a table for final-year theses.</p><ul class=\"spec\"><li><b>Create:</b> table <code>theses</code> with these columns:</li><li><code>thesis_id</code>: integer, primary key</li><li><code>student_id</code>: required, references <code>students(student_id)</code>. A student writes at most one thesis. If the student is deleted, delete the thesis too.</li><li><code>supervisor_id</code>: optional, references <code>instructors(instructor_id)</code>. If the instructor is deleted, keep the thesis, but with no supervisor.</li><li><code>title</code>: text, required</li></ul>",
       solution: `CREATE TABLE theses (
   thesis_id     INTEGER PRIMARY KEY,
   student_id    INTEGER NOT NULL UNIQUE REFERENCES students(student_id) ON DELETE CASCADE,
@@ -342,17 +386,56 @@ DELETE FROM departments WHERE dept_id = 8;`,
   title         TEXT NOT NULL
 );`,
       check: schemaCheck(['theses'], { onDelete: true }),
-      hints: ['"At most one thesis per student" means student_id is UNIQUE.', '"Deleted too" is ON DELETE CASCADE.', '"Stays without a supervisor" is ON DELETE SET NULL.']
+      hints: [
+        "\"At most one thesis per student\" means student_id is UNIQUE.",
+        "\"Delete the thesis too\" is ON DELETE CASCADE.",
+        "\"Keep it with no supervisor\" is ON DELETE SET NULL."
+      ]
     }
   ],
   quiz: [
-    { id: 'd8-q1', q: 'Which statement belongs to DDL?', options: ['UPDATE', 'GRANT', 'ALTER TABLE', 'COMMIT'], answer: 2, why: 'DDL defines structure: CREATE, ALTER, DROP, TRUNCATE. UPDATE is DML, GRANT is DCL, COMMIT is TCL.' },
-    { id: 'd8-q2', q: 'You need to empty a large log table quickly but keep its structure. Which is the best fit?', options: ['DROP TABLE logs', 'TRUNCATE TABLE logs', 'DELETE FROM logs WHERE 1 = 0', 'ALTER TABLE logs DROP COLUMN *'], answer: 1, why: 'TRUNCATE removes all rows fast and keeps the table. DROP removes the table itself. DELETE ... WHERE 1 = 0 deletes nothing.' },
-    { id: 'd8-q3', q: 'enrollments has PRIMARY KEY (student_id, section_id). Which insert is rejected?', options: ['The same student in a second section', 'A second student in the same section', 'The same student in the same section again', 'A student with a NULL grade'], answer: 2, why: 'A composite key requires the combination to be unique. Each column alone may repeat.' },
-    { id: 'd8-q4', q: 'students.advisor_id references instructors with ON DELETE SET NULL. An instructor who advises 3 students is deleted. What happens?', options: ['The delete is refused', 'The 3 students are deleted', 'The 3 students remain with advisor_id = NULL', 'advisor_id is set to 0'], answer: 2, why: 'SET NULL keeps the child rows and clears the reference.' },
-    { id: 'd8-q5', q: 'A column is declared <code>email VARCHAR(100) UNIQUE</code> (no NOT NULL). In PostgreSQL, how many rows can have a NULL email?', options: ['None', 'Exactly one', 'Any number', 'Only if a DEFAULT exists'], answer: 2, why: 'NULL is not equal to NULL, so UNIQUE does not see duplicates. SQL Server is the exception: it allows only one NULL in a unique constraint.' },
-    { id: 'd8-q6', q: 'Why is <code>INSERT ... ON CONFLICT DO UPDATE</code> better than "SELECT to check, then INSERT or UPDATE"?', options: ['It is shorter, nothing more', 'It is one atomic statement, so two users cannot both decide to INSERT', 'It skips constraint checks', 'It works without a unique key'], answer: 1, why: 'Between your SELECT and your INSERT another session can insert the same key. The upsert decides and writes in one step. It needs a unique key or primary key to detect the conflict.' },
-    { id: 'd8-q7', q: 'Which type should you use for prices in an accounting system?', options: ['FLOAT', 'REAL', 'DECIMAL(12,2)', 'VARCHAR(20)'], answer: 2, why: 'DECIMAL is exact. FLOAT and REAL are binary approximations, so sums of money drift by fractions of a cent.' }
+    { id: 'd8-q1', q: "Which statement is DDL (it defines the structure of tables)?", options: [
+        "UPDATE",
+        "GRANT",
+        "ALTER TABLE",
+        "COMMIT"
+      ], answer: 2, why: "DDL defines structure: CREATE, ALTER, DROP, TRUNCATE. UPDATE is DML. GRANT is DCL. COMMIT is TCL." },
+    { id: 'd8-q2', q: "You must empty a big log table fast, but keep the table. What is the best choice?", options: [
+        "DROP TABLE logs",
+        "TRUNCATE TABLE logs",
+        "DELETE FROM logs WHERE 1 = 0",
+        "ALTER TABLE logs DROP COLUMN *"
+      ], answer: 1, why: "TRUNCATE removes all rows fast and keeps the table. DROP removes the table itself. DELETE ... WHERE 1 = 0 deletes nothing." },
+    { id: 'd8-q3', q: "enrollments has PRIMARY KEY (student_id, section_id). Which insert is refused?", options: [
+        "The same student in a second section",
+        "A second student in the same section",
+        "The same student in the same section again",
+        "A student with a NULL grade"
+      ], answer: 2, why: "With a key on two columns, the pair must be unique. Each column alone can repeat." },
+    { id: 'd8-q4', q: "students.advisor_id references instructors with ON DELETE SET NULL. You delete an instructor who advises 3 students. What happens?", options: [
+        "The delete is refused",
+        "The 3 students are deleted",
+        "The 3 students stay, with advisor_id = NULL",
+        "advisor_id is set to 0"
+      ], answer: 2, why: "SET NULL keeps the student rows and clears the link." },
+    { id: 'd8-q5', q: "A column is <code>email VARCHAR(100) UNIQUE</code>, with no NOT NULL. In PostgreSQL, how many rows can have a NULL email?", options: [
+        "None",
+        "Exactly one",
+        "Any number",
+        "Only if a DEFAULT exists"
+      ], answer: 2, why: "NULL is not equal to NULL, so UNIQUE does not see two NULLs as the same. SQL Server is different: it allows only one NULL." },
+    { id: 'd8-q6', q: "Why is <code>INSERT ... ON CONFLICT DO UPDATE</code> better than \"first SELECT to check, then INSERT or UPDATE\"?", options: [
+        "It is only shorter",
+        "It is one atomic statement, so two users cannot both decide to INSERT",
+        "It skips constraint checks",
+        "It works without a unique key"
+      ], answer: 1, why: "Between your SELECT and your INSERT, another user can insert the same key. The upsert decides and writes in one step. It needs a unique key or primary key to find the conflict." },
+    { id: 'd8-q7', q: "Which type should you use for prices in an accounting system?", options: [
+        "FLOAT",
+        "REAL",
+        "DECIMAL(12,2)",
+        "VARCHAR(20)"
+      ], answer: 2, why: "DECIMAL is exact. FLOAT and REAL are approximations, so sums of money can be off by a tiny amount." }
   ],
   teach: 'Explain the difference between ON DELETE CASCADE, ON DELETE SET NULL and the default (RESTRICT / NO ACTION). For each one, give an example from a university database where it is the right choice.',
   rubric: 'CASCADE deletes child rows with the parent (e.g. payments or theses of a deleted student); SET NULL keeps children but clears the FK (e.g. advisor leaves, student stays; requires the column to be nullable); RESTRICT/NO ACTION refuses the parent delete while children exist (e.g. department with courses); choice depends on whether the child can exist without the parent; mentions referential integrity.'

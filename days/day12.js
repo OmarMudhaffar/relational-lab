@@ -69,10 +69,10 @@ EXPLAIN QUERY PLAN
 SELECT student_id, paid_on FROM payments
 WHERE student_id = 1005 AND paid_on >= '2026-01-01';`,
       predict: {
-        q: 'With only the index payments(student_id, paid_on), which WHERE clause can use it to SEARCH?',
+        q: 'The only index is payments(student_id, paid_on). Which WHERE clause can use it to SEARCH?',
         options: ["WHERE paid_on = '2026-03-01'", "WHERE method = 'cash'", 'WHERE student_id = 1010', "WHERE paid_on > '2026-01-01' OR method = 'bank'"],
         answer: 2,
-        why: 'student_id is the leftmost column of the index. paid_on alone is not a prefix, and method is not in the index.'
+        why: 'student_id is the first (leftmost) column of the index. paid_on alone is not the first column, and method is not in the index.'
       }
     },
     {
@@ -106,7 +106,7 @@ FROM students;`
         q: 'There is an index on instructors(hire_date). Which filter can use it?',
         options: ["WHERE substr(hire_date, 1, 4) = '2020'", "WHERE hire_date LIKE '%2020%'", "WHERE hire_date BETWEEN '2020-01-01' AND '2020-12-31'", "WHERE date(hire_date, '+1 year') > '2021-01-01'"],
         answer: 2,
-        why: 'Only the BETWEEN version leaves hire_date untouched. The other three wrap the column in a function or start with a wildcard.'
+        why: 'Only BETWEEN keeps hire_date alone. The other three put a function on the column or start with a % wildcard.'
       }
     },
     {
@@ -122,10 +122,10 @@ FROM students;`
 <ul><li><strong>MySQL InnoDB</strong>: the primary key is always the clustered index. Secondary indexes store the primary key value, so a lookup through a secondary index then searches the PK tree.</li><li><strong>SQL Server</strong>: you choose the clustered index (by default the PK). Others are non-clustered.</li><li><strong>SQLite</strong>: ordinary tables are clustered on the rowid (your <code>INTEGER PRIMARY KEY</code>).</li><li><strong>PostgreSQL</strong>: tables are heaps (unordered); all indexes are secondary.</li></ul>
 <p>A <strong>non-clustered</strong> (secondary) index is a separate tree whose leaves point to the rows.</p>`,
       predict: {
-        q: 'Why should a MySQL InnoDB primary key usually be short (for example an integer and not a long text)?',
+        q: 'In MySQL InnoDB, why should a primary key usually be short (a number, not a long text)?',
         options: ['Text keys are not allowed', 'Every secondary index stores the primary key, so a long key makes all indexes bigger', 'Long keys make COUNT(*) wrong', 'InnoDB cannot sort text'],
         answer: 1,
-        why: 'Secondary index leaves in InnoDB hold the primary key value as the row pointer. A wide PK is copied into every index.'
+        why: 'In InnoDB, every other index stores the primary key value to find the row. A long key is copied into every index.'
       }
     }
   ],
@@ -141,82 +141,82 @@ FROM students;`
   exercises: [
     {
       id: 'd12-1', level: 1, kind: 'script',
-      prompt: 'This query is slow on a big table because it scans <code>students</code>:<pre class="code">SELECT name, email FROM students WHERE city = \'Cairo\';</pre>Create an index so that the plan becomes a <code>SEARCH</code> on students.',
+      prompt: '<p>This query is slow on a big table. It reads (scans) every row of <code>students</code>:</p><pre class="code">SELECT name, email FROM students WHERE city = \'Cairo\';</pre><ul class="spec"><li><b>Create:</b> an index that makes the plan a <code>SEARCH</code> on students.</li></ul>',
       solution: `CREATE INDEX idx_students_city ON students(city);`,
       plan: { query: `SELECT name, email FROM students WHERE city = 'Cairo'`, mustContain: 'SEARCH students USING' },
-      hints: ['The column in the WHERE clause is the one to index.', 'CREATE INDEX some_name ON table(column);', 'CREATE INDEX idx_students_city ON students(city);']
+      hints: ['Index the column that is in the WHERE clause.', 'CREATE INDEX some_name ON table(column);', 'CREATE INDEX idx_students_city ON students(city);']
     },
     {
       id: 'd12-2', level: 1, kind: 'script',
-      prompt: 'Joins and lookups from a section to its students filter <code>enrollments</code> by <code>section_id</code>. The primary key is <code>(student_id, section_id)</code>, which does not help here (leftmost-prefix rule). Create an index named <code>idx_enr_section</code> so that this query uses it:<pre class="code">SELECT student_id, grade FROM enrollments WHERE section_id = 12;</pre>',
+      prompt: '<p>Many queries look for the students of one section. They filter <code>enrollments</code> by <code>section_id</code>:</p><pre class="code">SELECT student_id, grade FROM enrollments WHERE section_id = 12;</pre><ul class="spec"><li><b>Create:</b> an index named <code>idx_enr_section</code> that this query uses.</li><li><b>Note:</b> the primary key is <code>(student_id, section_id)</code>. It starts with <code>student_id</code>, so it does not help here (leftmost-prefix rule).</li></ul>',
       solution: `CREATE INDEX idx_enr_section ON enrollments(section_id);`,
       plan: { query: `SELECT student_id, grade FROM enrollments WHERE section_id = 12`, mustContain: 'idx_enr_section' },
-      hints: ['The PK index starts with student_id, so it cannot search by section_id alone.', 'CREATE INDEX idx_enr_section ON enrollments(...);']
+      hints: ['The primary key index starts with student_id. It cannot search by section_id alone.', 'CREATE INDEX idx_enr_section ON enrollments(...);']
     },
     {
       id: 'd12-3', level: 1, kind: 'script',
-      prompt: 'Make this range query use an index (plan must show <code>SEARCH instructors USING ...</code>):<pre class="code">SELECT name FROM instructors WHERE salary BETWEEN 80000 AND 95000;</pre>',
+      prompt: '<p>Make this range query use an index:</p><pre class="code">SELECT name FROM instructors WHERE salary BETWEEN 80000 AND 95000;</pre><ul class="spec"><li><b>Create:</b> an index so the plan shows <code>SEARCH instructors USING ...</code>.</li></ul>',
       solution: `CREATE INDEX idx_instr_salary ON instructors(salary);`,
       plan: { query: `SELECT name FROM instructors WHERE salary BETWEEN 80000 AND 95000`, mustContain: 'SEARCH instructors USING' },
-      hints: ['B+ tree indexes support ranges because keys are sorted.', 'Index the salary column.']
+      hints: ['B+ tree indexes keep keys in order, so they can find ranges.', 'Index the salary column.']
     },
     {
       id: 'd12-4', level: 2,
-      prompt: 'An index exists on <code>instructors(hire_date)</code>, but this query cannot use it:<pre class="code">SELECT name, hire_date FROM instructors WHERE substr(hire_date, 1, 4) = \'2017\';</pre>Rewrite it so it returns the same rows (columns <code>name</code>, <code>hire_date</code>) with a sargable condition on <code>hire_date</code>.',
+      prompt: '<p>There is an index on <code>instructors(hire_date)</code>. This query cannot use it, because it puts a function on the column:</p><pre class="code">SELECT name, hire_date FROM instructors WHERE substr(hire_date, 1, 4) = \'2017\';</pre><p>Rewrite it. It must return the same rows. Use a condition on <code>hire_date</code> with no function on it (a sargable condition).</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>hire_date</code></li></ul>',
       solution: `SELECT name, hire_date FROM instructors WHERE hire_date >= '2017-01-01' AND hire_date < '2018-01-01';`,
-      hints: ['Do not apply any function to hire_date.', 'Dates in YYYY-MM-DD text compare correctly as strings, so a range works.', "hire_date >= '2017-01-01' AND hire_date < '2018-01-01'"]
+      hints: ['Do not put any function on hire_date.', 'Dates in YYYY-MM-DD text sort correctly as text, so a range works.', "hire_date >= '2017-01-01' AND hire_date < '2018-01-01'"]
     },
     {
       id: 'd12-5', level: 2,
-      prompt: 'Rewrite this non-sargable query so the column <code>salary</code> stands alone on one side of the comparison. Return <code>name</code> and <code>salary</code>, same rows as:<pre class="code">SELECT name, salary FROM instructors WHERE salary * 12 &gt; 1000000;</pre>',
+      prompt: '<p>Rewrite this query so <code>salary</code> stands alone on one side of the comparison. It must return the same rows:</p><pre class="code">SELECT name, salary FROM instructors WHERE salary * 12 &gt; 1000000;</pre><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>salary</code></li></ul>',
       solution: `SELECT name, salary FROM instructors WHERE salary > 1000000 / 12.0;`,
-      hints: ['Move the multiplication to the other side: divide both sides by 12.', 'Use 12.0 so SQLite does not do integer division.', 'WHERE salary > 1000000 / 12.0']
+      hints: ['Move the 12 to the other side: divide both sides by 12.', 'Write 12.0, so SQLite does not do whole-number division.', 'WHERE salary > 1000000 / 12.0']
     },
     {
       id: 'd12-6', level: 2, kind: 'script',
-      prompt: 'Someone already created <code>idx_pay_date_student ON payments(paid_on, student_id)</code>, but this query still scans:<pre class="code">SELECT * FROM payments WHERE student_id = 1010 AND method = \'card\';</pre>Create a better index named <code>idx_pay_student_method</code> that the plan will use.',
+      prompt: '<p>Someone created the index <code>idx_pay_date_student ON payments(paid_on, student_id)</code>. But this query still scans the whole table:</p><pre class="code">SELECT * FROM payments WHERE student_id = 1010 AND method = \'card\';</pre><ul class="spec"><li><b>Create:</b> a better index named <code>idx_pay_student_method</code> that the plan uses.</li></ul>',
       setup: `CREATE INDEX idx_pay_date_student ON payments(paid_on, student_id);`,
       solution: `CREATE INDEX idx_pay_student_method ON payments(student_id, method);`,
       plan: { query: `SELECT * FROM payments WHERE student_id = 1010 AND method = 'card'`, mustContain: 'idx_pay_student_method' },
-      hints: ['The existing index starts with paid_on, which the query does not filter on. Leftmost-prefix rule.', 'Both filtered columns use =, so both can go into the index.', 'CREATE INDEX idx_pay_student_method ON payments(student_id, method);']
+      hints: ['The old index starts with paid_on. The query does not filter on paid_on (leftmost-prefix rule).', 'Both filtered columns use =, so both can go into the index.', 'CREATE INDEX idx_pay_student_method ON payments(student_id, method);']
     },
     {
       id: 'd12-7', level: 3, kind: 'script',
-      prompt: 'Create one index that makes this query <strong>covering</strong> (the plan must say <code>USING COVERING INDEX</code>):<pre class="code">SELECT student_id, paid_on FROM payments\nWHERE student_id = 1005 AND paid_on &gt;= \'2026-01-01\';</pre>',
+      prompt: '<p>Create one index that makes this query <strong>covering</strong>. Covering means the database reads only the index, not the table:</p><pre class="code">SELECT student_id, paid_on FROM payments\nWHERE student_id = 1005 AND paid_on &gt;= \'2026-01-01\';</pre><ul class="spec"><li><b>Create:</b> an index so the plan says <code>USING COVERING INDEX</code>.</li></ul>',
       solution: `CREATE INDEX idx_pay_student_date ON payments(student_id, paid_on);`,
       plan: { query: `SELECT student_id, paid_on FROM payments WHERE student_id = 1005 AND paid_on >= '2026-01-01'`, mustContain: 'USING COVERING INDEX' },
-      hints: ['The index must contain every column the query uses: student_id and paid_on.', 'Equality column first, range column last.', 'CREATE INDEX ... ON payments(student_id, paid_on);']
+      hints: ['The index must hold every column the query uses: student_id and paid_on.', 'Put the column with = first, and the range column last.', 'CREATE INDEX ... ON payments(student_id, paid_on);']
     },
     {
       id: 'd12-8', level: 3, kind: 'script',
-      prompt: 'The application searches cities case-insensitively with:<pre class="code">SELECT name FROM students WHERE lower(city) = \'cairo\';</pre>A plain index on <code>city</code> will not help, because the column is wrapped in <code>lower()</code>. Create an <strong>expression index</strong> so the plan shows <code>SEARCH students USING ...</code>.',
+      prompt: '<p>The app searches cities without caring about capital letters:</p><pre class="code">SELECT name FROM students WHERE lower(city) = \'cairo\';</pre><p>A normal index on <code>city</code> does not help, because the query puts <code>lower()</code> on the column.</p><ul class="spec"><li><b>Create:</b> an <strong>expression index</strong> (an index on <code>lower(city)</code>) so the plan shows <code>SEARCH students USING ...</code>.</li></ul>',
       solution: `CREATE INDEX idx_students_lower_city ON students(lower(city));`,
       plan: { query: `SELECT name FROM students WHERE lower(city) = 'cairo'`, mustContain: 'SEARCH students USING' },
-      hints: ['You can index an expression, not only a column.', 'The expression in the index must match the one in the query exactly.', 'CREATE INDEX idx_students_lower_city ON students(lower(city));']
+      hints: ['You can index an expression, not only a column.', 'The expression in the index must be exactly the same as in the query.', 'CREATE INDEX idx_students_lower_city ON students(lower(city));']
     },
     {
       id: 'd12-9', level: 3, kind: 'script',
-      prompt: 'Teachers often list the students still in progress (grade is NULL) in one section:<pre class="code">SELECT student_id FROM enrollments WHERE grade IS NULL AND section_id = 30;</pre>Create a <strong>partial index</strong> named <code>idx_in_progress</code> on <code>section_id</code> that only includes rows where <code>grade IS NULL</code>, so the plan uses it.',
+      prompt: '<p>Teachers often list the students who have no grade yet (grade is NULL) in one section:</p><pre class="code">SELECT student_id FROM enrollments WHERE grade IS NULL AND section_id = 30;</pre><ul class="spec"><li><b>Create:</b> a <strong>partial index</strong> named <code>idx_in_progress</code> on <code>section_id</code>. It must only include rows where <code>grade IS NULL</code>. The plan must use it.</li><li><b>Note:</b> a partial index stores only the rows that match its own WHERE.</li></ul>',
       solution: `CREATE INDEX idx_in_progress ON enrollments(section_id) WHERE grade IS NULL;`,
       plan: { query: `SELECT student_id FROM enrollments WHERE grade IS NULL AND section_id = 30`, mustContain: 'idx_in_progress' },
-      hints: ['A partial index has its own WHERE clause at the end of CREATE INDEX.', 'CREATE INDEX idx_in_progress ON enrollments(section_id) WHERE ...;']
+      hints: ['A partial index has its own WHERE at the end of CREATE INDEX.', 'CREATE INDEX idx_in_progress ON enrollments(section_id) WHERE ...;']
     },
     {
       id: 'd12-10', level: 2,
-      prompt: 'Measure selectivity before choosing indexes. For the <code>payments</code> table, return one row with: <code>total_rows</code>, <code>distinct_students</code> (distinct student_id), <code>distinct_methods</code>, and <code>method_selectivity</code> = 1.0 / number of distinct methods, rounded to 3 decimals.',
+      prompt: '<p>Before you choose indexes, measure how many different values a column has (its selectivity). Return one row about the <code>payments</code> table.</p><ul class="spec"><li><b>Columns:</b> <code>total_rows</code>, <code>distinct_students</code> (different <code>student_id</code> values), <code>distinct_methods</code> (different methods), <code>method_selectivity</code></li><li><b>Note:</b> <code>method_selectivity</code> = 1.0 divided by the number of different methods, rounded to 3 decimals.</li></ul>',
       solution: `SELECT COUNT(*) AS total_rows, COUNT(DISTINCT student_id) AS distinct_students, COUNT(DISTINCT method) AS distinct_methods, ROUND(1.0 / COUNT(DISTINCT method), 3) AS method_selectivity FROM payments;`,
-      hints: ['COUNT(DISTINCT column) counts different values.', 'Use 1.0 so the division is not integer division.', 'ROUND(1.0 / COUNT(DISTINCT method), 3)']
+      hints: ['COUNT(DISTINCT column) counts the different values.', 'Use 1.0, so the division keeps decimals.', 'ROUND(1.0 / COUNT(DISTINCT method), 3)']
     }
   ],
   quiz: [
-    { id: 'd12-q1', q: 'A B+ tree index with fan-out 400 indexes 60 million rows. Roughly how many levels does it have?', options: ['1', '3', '20', '400'], answer: 1, why: '400² = 160,000 and 400³ = 64 million, so 3 levels are enough. Height grows with log base fan-out.' },
-    { id: 'd12-q2', q: 'Why are B+ tree leaves linked to each other?', options: ['To support fast range scans and ordered reads', 'To make inserts faster', 'To save disk space', 'To support hash lookups'], answer: 0, why: 'After finding the first key of a range, the engine walks along the linked leaves without going back up the tree.' },
-    { id: 'd12-q3', q: 'Index on (dept_id, year). Which query CANNOT use it to search?', options: ['WHERE dept_id = 1', 'WHERE dept_id = 1 AND year = 2', 'WHERE year = 2', 'WHERE dept_id = 1 AND year > 2'], answer: 2, why: 'year is not a leftmost prefix of (dept_id, year).' },
-    { id: 'd12-q4', q: 'A hash index is a poor choice for which query?', options: ["WHERE email = 'x@uni.edu'", 'WHERE student_id = 1001', "WHERE paid_on BETWEEN '2026-01-01' AND '2026-03-31'", 'WHERE course_id = \'CS220\''], answer: 2, why: 'Hashing destroys order, so ranges cannot use a hash index.' },
-    { id: 'd12-q5', q: 'The plan says "SEARCH payments USING COVERING INDEX idx". What does that mean?', options: ['The table and the index were both read', 'Only the index was read; the table was not touched', 'The index covers all rows of the table', 'The query used a full scan'], answer: 1, why: 'A covering index holds every column the query needs, so no table lookup is needed.' },
-    { id: 'd12-q6', q: 'Which filter is sargable for an index on students(birth_date)?', options: ["WHERE strftime('%Y', birth_date) = '2004'", "WHERE birth_date >= '2004-01-01' AND birth_date < '2005-01-01'", "WHERE birth_date LIKE '%2004%'", "WHERE date(birth_date) = '2004-05-01'"], answer: 1, why: 'Only the range leaves birth_date unchanged on one side.' },
-    { id: 'd12-q7', q: 'A table receives 5,000 inserts per second and is rarely queried. What is the main risk of adding 8 indexes?', options: ['Queries become wrong', 'Every insert must update 8 extra trees, so writes slow down', 'The primary key stops working', 'The table becomes read-only'], answer: 1, why: 'Indexes speed up reads but every write must maintain every index.' },
-    { id: 'd12-q8', q: 'In MySQL InnoDB, the clustered index is…', options: ['Chosen randomly', 'Always the primary key', 'Any unique index you choose', 'Not supported'], answer: 1, why: 'InnoDB stores rows inside the primary key B+ tree. Secondary indexes point to rows through the PK value.' }
+    { id: 'd12-q1', q: 'A B+ tree index has fan-out 400 (400 keys per node). It indexes 60 million rows. About how many levels does it have?', options: ['1', '3', '20', '400'], answer: 1, why: '400 × 400 = 160,000 and 400 × 400 × 400 = 64 million. So 3 levels are enough.' },
+    { id: 'd12-q2', q: 'Why are the leaves of a B+ tree linked to each other?', options: ['To make range scans and sorted reads fast', 'To make inserts faster', 'To save disk space', 'To support hash lookups'], answer: 0, why: 'The engine finds the first key of the range. Then it walks along the linked leaves. It does not go back up the tree.' },
+    { id: 'd12-q3', q: 'There is an index on (dept_id, year). Which query CANNOT use it to search?', options: ['WHERE dept_id = 1', 'WHERE dept_id = 1 AND year = 2', 'WHERE year = 2', 'WHERE dept_id = 1 AND year > 2'], answer: 2, why: 'The index starts with dept_id. A filter on year alone does not use the first column (leftmost-prefix rule).' },
+    { id: 'd12-q4', q: 'For which query is a hash index a bad choice?', options: ["WHERE email = 'x@uni.edu'", 'WHERE student_id = 1001', "WHERE paid_on BETWEEN '2026-01-01' AND '2026-03-31'", 'WHERE course_id = \'CS220\''], answer: 2, why: 'A hash index does not keep values in order. So it cannot find a range of values.' },
+    { id: 'd12-q5', q: 'The plan says "SEARCH payments USING COVERING INDEX idx". What does that mean?', options: ['The table and the index were both read', 'Only the index was read; the table was not touched', 'The index covers all rows of the table', 'The query used a full scan'], answer: 1, why: 'A covering index holds every column the query needs. So the database does not need to read the table.' },
+    { id: 'd12-q6', q: 'There is an index on students(birth_date). Which filter can use it (is sargable)?', options: ["WHERE strftime('%Y', birth_date) = '2004'", "WHERE birth_date >= '2004-01-01' AND birth_date < '2005-01-01'", "WHERE birth_date LIKE '%2004%'", "WHERE date(birth_date) = '2004-05-01'"], answer: 1, why: 'Only the range keeps birth_date alone, with no function on it.' },
+    { id: 'd12-q7', q: 'A table gets 5,000 inserts per second. People rarely read it. What is the main risk of adding 8 indexes?', options: ['Queries become wrong', 'Every insert must update 8 extra trees, so writes get slower', 'The primary key stops working', 'The table becomes read-only'], answer: 1, why: 'Indexes make reads faster. But every write must update every index.' },
+    { id: 'd12-q8', q: 'In MySQL InnoDB, what is the clustered index?', options: ['A random index', 'Always the primary key', 'Any unique index you choose', 'It is not supported'], answer: 1, why: 'InnoDB stores the rows inside the primary key B+ tree. Other indexes find rows through the primary key value.' }
   ],
   teach: 'Explain to a classmate why the query WHERE substr(hire_date,1,4) = \'2017\' does not use an index on hire_date, and how to rewrite it. Mention what a B+ tree has to do with it.',
   rubric: 'A B+ tree stores the column values sorted; the database can only navigate it when it compares the raw column to a value; wrapping the column in a function (substr) produces values the tree does not store, so the engine must compute it for every row (full scan); rewrite as a range hire_date >= \'2017-01-01\' AND hire_date < \'2018-01-01\'; optional: an expression index on substr(hire_date,1,4) is an alternative.'

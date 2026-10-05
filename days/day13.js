@@ -38,10 +38,10 @@ CREATE MATERIALIZED VIEW dept_stats AS
 REFRESH MATERIALIZED VIEW dept_stats;</pre>
 <p>Oracle also has materialized views; SQL Server has <em>indexed views</em>. MySQL and SQLite have none (you build a summary table and refresh it yourself).</p>`,
       predict: {
-        q: 'You create a normal (non-materialized) view, then INSERT new rows into its base table. What does the next SELECT on the view show?',
+        q: 'You create a normal view (not materialized). Then you INSERT new rows into its base table. What does the next SELECT on the view show?',
         options: ['The old rows only, until you refresh the view', 'The new rows too, because the view re-runs its query', 'An error: the view is invalid', 'Only the new rows'],
         answer: 1,
-        why: 'A normal view stores only the query text. Each read runs the query again on the current data. Only a materialized view can be stale.'
+        why: 'A normal view stores only the query text. Each read runs the query again on the current data. Only a materialized view can show old data.'
       }
     },
     {
@@ -76,11 +76,23 @@ BEGIN
   SELECT RAISE(ABORT, 'Section is full');
 END;</pre>
 <div class="callout warn"><strong>Use triggers carefully.</strong> They are invisible: someone reading the INSERT does not see that extra work happens. Too many triggers make bugs hard to find and slow down writes. Prefer constraints (NOT NULL, CHECK, FK) when they can express the rule.</div>`,
+      sql: `CREATE TRIGGER trg_capacity_positive
+BEFORE INSERT ON sections
+WHEN NEW.capacity <= 0
+BEGIN
+  SELECT RAISE(ABORT, 'Capacity must be positive');
+END;
+
+-- remove the -- on the next line to see the trigger stop a bad row:
+-- INSERT INTO sections VALUES (100, 'CS101', 101, 'Fall', 2026, 'A101', 0);
+INSERT INTO sections VALUES (101, 'CS101', 101, 'Fall', 2026, 'A101', 30);
+SELECT section_id, course_id, capacity FROM sections WHERE section_id >= 100;`,
+      note: 'BEFORE triggers run before the row is saved, so RAISE(ABORT, ...) can stop it.',
       predict: {
         q: 'In an AFTER DELETE trigger, which row variable can you use?',
         options: ['NEW only', 'OLD only', 'Both NEW and OLD', 'Neither'],
         answer: 1,
-        why: 'After a delete there is no new row. OLD holds the deleted row\'s values.'
+        why: 'After a delete there is no new row. OLD holds the values of the deleted row.'
       }
     },
     {
@@ -133,10 +145,10 @@ cur.execute("SELECT * FROM users WHERE email = ? AND pw_hash = ?", (email, pw_ha
 await client.query("SELECT * FROM users WHERE email = $1", [email]);</pre>
 <p>Also: store password <em>hashes</em> (bcrypt, argon2), never plain passwords; give the app's database user minimal privileges; never show raw database errors to users.</p>`,
       predict: {
-        q: 'Which is the correct defense against SQL injection?',
+        q: 'What is the correct way to stop SQL injection?',
         options: ['Remove all single quotes from user input', 'Use parameterized queries / prepared statements', 'Hide the error messages', 'Use a longer password'],
         answer: 1,
-        why: 'Escaping by hand is fragile and easy to get wrong. Parameters send values separately from the SQL text, so input can never change the query structure.'
+        why: 'Cleaning input by hand is easy to get wrong. Parameters send the values apart from the SQL text. So the input can never change the query.'
       }
     },
     {
@@ -180,10 +192,10 @@ SELECT student_id FROM payments;</pre>
 EXCEPT
 SELECT student_id FROM payments;`,
       predict: {
-        q: 'Which SQL is equivalent to σ salary > 90000 ( π name, salary ( instructors ) )?',
+        q: 'Which SQL means the same as σ salary > 90000 ( π name, salary ( instructors ) )?',
         options: ['SELECT name FROM instructors WHERE salary > 90000', 'SELECT DISTINCT name, salary FROM instructors WHERE salary > 90000', 'SELECT * FROM instructors WHERE salary > 90000', 'SELECT DISTINCT salary FROM instructors WHERE name > 90000'],
         answer: 1,
-        why: 'The projection keeps name and salary (with set semantics, so DISTINCT), and the selection then filters on salary. The output has both columns.'
+        why: 'The projection keeps name and salary, with no duplicates (DISTINCT). Then the selection filters on salary. The result has both columns.'
       }
     }
   ],
@@ -199,26 +211,26 @@ SELECT student_id FROM payments;`,
   exercises: [
     {
       id: 'd13-1', level: 1, kind: 'script',
-      prompt: 'Create a view named <code>student_directory</code> with columns <code>student_id</code>, <code>name</code>, <code>email</code> and <code>dept_name</code> (the department name). Students without a department must still appear, with <code>dept_name</code> NULL.',
+      prompt: '<p>Create a view (a saved query with a name) that lists every student with their department name.</p><ul class="spec"><li><b>Create:</b> a view named <code>student_directory</code> with columns <code>student_id</code>, <code>name</code>, <code>email</code>, <code>dept_name</code> (the department name)</li><li><b>Note:</b> students with no department must still be in the view, with <code>dept_name</code> NULL.</li></ul>',
       solution: `CREATE VIEW student_directory AS
 SELECT s.student_id, s.name, s.email, d.name AS dept_name
 FROM students s LEFT JOIN departments d ON d.dept_id = s.dept_id;`,
       check: `SELECT student_id, name, email, dept_name FROM student_directory ORDER BY student_id;`,
-      hints: ['CREATE VIEW name AS SELECT ...', 'Keeping students without a department needs a LEFT JOIN.', 'Rename departments.name with AS dept_name.']
+      hints: ['CREATE VIEW name AS SELECT ...', 'To keep students with no department, use a LEFT JOIN.', 'Rename departments.name with AS dept_name.']
     },
     {
       id: 'd13-2', level: 1, kind: 'script',
-      prompt: 'Create a view <code>course_offerings</code> with columns <code>course_id</code>, <code>title</code> and <code>n_sections</code> (how many sections the course has). Courses with no sections must show 0.',
+      prompt: '<p>Create a view that shows how many sections each course has.</p><ul class="spec"><li><b>Create:</b> a view named <code>course_offerings</code> with columns <code>course_id</code>, <code>title</code>, <code>n_sections</code> (the number of sections of the course)</li><li><b>Note:</b> courses with no sections must show 0.</li></ul>',
       solution: `CREATE VIEW course_offerings AS
 SELECT c.course_id, c.title, COUNT(s.section_id) AS n_sections
 FROM courses c LEFT JOIN sections s ON s.course_id = c.course_id
 GROUP BY c.course_id, c.title;`,
       check: `SELECT course_id, title, n_sections FROM course_offerings ORDER BY course_id;`,
-      hints: ['LEFT JOIN courses to sections so courses with no sections stay.', 'COUNT(s.section_id) counts only matched rows, so it gives 0 for no match. COUNT(*) would give 1.', 'GROUP BY c.course_id, c.title']
+      hints: ['LEFT JOIN courses to sections, so courses with no sections stay.', 'COUNT(s.section_id) counts only matched rows, so it gives 0. COUNT(*) would give 1.', 'GROUP BY c.course_id, c.title']
     },
     {
       id: 'd13-3', level: 2,
-      prompt: 'A view <code>transcript</code> (student, course_id, title, semester, year, grade, score) has been created for you. Using <strong>only the view</strong>, return each <code>student</code> with their average score as <code>avg_score</code> (rounded to 1 decimal), only for students with at least 3 graded courses. Sort by <code>avg_score</code> descending, then <code>student</code>.',
+      prompt: '<p>A view named <code>transcript</code> is ready for you. It has the columns student, course_id, title, semester, year, grade, score. Use <strong>only this view</strong>. Find each student\'s average score. Show only students with at least 3 graded courses.</p><ul class="spec"><li><b>Columns:</b> <code>student</code>, <code>avg_score</code> (rounded to 1 decimal)</li><li><b>Order:</b> <code>avg_score</code> from high to low, then <code>student</code> A–Z</li><li><b>Note:</b> a graded course has a score that is not NULL.</li></ul>',
       setup: `CREATE VIEW transcript AS
 SELECT s.student_id, s.name AS student, c.course_id, c.title, sec.semester, sec.year, e.grade, e.score
 FROM enrollments e JOIN students s ON s.student_id = e.student_id
@@ -226,11 +238,11 @@ JOIN sections sec ON sec.section_id = e.section_id
 JOIN courses c ON c.course_id = sec.course_id;`,
       solution: `SELECT student, ROUND(AVG(score), 1) AS avg_score FROM transcript WHERE score IS NOT NULL GROUP BY student_id, student HAVING COUNT(score) >= 3 ORDER BY avg_score DESC, student;`,
       ordered: true,
-      hints: ['Use the view just like a table: FROM transcript.', '"Graded" means score is not NULL. COUNT(score) ignores NULLs.', 'GROUP BY the student, HAVING COUNT(score) >= 3, then ORDER BY.']
+      hints: ['Use the view like a table: FROM transcript.', 'Graded means score is not NULL. COUNT(score) skips NULLs.', 'GROUP BY the student, HAVING COUNT(score) >= 3, then ORDER BY.']
     },
     {
       id: 'd13-4', level: 2, kind: 'script',
-      prompt: 'A table <code>grade_log(student_id, section_id, old_grade, new_grade)</code> exists. Create an <code>AFTER UPDATE OF grade ON enrollments</code> trigger named <code>trg_grade_audit</code> that inserts one log row (using OLD and NEW) whenever a grade changes. Then, in the same script, run these two updates so the trigger fires:<pre class="code">UPDATE enrollments SET grade = \'B\' WHERE student_id = 1001 AND section_id = 18;\nUPDATE enrollments SET grade = \'C\' WHERE student_id = 1003 AND section_id = 8;</pre>',
+      prompt: '<p>Create a trigger (code that runs by itself when data changes). It must log every grade change.</p><ul class="spec"><li><b>Start:</b> the table <code>grade_log(student_id, section_id, old_grade, new_grade)</code> exists.</li><li><b>Create:</b> a trigger named <code>trg_grade_audit</code> that runs <code>AFTER UPDATE OF grade ON enrollments</code>. It inserts one row into <code>grade_log</code>, using OLD and NEW.</li><li><b>Then:</b> in the same script, run these two updates, so the trigger runs:</li></ul><pre class="code">UPDATE enrollments SET grade = \'B\' WHERE student_id = 1001 AND section_id = 18;\nUPDATE enrollments SET grade = \'C\' WHERE student_id = 1003 AND section_id = 8;</pre>',
       setup: `CREATE TABLE grade_log (student_id INTEGER, section_id INTEGER, old_grade TEXT, new_grade TEXT);`,
       solution: `CREATE TRIGGER trg_grade_audit
 AFTER UPDATE OF grade ON enrollments
@@ -241,11 +253,11 @@ END;
 UPDATE enrollments SET grade = 'B' WHERE student_id = 1001 AND section_id = 18;
 UPDATE enrollments SET grade = 'C' WHERE student_id = 1003 AND section_id = 8;`,
       check: `SELECT student_id, section_id, old_grade, new_grade FROM grade_log ORDER BY student_id, section_id;`,
-      hints: ['CREATE TRIGGER name AFTER UPDATE OF grade ON enrollments BEGIN ... END;', 'Inside the body: INSERT INTO grade_log (...) VALUES (OLD.student_id, OLD.section_id, OLD.grade, NEW.grade);', 'Remember the semicolon after the INSERT and after END. Then run the two UPDATEs.']
+      hints: ['CREATE TRIGGER name AFTER UPDATE OF grade ON enrollments BEGIN ... END;', 'Inside: INSERT INTO grade_log (...) VALUES (OLD.student_id, OLD.section_id, OLD.grade, NEW.grade);', 'Put a semicolon after the INSERT and after END. Then run the two UPDATEs.']
     },
     {
       id: 'd13-5', level: 2, kind: 'script',
-      prompt: 'Create a trigger named <code>trg_positive_payment</code> that runs <strong>BEFORE INSERT</strong> on <code>payments</code> and aborts with the message <code>Amount must be positive</code> when <code>NEW.amount &lt;= 0</code>. After it, insert one valid payment: <code>(payment_id 500, student_id 1001, amount 300, paid_on \'2026-09-15\', method \'card\')</code>.',
+      prompt: '<p>Create a trigger that stops payments with a zero or negative amount.</p><ul class="spec"><li><b>Create:</b> a trigger named <code>trg_positive_payment</code>. It runs <strong>BEFORE INSERT</strong> on <code>payments</code>. When <code>NEW.amount &lt;= 0</code>, it stops the insert with the message <code>Amount must be positive</code>.</li><li><b>Then:</b> insert one good payment: <code>(payment_id 500, student_id 1001, amount 300, paid_on \'2026-09-15\', method \'card\')</code>.</li></ul>',
       solution: `CREATE TRIGGER trg_positive_payment
 BEFORE INSERT ON payments
 WHEN NEW.amount <= 0
@@ -258,11 +270,11 @@ INSERT INTO payments VALUES (500, 1001, 300, '2026-09-15', 'card');`,
   instr(upper(sql), 'RAISE') > 0 AS raises,
   (SELECT COUNT(*) FROM payments WHERE payment_id = 500 AND amount = 300) AS valid_row
 FROM sqlite_master WHERE type = 'trigger' ORDER BY name;`,
-      hints: ['Use a WHEN clause to fire only for bad rows.', "The body is SELECT RAISE(ABORT, 'Amount must be positive');", 'Finish with the INSERT of the valid payment (it must pass the trigger).']
+      hints: ['Use WHEN, so the trigger runs only for bad rows.', "The body is SELECT RAISE(ABORT, 'Amount must be positive');", 'End with the INSERT of the good payment. It must pass the trigger.']
     },
     {
       id: 'd13-6', level: 3, kind: 'script',
-      prompt: 'Keep letter grades in sync with scores. Create a trigger <code>trg_score_to_grade</code> that runs <strong>AFTER UPDATE OF score ON enrollments</strong> and sets that row\'s <code>grade</code> from the new score: 90+ A, 80+ B, 70+ C, 60+ D, else F (NULL score gives NULL grade). Then run:<pre class="code">UPDATE enrollments SET score = 91 WHERE student_id = 1002 AND section_id = 21;\nUPDATE enrollments SET score = 58 WHERE student_id = 1002 AND section_id = 33;</pre>',
+      prompt: '<p>Keep the letter grade in step with the score. When a score changes, the grade must change too.</p><ul class="spec"><li><b>Create:</b> a trigger named <code>trg_score_to_grade</code>. It runs <strong>AFTER UPDATE OF score ON enrollments</strong>. It sets the <code>grade</code> of that row from the new score.</li><li><b>Rule:</b> 90 or more = A, 80 or more = B, 70 or more = C, 60 or more = D, less = F. A NULL score gives a NULL grade.</li><li><b>Then:</b> run these two updates:</li></ul><pre class="code">UPDATE enrollments SET score = 91 WHERE student_id = 1002 AND section_id = 21;\nUPDATE enrollments SET score = 58 WHERE student_id = 1002 AND section_id = 33;</pre>',
       solution: `CREATE TRIGGER trg_score_to_grade
 AFTER UPDATE OF score ON enrollments
 BEGIN
@@ -279,42 +291,42 @@ END;
 UPDATE enrollments SET score = 91 WHERE student_id = 1002 AND section_id = 21;
 UPDATE enrollments SET score = 58 WHERE student_id = 1002 AND section_id = 33;`,
       check: `SELECT student_id, section_id, grade, score FROM enrollments WHERE student_id = 1002 ORDER BY section_id;`,
-      hints: ['The trigger body is an UPDATE on the same row: WHERE student_id = NEW.student_id AND section_id = NEW.section_id.', 'Compute the letter with CASE WHEN NEW.score >= 90 THEN \'A\' ... END.', 'Because the trigger fires only on UPDATE OF score, setting grade inside it does not fire it again.']
+      hints: ['The trigger body updates the same row: WHERE student_id = NEW.student_id AND section_id = NEW.section_id.', 'Find the letter with CASE WHEN NEW.score >= 90 THEN \'A\' ... END.', 'The trigger runs only when score changes. So changing grade inside it does not run it again.']
     },
     {
       id: 'd13-7', level: 1,
-      prompt: 'Translate to SQL: <code>π<sub>name, email</sub> ( σ<sub>year = 4</sub> ( students ) )</code>. Remember that algebra uses sets.',
+      prompt: '<p>Write this relational algebra expression in SQL: <code>π<sub>name, email</sub> ( σ<sub>year = 4</sub> ( students ) )</code></p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>email</code></li><li><b>Note:</b> relational algebra works with sets, so there are no duplicate rows.</li></ul>',
       solution: `SELECT DISTINCT name, email FROM students WHERE year = 4;`,
-      hints: ['σ is WHERE, π is the SELECT list.', 'π removes duplicates: SELECT DISTINCT.']
+      hints: ['σ (selection) is WHERE. π (projection) is the SELECT list.', 'π removes duplicates: use SELECT DISTINCT.']
     },
     {
       id: 'd13-8', level: 2,
-      prompt: 'Translate to SQL: <code>π<sub>name</sub> ( students ⋈<sub>students.student_id = enrollments.student_id</sub> σ<sub>grade = \'A\'</sub> ( enrollments ) )</code> — the names of students who received at least one A.',
+      prompt: '<p>Write this expression in SQL. It gives the names of students who got at least one A: <code>π<sub>name</sub> ( students ⋈<sub>students.student_id = enrollments.student_id</sub> σ<sub>grade = \'A\'</sub> ( enrollments ) )</code></p><ul class="spec"><li><b>Columns:</b> <code>name</code></li><li><b>Note:</b> each name appears once.</li></ul>',
       solution: `SELECT DISTINCT s.name FROM students s JOIN enrollments e ON s.student_id = e.student_id WHERE e.grade = 'A';`,
-      hints: ['⋈ with a condition is JOIN ... ON.', 'The σ on enrollments becomes a WHERE condition.', 'A student with two A grades must appear once: DISTINCT.']
+      hints: ['⋈ with a condition is JOIN ... ON.', 'The σ on enrollments becomes a WHERE condition.', 'A student with two A grades must appear once: use DISTINCT.']
     },
     {
       id: 'd13-9', level: 2,
-      prompt: 'Translate to SQL: <code>π<sub>course_id</sub> ( courses ) − π<sub>course_id</sub> ( sections )</code> — courses that were never offered.',
+      prompt: '<p>Write this expression in SQL. It gives the courses that never had a section: <code>π<sub>course_id</sub> ( courses ) − π<sub>course_id</sub> ( sections )</code></p><ul class="spec"><li><b>Columns:</b> <code>course_id</code></li></ul>',
       solution: `SELECT course_id FROM courses EXCEPT SELECT course_id FROM sections;`,
-      hints: ['− is set difference.', 'In SQL it is EXCEPT (MINUS in Oracle).']
+      hints: ['− is set difference: rows in the first result but not in the second.', 'In SQL it is EXCEPT (MINUS in Oracle).']
     },
     {
       id: 'd13-10', level: 3,
-      prompt: 'Translate to SQL: <code>π<sub>i.name, m.name</sub> ( σ<sub>i.mentor_id = m.instructor_id</sub> ( ρ<sub>i</sub>(instructors) × ρ<sub>m</sub>(instructors) ) )</code>. Name the output columns <code>mentee</code> and <code>mentor</code>.',
+      prompt: '<p>Write this expression in SQL. It pairs each instructor with their mentor: <code>π<sub>i.name, m.name</sub> ( σ<sub>i.mentor_id = m.instructor_id</sub> ( ρ<sub>i</sub>(instructors) × ρ<sub>m</sub>(instructors) ) )</code></p><ul class="spec"><li><b>Columns:</b> <code>mentee</code> (the instructor name), <code>mentor</code> (the mentor name)</li></ul>',
       solution: `SELECT DISTINCT i.name AS mentee, m.name AS mentor FROM instructors i, instructors m WHERE i.mentor_id = m.instructor_id;`,
-      hints: ['ρ gives the same table two different names: aliases i and m.', '× followed by σ is a join: either FROM i, m WHERE ... or JOIN ... ON.', 'SELECT DISTINCT i.name AS mentee, m.name AS mentor ...']
+      hints: ['ρ gives the same table two names: the aliases i and m.', '× and then σ is a join: FROM i, m WHERE ..., or JOIN ... ON.', 'SELECT DISTINCT i.name AS mentee, m.name AS mentor ...']
     }
   ],
   quiz: [
-    { id: 'd13-q1', q: 'Which is NOT a typical reason to create a view?', options: ['Hide a complex join behind a simple name', 'Restrict which columns a user can see', 'Keep old queries working after a table change', 'Make every query faster by storing the data'], answer: 3, why: 'A normal view stores no data, so it does not make queries faster. That is what materialized views do.' },
-    { id: 'd13-q2', q: 'You want to stop an INSERT if the section is already full. Which trigger timing fits?', options: ['AFTER INSERT', 'BEFORE INSERT', 'AFTER DELETE', 'INSTEAD OF DELETE'], answer: 1, why: 'A BEFORE trigger runs before the row is written and can reject it with an error.' },
-    { id: 'd13-q3', q: "An attacker types  ' OR '1'='1' --  into a login form. What makes this attack possible?", options: ['A weak password policy', 'The app concatenates user input into the SQL string', 'Missing indexes', 'Using SQLite'], answer: 1, why: 'Injection works only when input becomes part of the SQL text. Parameterized queries prevent it.' },
-    { id: 'd13-q4', q: 'Which relational algebra operator corresponds to the WHERE clause?', options: ['π (projection)', 'σ (selection)', 'ρ (rename)', '× (product)'], answer: 1, why: 'Selection filters rows. Projection chooses columns, which corresponds to the SELECT list.' },
+    { id: 'd13-q1', q: 'Which is NOT a normal reason to create a view?', options: ['Hide a complex join behind a simple name', 'Limit which columns a user can see', 'Keep old queries working after a table changes', 'Make every query faster by storing the data'], answer: 3, why: 'A normal view stores no data, so it does not make queries faster. Materialized views store data.' },
+    { id: 'd13-q2', q: 'You want to stop an INSERT when the section is already full. Which trigger timing fits?', options: ['AFTER INSERT', 'BEFORE INSERT', 'AFTER DELETE', 'INSTEAD OF DELETE'], answer: 1, why: 'A BEFORE trigger runs before the row is saved. It can stop the row with an error.' },
+    { id: 'd13-q3', q: "An attacker types  ' OR '1'='1' --  into a login form. What makes this attack work?", options: ['A weak password rule', 'The app glues the user input into the SQL text', 'Missing indexes', 'Using SQLite'], answer: 1, why: 'Injection works only when the input becomes part of the SQL text. Parameterized queries stop it.' },
+    { id: 'd13-q4', q: 'Which relational algebra operator matches the WHERE clause?', options: ['π (projection)', 'σ (selection)', 'ρ (rename)', '× (product)'], answer: 1, why: 'Selection keeps some rows. Projection chooses columns, like the SELECT list.' },
     { id: 'd13-q5', q: 'R has 5 rows and S has 4 rows. How many rows does R × S have?', options: ['9', '20', '5', '4'], answer: 1, why: 'The Cartesian product pairs every row of R with every row of S: 5 × 4 = 20.' },
-    { id: 'd13-q6', q: 'Which set of operators is the basic (complete) set of relational algebra?', options: ['σ, π, ⋈, ∩', 'σ, π, ρ, ∪, −, ×', 'σ, π, ∪, ∩', '⋈, ×, ∪, −'], answer: 1, why: 'Join and intersection can be derived: R ⋈ S = σ(R × S), R ∩ S = R − (R − S).' },
-    { id: 'd13-q7', q: 'GRANT SELECT ON courses TO bob WITH GRANT OPTION means…', options: ['Bob can read and also change courses', 'Bob can read courses and give that read permission to others', 'Bob owns the courses table', 'Bob can create new tables'], answer: 1, why: 'WITH GRANT OPTION lets the receiver pass on the same privilege.' },
-    { id: 'd13-q8', q: 'π dept_id (students) in SQL is best written as…', options: ['SELECT dept_id FROM students', 'SELECT DISTINCT dept_id FROM students', 'SELECT * FROM students GROUP BY name', 'SELECT COUNT(dept_id) FROM students'], answer: 1, why: 'Projection returns a set, so duplicates must be removed with DISTINCT.' }
+    { id: 'd13-q6', q: 'Which group is the basic (complete) set of relational algebra operators?', options: ['σ, π, ⋈, ∩', 'σ, π, ρ, ∪, −, ×', 'σ, π, ∪, ∩', '⋈, ×, ∪, −'], answer: 1, why: 'You can build join and intersection from these: R ⋈ S = σ(R × S), and R ∩ S = R − (R − S).' },
+    { id: 'd13-q7', q: 'What does GRANT SELECT ON courses TO bob WITH GRANT OPTION mean?', options: ['Bob can read and also change courses', 'Bob can read courses and give this read permission to others', 'Bob owns the courses table', 'Bob can create new tables'], answer: 1, why: 'WITH GRANT OPTION lets Bob give the same permission to other users.' },
+    { id: 'd13-q8', q: 'What is the best SQL for π dept_id (students)?', options: ['SELECT dept_id FROM students', 'SELECT DISTINCT dept_id FROM students', 'SELECT * FROM students GROUP BY name', 'SELECT COUNT(dept_id) FROM students'], answer: 1, why: 'Projection returns a set, with no duplicates. So use DISTINCT.' }
   ],
   teach: 'Explain SQL injection to a junior developer: show a vulnerable login query, the attack input, what the final SQL looks like, and the correct fix.',
   rubric: 'Vulnerable code concatenates user input into SQL text; attack input like \' OR \'1\'=\'1\' -- changes the WHERE condition and comments out the rest; result: login without password or data leak; fix: parameterized queries / prepared statements where values are sent separately; extra defenses: least-privilege DB user, hashed passwords, no raw error messages; escaping by hand is not enough.'

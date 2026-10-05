@@ -95,10 +95,15 @@ SELECT name, depth, path FROM tree ORDER BY path;`,
 FROM instructors
 WHERE dept_id IS NOT NULL
 ORDER BY dept_id, salary DESC;`,
-        q: '15 instructors have a department, in 7 departments. How many rows does this query return?',
-        options: ['7 rows, one per department', '15 rows, one per instructor', '1 row', 'An error: salary is not in a GROUP BY'],
+        q: "15 instructors have a department. There are 7 departments. How many rows does this query return?",
+        options: [
+        "7 rows, one per department",
+        "15 rows, one per instructor",
+        "1 row",
+        "An error: salary is not in a GROUP BY"
+      ],
         answer: 1,
-        why: 'There is no GROUP BY, so no rows are collapsed. The window function adds the department average to each of the 15 rows.'
+        why: "There is no GROUP BY, so no rows are merged. The window function adds the department average to each of the 15 rows."
       }
     },
     {
@@ -115,10 +120,15 @@ ORDER BY dept_id, salary DESC;`,
        DENSE_RANK() OVER (ORDER BY credits DESC) AS dense
 FROM courses
 ORDER BY rn;`,
-        q: 'Eleven courses have 4 credits and the rest have 3. What RANK do the 3-credit courses get?',
-        options: ['2', '3', '11', '12'],
+        q: "Eleven courses have 4 credits. The rest have 3 credits. What RANK do the 3-credit courses get?",
+        options: [
+        "2",
+        "3",
+        "11",
+        "12"
+      ],
         answer: 3,
-        why: 'Eleven rows share rank 1, so RANK skips to 12 for the next value. DENSE_RANK would give them 2.'
+        why: "Eleven rows share rank 1. So RANK jumps to 12 for the next value. DENSE_RANK would give them 2."
       }
     },
     {
@@ -191,74 +201,149 @@ ORDER BY total_salary DESC;`
   exercises: [
     {
       id: 'd6-1', level: 1,
-      prompt: 'Using a CTE that computes the average salary per department, return the department <code>name</code> and <code>avg_salary</code> of every department whose average instructor salary is above 80000.',
+      prompt: "<p>Find the departments where the average instructor salary is above 80000. Use a CTE (a <code>WITH</code> step) to compute the average salary of each department first.</p><ul class=\"spec\"><li><b>Columns:</b> <code>name</code>, <code>avg_salary</code></li><li><b>Note:</b> Do not round the average.</li></ul>",
       solution: `WITH dept_pay AS (SELECT dept_id, AVG(salary) AS avg_salary FROM instructors GROUP BY dept_id) SELECT d.name, dp.avg_salary FROM dept_pay dp JOIN departments d ON d.dept_id = dp.dept_id WHERE dp.avg_salary > 80000;`,
-      hints: ['Step 1 (the CTE): GROUP BY dept_id with AVG(salary).', 'Step 2: join the CTE to departments to get the name.', 'WITH dept_pay AS (SELECT dept_id, AVG(salary) AS avg_salary FROM instructors GROUP BY dept_id) SELECT ...']
+      hints: [
+        "Step 1, inside WITH: group the instructors by dept_id and compute AVG(salary).",
+        "Step 2: join the WITH result to departments to get the name.",
+        "WITH dept_pay AS (SELECT dept_id, AVG(salary) AS avg_salary FROM instructors GROUP BY dept_id) SELECT ..."
+      ]
     },
     {
       id: 'd6-2', level: 1,
-      prompt: 'For every instructor who belongs to a department, show <code>name</code>, <code>dept_id</code>, <code>salary</code> and <code>dept_avg</code> (the average salary of their department) on the same row. Use a window function.',
+      prompt: "<p>Show each instructor next to the average salary of their department. Use a window function, so every instructor keeps their own row.</p><ul class=\"spec\"><li><b>Columns:</b> <code>name</code>, <code>dept_id</code>, <code>salary</code>, <code>dept_avg</code></li><li><b>Note:</b> Leave out the instructor who has no department (dept_id is NULL).</li></ul>",
       solution: `SELECT name, dept_id, salary, AVG(salary) OVER (PARTITION BY dept_id) AS dept_avg FROM instructors WHERE dept_id IS NOT NULL;`,
-      hints: ['You want one row per instructor, so do not use GROUP BY.', 'AVG(...) OVER (PARTITION BY ...)', 'Do not forget to exclude the instructor whose dept_id is NULL.']
+      hints: [
+        "You want one row per instructor. So do not use GROUP BY.",
+        "Use AVG(...) OVER (PARTITION BY ...).",
+        "Remember WHERE dept_id IS NOT NULL."
+      ]
     },
     {
       id: 'd6-3', level: 1,
-      prompt: 'Number the courses inside each department in alphabetical order of title. Return <code>dept_id</code>, <code>course_id</code>, <code>title</code> and <code>pos</code> (1 for the first title in that department, 2 for the next, ...).',
+      prompt: "<p>Number the courses inside each department, in alphabetical order of title. The first title in a department gets 1, the next gets 2, and so on.</p><ul class=\"spec\"><li><b>Columns:</b> <code>dept_id</code>, <code>course_id</code>, <code>title</code>, <code>pos</code></li><li><b>Note:</b> The numbers start again at 1 in each department.</li></ul>",
       solution: `SELECT dept_id, course_id, title, ROW_NUMBER() OVER (PARTITION BY dept_id ORDER BY title) AS pos FROM courses;`,
-      hints: ['The numbering restarts in each department: PARTITION BY.', 'Titles are unique, so ROW_NUMBER gives a stable result here.', 'ROW_NUMBER() OVER (PARTITION BY dept_id ORDER BY title)']
+      hints: [
+        "The numbering starts again in each department. That is PARTITION BY.",
+        "Titles are unique, so ROW_NUMBER gives the same result every time.",
+        "ROW_NUMBER() OVER (PARTITION BY dept_id ORDER BY title)"
+      ]
     },
     {
       id: 'd6-4', level: 2,
-      prompt: 'Inside each department, rank the courses by credits, highest first, so that courses with equal credits share a rank and the next rank is skipped. Return <code>dept_id</code>, <code>course_id</code>, <code>credits</code> and <code>credit_rank</code>.',
+      prompt: "<p>Rank the courses inside each department by credits. The course with the most credits comes first.</p><ul class=\"spec\"><li><b>Columns:</b> <code>dept_id</code>, <code>course_id</code>, <code>credits</code>, <code>credit_rank</code></li><li><b>Note:</b> Courses with equal credits get the same rank. The next rank is then skipped (1, 1, 3).</li></ul>",
       solution: `SELECT dept_id, course_id, credits, RANK() OVER (PARTITION BY dept_id ORDER BY credits DESC) AS credit_rank FROM courses;`,
-      hints: ['"Share a rank and skip the next" describes one of the three ranking functions.', 'RANK() skips after ties, DENSE_RANK() does not.', 'RANK() OVER (PARTITION BY dept_id ORDER BY credits DESC)']
+      hints: [
+        "\"Same rank, then skip the next number\" describes one of the three ranking functions.",
+        "RANK() skips numbers after a tie. DENSE_RANK() does not.",
+        "RANK() OVER (PARTITION BY dept_id ORDER BY credits DESC)"
+      ]
     },
     {
       id: 'd6-5', level: 2,
-      prompt: 'For each section that has graded scores, find the student(s) with the highest score. Return <code>section_id</code>, <code>student_id</code> and <code>score</code>. If two students tie for the top, show both.',
+      prompt: "<p>Find the top student of each section: the student with the highest score.</p><ul class=\"spec\"><li><b>Columns:</b> <code>section_id</code>, <code>student_id</code>, <code>score</code></li><li><b>Note:</b> Use only rows that have a score. If two students share the top score, show both.</li></ul>",
       solution: `WITH ranked AS (SELECT section_id, student_id, score, RANK() OVER (PARTITION BY section_id ORDER BY score DESC) AS pos FROM enrollments WHERE score IS NOT NULL) SELECT section_id, student_id, score FROM ranked WHERE pos = 1;`,
-      hints: ['Rank the students inside each section, then keep rank 1.', 'You cannot filter on a window function in WHERE. Put the ranking in a CTE.', 'Use RANK (not ROW_NUMBER) so ties are kept.']
+      hints: [
+        "Rank the students inside each section. Then keep rank 1.",
+        "WHERE cannot use a window function. Put the ranking in a WITH step first.",
+        "Use RANK, not ROW_NUMBER, so ties stay."
+      ]
     },
     {
       id: 'd6-6', level: 2,
-      prompt: 'For every payment, show the student\'s running total of payments so far. Return <code>student_id</code>, <code>payment_id</code>, <code>paid_on</code>, <code>amount</code> and <code>running_total</code>. Accumulate per student in order of <code>paid_on</code>, then <code>payment_id</code>. Sort the output by <code>student_id</code>, <code>paid_on</code>, <code>payment_id</code>.',
+      prompt: "<p>Show a running total of payments for each student. A running total adds each payment to the sum of the earlier ones.</p><ul class=\"spec\"><li><b>Columns:</b> <code>student_id</code>, <code>payment_id</code>, <code>paid_on</code>, <code>amount</code>, <code>running_total</code></li><li><b>Order:</b> by <code>student_id</code>, then <code>paid_on</code>, then <code>payment_id</code>.</li><li><b>Note:</b> Add up the payments of each student separately, in order of <code>paid_on</code>, then <code>payment_id</code>.</li></ul>",
       solution: `SELECT student_id, payment_id, paid_on, amount, SUM(amount) OVER (PARTITION BY student_id ORDER BY paid_on, payment_id) AS running_total FROM payments ORDER BY student_id, paid_on, payment_id;`,
       ordered: true,
-      hints: ['A running total is SUM with an ORDER BY inside OVER.', 'Restart the total for each student with PARTITION BY.', 'SUM(amount) OVER (PARTITION BY student_id ORDER BY paid_on, payment_id)']
+      hints: [
+        "A running total is SUM with an ORDER BY inside OVER.",
+        "Start a new total for each student with PARTITION BY.",
+        "SUM(amount) OVER (PARTITION BY student_id ORDER BY paid_on, payment_id)"
+      ]
     },
     {
       id: 'd6-7', level: 2,
-      prompt: 'For every payment, show how many days have passed since the same student\'s previous payment (NULL for a student\'s first payment). Return <code>payment_id</code>, <code>student_id</code>, <code>paid_on</code> and <code>days_since_prev</code>.',
+      prompt: "<p>For each payment, find how many days passed since the same student's previous payment.</p><ul class=\"spec\"><li><b>Columns:</b> <code>payment_id</code>, <code>student_id</code>, <code>paid_on</code>, <code>days_since_prev</code></li><li><b>Note:</b> A student's first payment has no previous payment, so show NULL.</li></ul>",
       solution: `SELECT payment_id, student_id, paid_on, julianday(paid_on) - julianday(LAG(paid_on) OVER (PARTITION BY student_id ORDER BY paid_on)) AS days_since_prev FROM payments;`,
-      hints: ['The previous payment\'s date comes from LAG.', 'Partition by student and order by date inside OVER.', 'julianday(paid_on) - julianday(LAG(paid_on) OVER (...))']
+      hints: [
+        "LAG gives you the date of the previous payment.",
+        "Inside OVER, use PARTITION BY student_id and ORDER BY paid_on.",
+        "julianday(paid_on) - julianday(LAG(paid_on) OVER (...))"
+      ]
     },
     {
       id: 'd6-8', level: 2,
-      prompt: 'List every course that CS420 depends on, directly or indirectly (prerequisites of prerequisites, and so on). Return one column <code>course_id</code>, each course once.',
+      prompt: "<p>CS420 needs some courses first. Those courses need other courses, and so on. List every course that CS420 depends on, at any level.</p><ul class=\"spec\"><li><b>Columns:</b> <code>course_id</code></li><li><b>Note:</b> Show each course only once.</li></ul>",
       solution: `WITH RECURSIVE chain(course_id) AS (SELECT prereq_id FROM prereqs WHERE course_id = 'CS420' UNION SELECT p.prereq_id FROM prereqs p JOIN chain c ON p.course_id = c.course_id) SELECT course_id FROM chain;`,
-      hints: ['A chain of unknown length needs a recursive CTE.', 'Anchor: the direct prerequisites of CS420. Recursive step: prerequisites of the rows already found.', 'WITH RECURSIVE chain(course_id) AS (SELECT prereq_id FROM prereqs WHERE course_id = \'CS420\' UNION SELECT p.prereq_id FROM prereqs p JOIN chain ...)']
+      hints: [
+        "A chain of unknown length needs a recursive CTE (WITH RECURSIVE).",
+        "Start with the direct prerequisites of CS420. Then add the prerequisites of the courses you already found.",
+        "WITH RECURSIVE chain(course_id) AS (SELECT prereq_id FROM prereqs WHERE course_id = 'CS420' UNION SELECT p.prereq_id FROM prereqs p JOIN chain ...)"
+      ]
     },
     {
       id: 'd6-9', level: 3,
-      prompt: 'Show every instructor with their depth in the mentoring tree: 0 for instructors without a mentor, 1 for people they mentor, and so on. Return <code>name</code> and <code>depth</code>.',
+      prompt: "<p>Instructors can mentor other instructors. This makes a tree. Show each instructor and their level (depth) in the tree.</p><ul class=\"spec\"><li><b>Columns:</b> <code>name</code>, <code>depth</code></li><li><b>Note:</b> An instructor with no mentor has depth 0. The people they mentor have depth 1, and so on.</li></ul>",
       solution: `WITH RECURSIVE tree(instructor_id, name, depth) AS (SELECT instructor_id, name, 0 FROM instructors WHERE mentor_id IS NULL UNION ALL SELECT i.instructor_id, i.name, t.depth + 1 FROM instructors i JOIN tree t ON i.mentor_id = t.instructor_id) SELECT name, depth FROM tree;`,
-      hints: ['The anchor is every instructor whose mentor_id IS NULL, with depth 0.', 'The recursive step joins instructors whose mentor is already in the tree, adding 1 to depth.', 'JOIN tree t ON i.mentor_id = t.instructor_id']
+      hints: [
+        "Start with every instructor whose mentor_id IS NULL, with depth 0.",
+        "Then add the instructors whose mentor is already in the tree, with depth + 1.",
+        "JOIN tree t ON i.mentor_id = t.instructor_id"
+      ]
     },
     {
       id: 'd6-10', level: 3,
-      prompt: 'For each department that has instructors, show its <code>name</code>, <code>total_salary</code> (sum of its instructors\' salaries) and <code>pct</code>: its share of the payroll of all instructors who belong to a department, as a percentage rounded to 1 decimal (e.g. 23.4).',
+      prompt: "<p>For each department that has instructors, show its total salary cost and its share of all salaries.</p><ul class=\"spec\"><li><b>Columns:</b> <code>name</code>, <code>total_salary</code>, <code>pct</code></li><li><b>Note:</b> <code>total_salary</code> is the sum of the salaries in that department.</li><li><b>Note:</b> <code>pct</code> is that sum as a percentage of the salaries of all instructors who have a department. Round it to 1 decimal (for example 23.4).</li></ul>",
       solution: `SELECT d.name, SUM(i.salary) AS total_salary, ROUND(100.0 * SUM(i.salary) / SUM(SUM(i.salary)) OVER (), 1) AS pct FROM instructors i JOIN departments d ON d.dept_id = i.dept_id GROUP BY d.name;`,
-      hints: ['First group by department to get each total.', 'The grand total can come from a window over the grouped rows: SUM(SUM(salary)) OVER ().', 'Multiply by 100.0 (not 100) to avoid integer division, then ROUND(..., 1).']
+      hints: [
+        "First group by department to get each total.",
+        "The grand total can come from a window over the grouped rows: SUM(SUM(salary)) OVER ().",
+        "Multiply by 100.0 (not 100) so the division keeps decimals. Then ROUND(..., 1)."
+      ]
     }
   ],
   quiz: [
-    { id: 'd6-q1', q: 'What is the main difference between <code>AVG(salary) ... GROUP BY dept_id</code> and <code>AVG(salary) OVER (PARTITION BY dept_id)</code>?', options: ['The window version is faster', 'GROUP BY returns one row per department; the window version keeps every row', 'The window version ignores NULL salaries', 'There is no difference'], answer: 1, why: 'Window functions compute over a set of rows but do not collapse them. Every input row stays in the result.' },
-    { id: 'd6-q2', q: 'Scores 95, 90, 90, 85 are ranked with DENSE_RANK (highest first). What does 85 get?', options: ['2', '3', '4', '1'], answer: 1, why: 'DENSE_RANK: 95→1, 90→2, 90→2, 85→3. RANK would give 85 the value 4.' },
-    { id: 'd6-q3', q: 'Why does <code>WHERE ROW_NUMBER() OVER (...) = 1</code> fail?', options: ['ROW_NUMBER needs PARTITION BY', 'Window functions are evaluated after WHERE', 'You must use RANK in WHERE', 'WHERE cannot compare with numbers'], answer: 1, why: 'Logical order: FROM, WHERE, GROUP BY, HAVING, window functions, SELECT, ORDER BY. Compute the window in a CTE and filter in the outer query.' },
-    { id: 'd6-q4', q: 'A recursive CTE has two parts joined by UNION or UNION ALL. What are they called?', options: ['Base table and view', 'Anchor member and recursive member', 'Outer query and inner query', 'Seed and index'], answer: 1, why: 'The anchor produces the starting rows; the recursive member refers to the CTE itself and runs until it adds no new rows.' },
-    { id: 'd6-q5', q: 'What does <code>LAG(score) OVER (ORDER BY exam_date)</code> return on the first row?', options: ['0', 'The first score', 'NULL', 'An error'], answer: 2, why: 'There is no previous row, so LAG returns NULL, unless you pass a default as the third argument: LAG(score, 1, 0).' },
-    { id: 'd6-q6', q: 'Which frame gives a 3-row moving average (this row and the two before it)?', options: ['ROWS BETWEEN 3 PRECEDING AND CURRENT ROW', 'ROWS BETWEEN 2 PRECEDING AND CURRENT ROW', 'RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW', 'ROWS BETWEEN CURRENT ROW AND 2 FOLLOWING'], answer: 1, why: '2 preceding rows + the current row = 3 rows. The RANGE option is the default running-total frame.' },
-    { id: 'd6-q7', q: 'Which database needs a different syntax because it does not support CTEs at all?', options: ['PostgreSQL 15', 'SQL Server 2019', 'MySQL 5.7', 'SQLite 3.40'], answer: 2, why: 'MySQL added CTEs and window functions in version 8.0. The others all support them.' }
+    { id: 'd6-q1', q: "What is the main difference between <code>AVG(salary) ... GROUP BY dept_id</code> and <code>AVG(salary) OVER (PARTITION BY dept_id)</code>?", options: [
+        "The window version is faster",
+        "GROUP BY gives one row per department. The window version keeps every row.",
+        "The window version ignores NULL salaries",
+        "There is no difference"
+      ], answer: 1, why: "A window function computes over a group of rows but does not merge them. Every row stays in the result." },
+    { id: 'd6-q2', q: "Scores 95, 90, 90, 85 are ranked with DENSE_RANK, highest first. What rank does 85 get?", options: [
+        "2",
+        "3",
+        "4",
+        "1"
+      ], answer: 1, why: "DENSE_RANK gives 95→1, 90→2, 90→2, 85→3. RANK would give 85 the rank 4." },
+    { id: 'd6-q3', q: "Why does <code>WHERE ROW_NUMBER() OVER (...) = 1</code> give an error?", options: [
+        "ROW_NUMBER needs PARTITION BY",
+        "Window functions run after WHERE",
+        "You must use RANK in WHERE",
+        "WHERE cannot compare numbers"
+      ], answer: 1, why: "The order is FROM, WHERE, GROUP BY, HAVING, window functions, SELECT, ORDER BY. So WHERE cannot see the window result. Compute it in a WITH step, then filter outside." },
+    { id: 'd6-q4', q: "A recursive CTE has two parts, joined by UNION or UNION ALL. What are they called?", options: [
+        "Base table and view",
+        "Anchor member and recursive member",
+        "Outer query and inner query",
+        "Seed and index"
+      ], answer: 1, why: "The anchor makes the first rows. The recursive member uses the CTE itself. It runs again and again until it adds no new rows." },
+    { id: 'd6-q5', q: "What does <code>LAG(score) OVER (ORDER BY exam_date)</code> return on the first row?", options: [
+        "0",
+        "The first score",
+        "NULL",
+        "An error"
+      ], answer: 2, why: "The first row has no row before it, so LAG returns NULL. You can give a default as a third value: LAG(score, 1, 0)." },
+    { id: 'd6-q6', q: "Which frame gives a 3-row moving average (this row and the two rows before it)?", options: [
+        "ROWS BETWEEN 3 PRECEDING AND CURRENT ROW",
+        "ROWS BETWEEN 2 PRECEDING AND CURRENT ROW",
+        "RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW",
+        "ROWS BETWEEN CURRENT ROW AND 2 FOLLOWING"
+      ], answer: 1, why: "2 rows before + the current row = 3 rows. The RANGE option is the default frame for a running total." },
+    { id: 'd6-q7', q: "Which database does not support CTEs at all, so it needs a different syntax?", options: [
+        "PostgreSQL 15",
+        "SQL Server 2019",
+        "MySQL 5.7",
+        "SQLite 3.40"
+      ], answer: 2, why: "MySQL added CTEs and window functions in version 8.0. The others all support them." }
   ],
   teach: 'Explain the difference between ROW_NUMBER, RANK and DENSE_RANK, and describe a real question where the choice changes the answer.',
   rubric: 'All three need ORDER BY inside OVER; ROW_NUMBER gives unique consecutive numbers even for ties (arbitrary order among ties unless a tiebreaker is added); RANK gives ties the same number and skips the following numbers (1,1,3); DENSE_RANK gives ties the same number without gaps (1,1,2); example: top-3 students per section where ties exist, or "second highest salary" where DENSE_RANK = 2 is needed; PARTITION BY restarts numbering per group.'

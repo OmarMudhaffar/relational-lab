@@ -58,10 +58,10 @@ UPDATE departments SET budget = 1 WHERE dept_id = 6;
 ROLLBACK TO s1;
 COMMIT;
 SELECT budget FROM departments WHERE dept_id = 6;`,
-        q: 'What budget does History (dept 6) have at the end? (It started at 210000.)',
+        q: 'History (dept 6) starts with a budget of 210000. What is its budget at the end?',
         options: ['210000', '0', '1', 'NULL'],
         answer: 1,
-        why: 'ROLLBACK TO s1 removes only the change made after the savepoint (budget = 1). The change before the savepoint (budget = 0) is kept and then committed.'
+        why: 'ROLLBACK TO s1 undoes only the change after the savepoint (budget = 1). The change before the savepoint (budget = 0) stays, and COMMIT saves it.'
       }
     },
     {
@@ -121,10 +121,10 @@ SELECT budget FROM departments WHERE dept_id = 6;`,
 <pre class="code">-- PostgreSQL / MySQL / SQL Server
 SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;</pre>`,
       predict: {
-        q: 'A report reads the same account twice in one transaction and must get the same value both times. Phantoms do not matter. What is the weakest level that is enough?',
+        q: 'A report reads the same account twice in one transaction. It must get the same value both times. New rows (phantoms) are not a problem. Which is the lowest level that is enough?',
         options: ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ', 'SERIALIZABLE'],
         answer: 2,
-        why: 'Reading the same row twice and getting the same value is exactly "no non-repeatable reads". REPEATABLE READ is the first level that guarantees it.'
+        why: 'Getting the same value twice means "no non-repeatable reads". REPEATABLE READ is the first level that promises this.'
       }
     },
     {
@@ -153,10 +153,10 @@ SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;</pre>`,
 <ul><li>R1(A) before W2(A): edge T1 → T2</li><li>R2(A) before W1(A): edge T2 → T1</li><li>W1(A) before W2(A): edge T1 → T2</li></ul>
 <figure class="diagram"><svg viewBox="0 0 300 90" width="300" height="90" role="img" aria-label="Precedence graph with a cycle between T1 and T2"><defs><marker id="ar11" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs><circle cx="60" cy="45" r="24" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/><text x="60" y="50" text-anchor="middle" font-size="15" fill="var(--ink)">T1</text><circle cx="240" cy="45" r="24" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/><text x="240" y="50" text-anchor="middle" font-size="15" fill="var(--ink)">T2</text><path d="M84,38 Q150,8 216,38" fill="none" stroke="var(--ink)" stroke-width="1.6" marker-end="url(#ar11)"/><path d="M216,52 Q150,82 84,52" fill="none" stroke="var(--bad)" stroke-width="1.6" marker-end="url(#ar11)"/><text x="150" y="16" text-anchor="middle" font-size="11" fill="var(--muted)">R1(A)…W2(A)</text><text x="150" y="86" text-anchor="middle" font-size="11" fill="var(--bad)">R2(A)…W1(A)</text></svg><figcaption>A cycle T1 → T2 → T1, so S is not conflict-serializable. This is the lost-update schedule.</figcaption></figure>`,
       predict: {
-        q: 'Schedule: R1(A), W1(A), R2(A), W2(A), R1(B), W1(B), R2(B), W2(B). Is it conflict-serializable?',
+        q: 'Look at this schedule: R1(A), W1(A), R2(A), W2(A), R1(B), W1(B), R2(B), W2(B). Is it conflict-serializable?',
         options: ['No, there is a cycle', 'Yes, equivalent to T1 then T2', 'Yes, equivalent to T2 then T1', 'It cannot be decided'],
         answer: 1,
-        why: 'Every conflict on A and on B has T1\'s operation first, so all edges go T1 → T2. No cycle, and the serial order is T1, T2.'
+        why: 'In every conflict on A and on B, T1 comes first. So all edges go T1 → T2. There is no cycle, and the serial order is T1, then T2.'
       }
     },
     {
@@ -180,7 +180,7 @@ SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;</pre>`,
   exercises: [
     {
       id: 'd11-1', level: 1, kind: 'script',
-      prompt: 'An <code>accounts</code> table has been created for you with accounts <code>A</code> (500), <code>B</code> (300) and <code>C</code> (0). Inside one transaction (<code>BEGIN</code> … <code>COMMIT</code>), transfer <strong>200</strong> from <code>A</code> to <code>B</code>.',
+      prompt: '<p>Move money from one account to another. Do it inside one transaction (a group of statements that succeed or fail together).</p><ul class="spec"><li><b>Start:</b> table <code>accounts</code> has <code>A</code> = 500, <code>B</code> = 300, <code>C</code> = 0.</li><li><b>Steps:</b> write <code>BEGIN</code>, take <strong>200</strong> from <code>A</code>, add <strong>200</strong> to <code>B</code>, then write <code>COMMIT</code>.</li></ul>',
       setup: `CREATE TABLE accounts (id TEXT PRIMARY KEY, owner TEXT NOT NULL, balance REAL NOT NULL CHECK (balance >= 0));
 INSERT INTO accounts VALUES ('A','Layla',500),('B','Omar',300),('C','Mei',0);`,
       solution: `BEGIN;
@@ -188,22 +188,22 @@ UPDATE accounts SET balance = balance - 200 WHERE id = 'A';
 UPDATE accounts SET balance = balance + 200 WHERE id = 'B';
 COMMIT;`,
       check: `SELECT id, balance FROM accounts ORDER BY id;`,
-      hints: ['You need two UPDATE statements between BEGIN and COMMIT.', 'Subtract from A, add to B: SET balance = balance - 200 WHERE id = \'A\'.', 'BEGIN; UPDATE ... A; UPDATE ... B; COMMIT;']
+      hints: ['You need two UPDATE statements between BEGIN and COMMIT.', 'Take money from A: SET balance = balance - 200 WHERE id = \'A\'.', 'BEGIN; UPDATE ... A; UPDATE ... B; COMMIT;']
     },
     {
       id: 'd11-2', level: 1, kind: 'script',
-      prompt: 'Same <code>accounts</code> table (A = 500, B = 300, C = 0). Start a transaction, set every balance to 0, then <strong>cancel</strong> the transaction so nothing changes. Finish with no open transaction.',
+      prompt: '<p>Change all the balances, then cancel the change. Nothing should change in the end.</p><ul class="spec"><li><b>Start:</b> <code>accounts</code> has A = 500, B = 300, C = 0.</li><li><b>Steps:</b> start a transaction, set every balance to 0, then cancel the transaction.</li><li><b>Note:</b> at the end, no transaction may be open.</li></ul>',
       setup: `CREATE TABLE accounts (id TEXT PRIMARY KEY, owner TEXT NOT NULL, balance REAL NOT NULL CHECK (balance >= 0));
 INSERT INTO accounts VALUES ('A','Layla',500),('B','Omar',300),('C','Mei',0);`,
       solution: `BEGIN;
 UPDATE accounts SET balance = 0;
 ROLLBACK;`,
       check: `SELECT id, balance FROM accounts ORDER BY id;`,
-      hints: ['The keyword that cancels a transaction undoes every change since BEGIN.', 'BEGIN; UPDATE accounts SET balance = 0; ROLLBACK;']
+      hints: ['One keyword cancels a transaction. It undoes every change since BEGIN.', 'BEGIN; UPDATE accounts SET balance = 0; ROLLBACK;']
     },
     {
       id: 'd11-3', level: 2, kind: 'script',
-      prompt: 'Accounts A = 500, B = 300, C = 0. In one transaction: (1) move 100 from A to C, (2) create a savepoint named <code>sp</code>, (3) move 300 from B to C, (4) undo step 3 only with <code>ROLLBACK TO</code>, (5) commit. Expected final balances: A = 400, B = 300, C = 100.',
+      prompt: '<p>Use a savepoint to undo only part of a transaction.</p><ul class="spec"><li><b>Start:</b> A = 500, B = 300, C = 0.</li><li><b>Steps:</b> (1) start a transaction. (2) Move 100 from A to C. (3) Create a savepoint named <code>sp</code>. (4) Move 300 from B to C. (5) Undo step 4 only, with <code>ROLLBACK TO</code>. (6) Commit.</li><li><b>Result:</b> A = 400, B = 300, C = 100.</li></ul>',
       setup: `CREATE TABLE accounts (id TEXT PRIMARY KEY, owner TEXT NOT NULL, balance REAL NOT NULL CHECK (balance >= 0));
 INSERT INTO accounts VALUES ('A','Layla',500),('B','Omar',300),('C','Mei',0);`,
       solution: `BEGIN;
@@ -215,11 +215,11 @@ UPDATE accounts SET balance = balance + 300 WHERE id = 'C';
 ROLLBACK TO sp;
 COMMIT;`,
       check: `SELECT id, balance FROM accounts ORDER BY id;`,
-      hints: ['Each transfer is two UPDATE statements.', 'SAVEPOINT sp; goes between the first and the second transfer.', 'After the second transfer write ROLLBACK TO sp; and then COMMIT;']
+      hints: ['Each move of money is two UPDATE statements.', 'Write SAVEPOINT sp; between the first move and the second move.', 'After the second move, write ROLLBACK TO sp; and then COMMIT;']
     },
     {
       id: 'd11-4', level: 2, kind: 'script',
-      prompt: 'Accounts A = 500, B = 300, C = 0, and an empty <code>audit(msg)</code> table exist. Simulate a failed transfer of 50 from C to A: start a transaction, insert the audit row <code>\'transfer C-&gt;A started\'</code>, add 50 to A, then notice that C has no money (it would break the <code>CHECK (balance &gt;= 0)</code>) and cancel everything. At the end the balances must be unchanged and <code>audit</code> must be empty.',
+      prompt: '<p>Start a money transfer, notice a problem, and cancel everything.</p><ul class="spec"><li><b>Start:</b> A = 500, B = 300, C = 0. The table <code>audit(msg)</code> is empty.</li><li><b>Steps:</b> start a transaction. Insert the row <code>\'transfer C-&gt;A started\'</code> into <code>audit</code>. Add 50 to A. C has no money, so the transfer must fail. Cancel the whole transaction.</li><li><b>Result:</b> the balances do not change, and <code>audit</code> is empty.</li></ul>',
       setup: `CREATE TABLE accounts (id TEXT PRIMARY KEY, owner TEXT NOT NULL, balance REAL NOT NULL CHECK (balance >= 0));
 INSERT INTO accounts VALUES ('A','Layla',500),('B','Omar',300),('C','Mei',0);
 CREATE TABLE audit (msg TEXT);`,
@@ -228,31 +228,31 @@ INSERT INTO audit VALUES ('transfer C->A started');
 UPDATE accounts SET balance = balance + 50 WHERE id = 'A';
 ROLLBACK;`,
       check: `SELECT (SELECT group_concat(id || '=' || balance, ',') FROM (SELECT * FROM accounts ORDER BY id)) AS balances, (SELECT COUNT(*) FROM audit) AS audit_rows;`,
-      hints: ['Anything you do between BEGIN and ROLLBACK disappears, including INSERTs into audit.', 'BEGIN; ...your statements...; ROLLBACK;', 'The important part: the script must end with ROLLBACK, so the checked state equals the start state.']
+      hints: ['Everything between BEGIN and ROLLBACK disappears. This includes the INSERT into audit.', 'BEGIN; ...your statements...; ROLLBACK;', 'Your script must end with ROLLBACK. Then the final state equals the start state.']
     },
     {
       id: 'd11-5', level: 2, kind: 'script',
-      prompt: 'Give every instructor of the <strong>Physics</strong> department (look it up by name, do not hard-code the id) a 10% raise and every instructor of <strong>History</strong> a 5% raise, in a single transaction. Round new salaries to whole numbers with <code>ROUND(...)</code>.',
+      prompt: '<p>Give pay raises to two departments in one transaction.</p><ul class="spec"><li><b>Steps:</b> give every instructor in <strong>Physics</strong> a 10% raise. Give every instructor in <strong>History</strong> a 5% raise. Put both changes in one transaction.</li><li><b>Note:</b> find each department by its <code>name</code>. Do not type the id number.</li><li><b>Note:</b> round the new salaries to whole numbers with <code>ROUND(...)</code>.</li></ul>',
       solution: `BEGIN;
 UPDATE instructors SET salary = ROUND(salary * 1.10) WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'Physics');
 UPDATE instructors SET salary = ROUND(salary * 1.05) WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History');
 COMMIT;`,
       check: `SELECT instructor_id, salary FROM instructors ORDER BY instructor_id;`,
-      hints: ['Use a subquery in WHERE to find the dept_id from the department name.', 'UPDATE instructors SET salary = ROUND(salary * 1.10) WHERE dept_id = (SELECT dept_id FROM departments WHERE name = \'Physics\');', 'Wrap both UPDATEs in BEGIN ... COMMIT.']
+      hints: ['Use a subquery in WHERE. It finds the dept_id from the department name.', 'UPDATE instructors SET salary = ROUND(salary * 1.10) WHERE dept_id = (SELECT dept_id FROM departments WHERE name = \'Physics\');', 'Put both UPDATE statements between BEGIN and COMMIT.']
     },
     {
       id: 'd11-6', level: 2, kind: 'script',
-      prompt: 'Avoid a lost update. A <code>counters</code> table holds a page-view counter <code>(name = \'home\', value = 41)</code>. Increase it by 1 using a <strong>single UPDATE that does the arithmetic inside the database</strong>, then increase it by 1 again the same way (simulating two users). The final value must be 43.',
+      prompt: '<p>Add 1 to a counter twice, in a safe way. This avoids a lost update.</p><ul class="spec"><li><b>Start:</b> table <code>counters</code> has the row <code>name = \'home\'</code>, <code>value = 41</code>.</li><li><b>Steps:</b> add 1 with one UPDATE that does the math inside the database. Then do the same again (like two users).</li><li><b>Result:</b> <code>value</code> = 43.</li></ul>',
       setup: `CREATE TABLE counters (name TEXT PRIMARY KEY, value INTEGER NOT NULL);
 INSERT INTO counters VALUES ('home', 41);`,
       solution: `UPDATE counters SET value = value + 1 WHERE name = 'home';
 UPDATE counters SET value = value + 1 WHERE name = 'home';`,
       check: `SELECT name, value FROM counters ORDER BY name;`,
-      hints: ['Do not write a fixed number like SET value = 42.', 'SET value = value + 1 reads and writes in one atomic statement.']
+      hints: ['Do not write a fixed number, like SET value = 42.', 'SET value = value + 1 reads and writes in one statement.']
     },
     {
       id: 'd11-7', level: 3, kind: 'script',
-      prompt: 'Create a table <code>transfers</code> with columns <code>transfer_id INTEGER PRIMARY KEY</code>, <code>from_id TEXT</code>, <code>to_id TEXT</code>, <code>amount REAL</code>. Then, in one transaction, transfer 120 from <code>B</code> to <code>A</code>, update both balances <em>and</em> insert a matching row into <code>transfers</code> (let the id be generated). Accounts start at A = 500, B = 300, C = 0.',
+      prompt: '<p>Create a log table. Then move money and log it in one transaction.</p><ul class="spec"><li><b>Create:</b> table <code>transfers</code> with columns <code>transfer_id INTEGER PRIMARY KEY</code>, <code>from_id TEXT</code>, <code>to_id TEXT</code>, <code>amount REAL</code>.</li><li><b>Start:</b> A = 500, B = 300, C = 0.</li><li><b>Then:</b> in one transaction, move 120 from <code>B</code> to <code>A</code>. Update both balances. Insert one row into <code>transfers</code> for this move.</li><li><b>Note:</b> do not give <code>transfer_id</code> a value. The database creates it.</li></ul>',
       setup: `CREATE TABLE accounts (id TEXT PRIMARY KEY, owner TEXT NOT NULL, balance REAL NOT NULL CHECK (balance >= 0));
 INSERT INTO accounts VALUES ('A','Layla',500),('B','Omar',300),('C','Mei',0);`,
       solution: `CREATE TABLE transfers (transfer_id INTEGER PRIMARY KEY, from_id TEXT, to_id TEXT, amount REAL);
@@ -264,36 +264,36 @@ COMMIT;`,
       check: `SELECT 'acct' AS kind, id AS k, balance AS v, NULL AS extra FROM accounts
 UNION ALL SELECT 'xfer', from_id, amount, to_id FROM transfers
 ORDER BY kind, k;`,
-      hints: ['First the CREATE TABLE, then BEGIN.', 'Leave transfer_id out of the INSERT column list; SQLite fills it in.', 'Three statements inside the transaction: two UPDATEs and one INSERT.']
+      hints: ['First write CREATE TABLE, then BEGIN.', 'Leave transfer_id out of the INSERT column list. SQLite fills it in.', 'Inside the transaction: two UPDATE statements and one INSERT.']
     },
     {
       id: 'd11-8', level: 1,
-      prompt: 'Concurrency often hits popular rows. Using the university data, list each <code>section_id</code> together with the number of enrolled students as <code>enrolled</code>, only for sections with at least 6 enrollments. Sort by <code>enrolled</code> descending, then <code>section_id</code> ascending.',
+      prompt: '<p>Many users change popular rows at the same time. Find the most popular sections: the ones with at least 6 enrollments.</p><ul class="spec"><li><b>Columns:</b> <code>section_id</code>, <code>enrolled</code> (the number of students in the section)</li><li><b>Order:</b> <code>enrolled</code> from high to low, then <code>section_id</code> from low to high</li></ul>',
       solution: `SELECT section_id, COUNT(*) AS enrolled FROM enrollments GROUP BY section_id HAVING COUNT(*) >= 6 ORDER BY enrolled DESC, section_id;`,
       ordered: true,
-      hints: ['GROUP BY section_id and COUNT(*).', 'Filter groups with HAVING, not WHERE.', 'ORDER BY enrolled DESC, section_id']
+      hints: ['Use GROUP BY section_id and COUNT(*).', 'Filter groups with HAVING, not WHERE.', 'ORDER BY enrolled DESC, section_id']
     },
     {
       id: 'd11-9', level: 3,
-      prompt: 'Imagine a transaction that moves all tuition paid in cash into the bank. Before running it, you want a check. For each payment <code>method</code>, return <code>method</code>, the number of payments <code>n</code> and the total <code>total</code>, plus a final row with method <code>\'ALL\'</code> holding the overall count and total. Sort with <code>\'ALL\'</code> last and the others alphabetically.',
+      prompt: '<p>Check the payment totals before a big change. Show one row per payment method, and one extra row for all payments together.</p><ul class="spec"><li><b>Columns:</b> <code>method</code>, <code>n</code> (number of payments), <code>total</code> (sum of <code>amount</code>)</li><li><b>Note:</b> the extra row has <code>method</code> = <code>\'ALL\'</code>. It holds the count and total of all payments.</li><li><b>Order:</b> the methods in A–Z order, and the <code>\'ALL\'</code> row last</li></ul>',
       solution: `SELECT method, n, total FROM (
   SELECT method, COUNT(*) AS n, SUM(amount) AS total, 0 AS grp FROM payments GROUP BY method
   UNION ALL
   SELECT 'ALL', COUNT(*), SUM(amount), 1 FROM payments
 ) ORDER BY grp, method;`,
       ordered: true,
-      hints: ['Build the per-method rows with GROUP BY, and the total row with a second SELECT without GROUP BY.', 'Combine them with UNION ALL.', 'To put ALL last, add a helper column (0 for normal rows, 1 for the total) and sort by it first.']
+      hints: ['Make the rows per method with GROUP BY. Make the ALL row with a second SELECT without GROUP BY.', 'Join the two results with UNION ALL.', 'To put ALL last, add a helper column: 0 for normal rows, 1 for the ALL row. Sort by it first.']
     }
   ],
   quiz: [
-    { id: 'd11-q1', q: 'A transaction moves 100 from A to B. The server crashes after the debit and before the credit. After restart, A still has its original balance. Which ACID property made this happen?', options: ['Atomicity', 'Consistency', 'Isolation', 'Durability'], answer: 0, why: 'All-or-nothing is atomicity. The recovery process undid the unfinished transaction.' },
-    { id: 'd11-q2', q: 'T2 reads a value written by T1. Then T1 rolls back. What anomaly did T2 experience?', options: ['Phantom read', 'Lost update', 'Dirty read', 'Non-repeatable read'], answer: 2, why: 'Reading uncommitted data that later disappears is a dirty read.' },
-    { id: 'd11-q3', q: 'Which is the weakest isolation level that prevents non-repeatable reads but may still allow phantoms (SQL standard)?', options: ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ', 'SERIALIZABLE'], answer: 2, why: 'REPEATABLE READ locks or snapshots the rows you read, but new rows matching your search can still appear.' },
-    { id: 'd11-q4', q: 'Which pair of operations does NOT conflict?', options: ['R1(X), W2(X)', 'W1(X), R2(X)', 'R1(X), R2(X)', 'W1(X), W2(X)'], answer: 2, why: 'Two reads never conflict. A conflict needs at least one write on the same item by different transactions.' },
-    { id: 'd11-q5', q: 'Schedule: R1(A), W2(A), W1(A). The precedence graph has…', options: ['Only T1 → T2', 'Only T2 → T1', 'T1 → T2 and T2 → T1 (a cycle)', 'No edges'], answer: 2, why: 'R1(A) before W2(A) gives T1 → T2. W2(A) before W1(A) gives T2 → T1. Cycle, so not conflict-serializable.' },
-    { id: 'd11-q6', q: 'Under two-phase locking, what is forbidden?', options: ['Holding two locks at once', 'Acquiring a new lock after releasing any lock', 'Reading an item after writing it', 'Holding an exclusive lock until commit'], answer: 1, why: 'The growing phase must end before the shrinking phase starts. Holding X locks until commit is strict 2PL, which is allowed.' },
-    { id: 'd11-q7', q: 'Why can a long report in PostgreSQL run without blocking writers?', options: ['Reports use READ UNCOMMITTED', 'MVCC lets the report read old row versions from its snapshot', 'PostgreSQL has no locks', 'Writers wait until the report ends'], answer: 1, why: 'With MVCC, writers create new versions and readers see the versions from their snapshot. Readers and writers do not block each other.' },
-    { id: 'd11-q8', q: 'The write-ahead logging rule says…', options: ['Data pages are written before the log', 'The log record must reach disk before the data page it describes', 'The log is written only at checkpoints', 'Every page is written at commit'], answer: 1, why: 'If the log is on disk first, recovery can always redo committed work and undo uncommitted work.' }
+    { id: 'd11-q1', q: 'A transaction moves 100 from A to B. The server crashes after taking the money from A, but before adding it to B. After the restart, A has its old balance again. Which ACID property did this?', options: ['Atomicity', 'Consistency', 'Isolation', 'Durability'], answer: 0, why: 'Atomicity means all or nothing. The recovery process undid the unfinished transaction.' },
+    { id: 'd11-q2', q: 'T2 reads a value that T1 wrote. Then T1 rolls back (cancels). What problem did T2 have?', options: ['Phantom read', 'Lost update', 'Dirty read', 'Non-repeatable read'], answer: 2, why: 'T2 read data that was never committed and then disappeared. This is a dirty read.' },
+    { id: 'd11-q3', q: 'In the SQL standard, which is the lowest isolation level that stops non-repeatable reads but can still allow phantoms?', options: ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ', 'SERIALIZABLE'], answer: 2, why: 'REPEATABLE READ protects the rows you already read. But new rows that match your search can still appear.' },
+    { id: 'd11-q4', q: 'Which pair of operations does NOT conflict?', options: ['R1(X), W2(X)', 'W1(X), R2(X)', 'R1(X), R2(X)', 'W1(X), W2(X)'], answer: 2, why: 'Two reads never conflict. A conflict needs two transactions, the same item, and at least one write.' },
+    { id: 'd11-q5', q: 'Schedule: R1(A), W2(A), W1(A). What does the precedence graph have?', options: ['Only T1 → T2', 'Only T2 → T1', 'T1 → T2 and T2 → T1 (a cycle)', 'No edges'], answer: 2, why: 'R1(A) comes before W2(A), so T1 → T2. W2(A) comes before W1(A), so T2 → T1. That is a cycle, so the schedule is not conflict-serializable.' },
+    { id: 'd11-q6', q: 'What is NOT allowed under two-phase locking (2PL)?', options: ['Holding two locks at once', 'Taking a new lock after giving up any lock', 'Reading an item after writing it', 'Keeping an exclusive lock until commit'], answer: 1, why: 'First a transaction only takes locks. After it gives up one lock, it cannot take new ones. Keeping exclusive locks until commit is strict 2PL, and that is allowed.' },
+    { id: 'd11-q7', q: 'In PostgreSQL, a long report runs and does not block writers. Why?', options: ['Reports use READ UNCOMMITTED', 'MVCC lets the report read old row versions from its snapshot', 'PostgreSQL has no locks', 'Writers wait until the report ends'], answer: 1, why: 'With MVCC, writers make new versions of rows. Readers see the versions from their snapshot. So readers and writers do not block each other.' },
+    { id: 'd11-q8', q: 'What does the write-ahead logging (WAL) rule say?', options: ['Data pages are written before the log', 'The log record must reach disk before the data page it describes', 'The log is written only at checkpoints', 'Every page is written at commit'], answer: 1, why: 'If the log is on disk first, recovery can always redo committed work and undo unfinished work.' }
   ],
   teach: 'Explain the lost-update problem with a two-column timeline (T1 and T2), and give two different ways to prevent it.',
   rubric: 'Both transactions read the same old value; each computes a new value; the later write overwrites the earlier one so one change is lost; concrete numbers (e.g. 500 + 100 and 500 + 50 gives 550 instead of 650); prevention: do the arithmetic in one UPDATE (SET x = x + n), lock the row with SELECT ... FOR UPDATE, use a SERIALIZABLE / higher isolation level, or optimistic concurrency with a version column.'

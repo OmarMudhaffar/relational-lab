@@ -39,11 +39,16 @@ FROM instructors;`
        COUNT(DISTINCT student_id) AS different_students
 FROM enrollments;`,
       predict: {
-        sql: `SELECT COUNT(city), COUNT(DISTINCT city) FROM students;`,
+        sql: 'SELECT COUNT(city), COUNT(DISTINCT city) FROM students;',
         q: 'There are 40 students. Some have a NULL city. What is true about <code>COUNT(city)</code>?',
-        options: ['It is 40', 'It is less than 40', 'It equals COUNT(DISTINCT city)', 'It raises an error because of NULLs'],
+        options: [
+          'It is 40',
+          'It is less than 40',
+          'It is equal to COUNT(DISTINCT city)',
+          'It gives an error because of the NULLs'
+        ],
         answer: 1,
-        why: 'COUNT(col) skips NULL values, so the students without a city are not counted. COUNT(DISTINCT city) is smaller still because many students share a city.'
+        why: 'COUNT(column) skips NULL values. So students without a city are not counted. COUNT(DISTINCT city) is even smaller, because many students live in the same city.'
       }
     },
     {
@@ -78,15 +83,20 @@ FROM instructors
 GROUP BY dept_id;</pre>
 <div class="callout warn">SQLite accepts the query above and picks a name for you (it happens to be the row with the max salary, but only for MIN/MAX). PostgreSQL, SQL Server and Oracle reject it. MySQL rejects it when <code>ONLY_FULL_GROUP_BY</code> is on, which is the default since 5.7. In exams, always follow the rule.</div>`,
       predict: {
-        q: 'Which query is valid in PostgreSQL?',
-        options: ['SELECT dept_id, name, COUNT(*) FROM students GROUP BY dept_id', 'SELECT dept_id, year, COUNT(*) FROM students GROUP BY dept_id, year', 'SELECT name, COUNT(*) FROM students', 'SELECT dept_id, COUNT(*) FROM students GROUP BY year'],
+        q: 'Which query works in PostgreSQL?',
+        options: [
+          'SELECT dept_id, name, COUNT(*) FROM students GROUP BY dept_id',
+          'SELECT dept_id, year, COUNT(*) FROM students GROUP BY dept_id, year',
+          'SELECT name, COUNT(*) FROM students',
+          'SELECT dept_id, COUNT(*) FROM students GROUP BY year'
+        ],
         answer: 1,
-        why: 'Both non-aggregated columns (dept_id and year) are in GROUP BY. The other queries select a column that is neither grouped nor aggregated.'
+        why: 'dept_id and year are not inside COUNT. So both must be in GROUP BY, and they are. The other queries show a column that is not grouped and not inside an aggregate.'
       }
     },
     {
       h: 'Grouping by several columns',
-      html: `<p>With <code>GROUP BY a, b</code> each group is one <strong>combination</strong> of a and b. Here every (semester, year) pair is a group: we count how many sections ran in each term.</p>`,
+      html: '<p>With <code>GROUP BY a, b</code> each group is one <strong>combination</strong> of a and b. Here every (semester, year) pair is a group: we count how many sections ran in each term.</p>',
       sql: `SELECT year, semester, COUNT(*) AS sections_offered
 FROM sections
 GROUP BY year, semester
@@ -107,10 +117,15 @@ GROUP BY student_id
 HAVING COUNT(*) >= 5
 ORDER BY avg_score DESC;`,
       predict: {
-        q: 'What happens with <code>SELECT student_id FROM enrollments WHERE COUNT(*) &gt; 3 GROUP BY student_id</code>?',
-        options: ['It returns students with more than 3 enrollments', 'It returns every student', 'An error: aggregates are not allowed in WHERE', 'It returns nothing'],
+        q: 'What happens when you run <code>SELECT student_id FROM enrollments WHERE COUNT(*) &gt; 3 GROUP BY student_id</code>?',
+        options: [
+          'It returns students with more than 3 enrollments',
+          'It returns every student',
+          'An error: you cannot use COUNT in WHERE',
+          'It returns nothing'
+        ],
         answer: 2,
-        why: 'WHERE runs before the groups exist, so COUNT(*) has nothing to count yet. Move the condition to HAVING.'
+        why: 'WHERE runs before the groups exist. So COUNT(*) has nothing to count yet. Move the condition to HAVING.'
       }
     },
     {
@@ -154,82 +169,172 @@ ORDER BY students DESC, city;`
 <li><strong>Alias in HAVING:</strong> MySQL and SQLite let you write <code>HAVING n &gt; 3</code> using a SELECT alias. PostgreSQL, SQL Server and Oracle need the full expression <code>HAVING COUNT(*) &gt; 3</code>.</li></ul>`,
   exercises: [
     {
-      id: 'd3-1', level: 1,
-      prompt: 'How many students are there in total, and how many of them have a declared major? Return one row with two columns: <code>total_students</code>, <code>with_major</code>.',
-      solution: `SELECT COUNT(*) AS total_students, COUNT(dept_id) AS with_major FROM students;`,
-      hints: ['One COUNT counts rows, the other skips NULLs.', 'COUNT(*) and COUNT(dept_id)']
+      id: 'd3-1',
+      level: 1,
+      prompt: '<p>Count all students. Also count the students who have a major.</p><ul class="spec"><li><b>Columns:</b> <code>total_students</code>, <code>with_major</code></li><li><b>Note:</b> return one row. A student has a major when <code>dept_id</code> is not NULL.</li></ul>',
+      solution: 'SELECT COUNT(*) AS total_students, COUNT(dept_id) AS with_major FROM students;',
+      hints: ['One COUNT counts all rows. The other one skips NULLs.', 'COUNT(*) and COUNT(dept_id)']
     },
     {
-      id: 'd3-2', level: 1,
-      prompt: 'For each payment method, show the <code>method</code>, the number of payments as <code>payments</code>, and the total amount as <code>total</code>.',
-      solution: `SELECT method, COUNT(*) AS payments, SUM(amount) AS total FROM payments GROUP BY method;`,
-      hints: ['You need one row per method.', 'GROUP BY method, then COUNT(*) and SUM(amount).']
+      id: 'd3-2',
+      level: 1,
+      prompt: '<p>For each payment method, count the payments and add up the money.</p><ul class="spec"><li><b>Columns:</b> <code>method</code>, <code>payments</code>, <code>total</code></li><li><b>Note:</b> <code>payments</code> is the number of payments. <code>total</code> is the sum of <code>amount</code>.</li></ul>',
+      solution: 'SELECT method, COUNT(*) AS payments, SUM(amount) AS total FROM payments GROUP BY method;',
+      hints: ['You need one row for each method.', 'GROUP BY method, then COUNT(*) and SUM(amount).']
     },
     {
-      id: 'd3-3', level: 1,
-      prompt: 'Show the lowest, highest and average score across all graded enrollments in one row: <code>lowest</code>, <code>highest</code>, <code>average</code>. Round the average to 1 decimal place.',
-      solution: `SELECT MIN(score) AS lowest, MAX(score) AS highest, ROUND(AVG(score), 1) AS average FROM enrollments;`,
-      hints: ['MIN, MAX and AVG already ignore NULL scores.', 'ROUND(AVG(score), 1)']
+      id: 'd3-3',
+      level: 1,
+      prompt: '<p>Find the lowest, the highest and the average score of all enrollments.</p><ul class="spec"><li><b>Columns:</b> <code>lowest</code>, <code>highest</code>, <code>average</code></li><li><b>Note:</b> return one row. Round <code>average</code> to 1 decimal place.</li></ul>',
+      solution: 'SELECT MIN(score) AS lowest, MAX(score) AS highest, ROUND(AVG(score), 1) AS average FROM enrollments;',
+      hints: ['MIN, MAX and AVG skip NULL scores by themselves.', 'ROUND(AVG(score), 1)']
     },
     {
-      id: 'd3-4', level: 2,
-      prompt: 'How many students are in each year of study? Return <code>year</code> and <code>students</code>, sorted by year.',
-      solution: `SELECT year, COUNT(*) AS students FROM students GROUP BY year ORDER BY year;`,
+      id: 'd3-4',
+      level: 2,
+      prompt: '<p>How many students are in each year of study?</p><ul class="spec"><li><b>Columns:</b> <code>year</code>, <code>students</code></li><li><b>Order:</b> by <code>year</code>, smallest first</li></ul>',
+      solution: 'SELECT year, COUNT(*) AS students FROM students GROUP BY year ORDER BY year;',
       ordered: true,
       hints: ['Group by the year column.', 'GROUP BY year ORDER BY year']
     },
     {
-      id: 'd3-5', level: 2,
-      prompt: 'For each section, compute the number of enrolled students (<code>enrolled</code>) and the average score rounded to 1 decimal (<code>avg_score</code>). Only show sections with at least 5 enrolled students. Return <code>section_id</code>, <code>enrolled</code>, <code>avg_score</code>.',
-      solution: `SELECT section_id, COUNT(*) AS enrolled, ROUND(AVG(score), 1) AS avg_score FROM enrollments GROUP BY section_id HAVING COUNT(*) >= 5;`,
-      hints: ['One row per section: GROUP BY section_id.', 'The "at least 5" condition is about a group, not a row.', 'HAVING COUNT(*) >= 5']
+      id: 'd3-5',
+      level: 2,
+      prompt: '<p>For each section, count its students and find their average score. Show only sections with 5 or more students.</p><ul class="spec"><li><b>Columns:</b> <code>section_id</code>, <code>enrolled</code>, <code>avg_score</code></li><li><b>Note:</b> <code>enrolled</code> is the number of students. Round <code>avg_score</code> to 1 decimal place.</li></ul>',
+      solution: 'SELECT section_id, COUNT(*) AS enrolled, ROUND(AVG(score), 1) AS avg_score FROM enrollments GROUP BY section_id HAVING COUNT(*) >= 5;',
+      hints: [
+        'One row per section: GROUP BY section_id.',
+        '"5 or more" is a rule for a group, not for one row.',
+        'HAVING COUNT(*) >= 5'
+      ]
     },
     {
-      id: 'd3-6', level: 2,
-      prompt: 'Which months had the most tuition income? Return <code>month</code> in the form <code>YYYY-MM</code> and <code>income</code> (the sum of amounts), only for months with income of at least 5000, sorted by income from highest to lowest, then by month.',
+      id: 'd3-6',
+      level: 2,
+      prompt: '<p>Find the months with the most tuition income. Show only months with an income of 5000 or more.</p><ul class="spec"><li><b>Columns:</b> <code>month</code>, <code>income</code></li><li><b>Order:</b> highest <code>income</code> first, then by <code>month</code></li><li><b>Note:</b> <code>month</code> looks like <code>2026-03</code>. <code>income</code> is the sum of <code>amount</code>.</li></ul>',
       solution: `SELECT STRFTIME('%Y-%m', paid_on) AS month, SUM(amount) AS income FROM payments GROUP BY STRFTIME('%Y-%m', paid_on) HAVING SUM(amount) >= 5000 ORDER BY income DESC, month;`,
       ordered: true,
-      hints: ['STRFTIME(\'%Y-%m\', paid_on) turns a date into YYYY-MM.', 'Group by that expression.', 'HAVING SUM(amount) >= 5000, then ORDER BY income DESC, month']
+      hints: [
+        `STRFTIME('%Y-%m', paid_on) turns a date into YYYY-MM.`,
+        'Group by that expression.',
+        'HAVING SUM(amount) >= 5000, then ORDER BY income DESC, month'
+      ]
     },
     {
-      id: 'd3-7', level: 2,
-      prompt: 'For each department that has instructors, show <code>dept_id</code>, the number of instructors (<code>staff</code>) and the total yearly salary cost (<code>payroll</code>). Skip the instructor who has no department.',
-      solution: `SELECT dept_id, COUNT(*) AS staff, SUM(salary) AS payroll FROM instructors WHERE dept_id IS NOT NULL GROUP BY dept_id;`,
-      hints: ['Remove the NULL department before grouping.', 'WHERE dept_id IS NOT NULL ... GROUP BY dept_id']
+      id: 'd3-7',
+      level: 2,
+      prompt: '<p>For each department, count its instructors and add up their yearly salaries.</p><ul class="spec"><li><b>Columns:</b> <code>dept_id</code>, <code>staff</code>, <code>payroll</code></li><li><b>Note:</b> <code>staff</code> is the number of instructors. <code>payroll</code> is the sum of <code>salary</code>.</li><li><b>Note:</b> one instructor has no department (NULL). Leave this instructor out.</li></ul>',
+      solution: 'SELECT dept_id, COUNT(*) AS staff, SUM(salary) AS payroll FROM instructors WHERE dept_id IS NOT NULL GROUP BY dept_id;',
+      hints: [
+        'Remove the NULL department before you group.',
+        'WHERE dept_id IS NOT NULL ... GROUP BY dept_id'
+      ]
     },
     {
-      id: 'd3-8', level: 3,
-      prompt: 'Grade report per section. Return <code>section_id</code>, <code>passed</code> (grades A, B, C or D), <code>failed</code> (grade F) and <code>pending</code> (no grade yet), for every section that has enrollments.',
+      id: 'd3-8',
+      level: 3,
+      prompt: '<p>Make a grade report for each section that has enrollments.</p><ul class="spec"><li><b>Columns:</b> <code>section_id</code>, <code>passed</code>, <code>failed</code>, <code>pending</code></li><li><b>Note:</b> <code>passed</code> counts grades A, B, C and D. <code>failed</code> counts grade F. <code>pending</code> counts rows with no grade yet (NULL).</li></ul>',
       solution: `SELECT section_id,
   SUM(CASE WHEN grade IN ('A','B','C','D') THEN 1 ELSE 0 END) AS passed,
   SUM(CASE WHEN grade = 'F' THEN 1 ELSE 0 END) AS failed,
   SUM(CASE WHEN grade IS NULL THEN 1 ELSE 0 END) AS pending
 FROM enrollments GROUP BY section_id;`,
-      hints: ['One row per section, three different counts.', 'Put a CASE inside SUM: 1 when the row matches, 0 otherwise.', 'Pending rows have grade IS NULL.']
+      hints: [
+        'One row per section, with three different counts.',
+        'Put a CASE inside SUM: 1 when the row matches, 0 when it does not.',
+        'Pending rows have grade IS NULL.'
+      ]
     },
     {
-      id: 'd3-9', level: 3,
-      prompt: 'Find students who paid at least 3000 in total but made no cash payment. Return <code>student_id</code> and <code>total_paid</code>, sorted by total_paid from highest to lowest, then by student_id.',
+      id: 'd3-9',
+      level: 3,
+      prompt: '<p>Find students who paid 3000 or more in total, and who never paid with cash.</p><ul class="spec"><li><b>Columns:</b> <code>student_id</code>, <code>total_paid</code></li><li><b>Order:</b> highest <code>total_paid</code> first, then by <code>student_id</code></li></ul>',
       solution: `SELECT student_id, SUM(amount) AS total_paid FROM payments GROUP BY student_id HAVING SUM(amount) >= 3000 AND SUM(CASE WHEN method = 'cash' THEN 1 ELSE 0 END) = 0 ORDER BY total_paid DESC, student_id;`,
       ordered: true,
-      hints: ['Both conditions are about all of a student\'s payments, so both go in HAVING.', 'Count the cash payments per student with SUM(CASE ...).', 'HAVING SUM(amount) >= 3000 AND (number of cash payments) = 0']
+      hints: [
+        'Both rules look at all the payments of one student. So both go in HAVING.',
+        'Count the cash payments of each student with SUM(CASE ...).',
+        'HAVING SUM(amount) >= 3000 AND (number of cash payments) = 0'
+      ]
     },
     {
-      id: 'd3-10', level: 3,
-      prompt: 'For each term, show <code>year</code>, <code>semester</code>, the number of sections (<code>sections</code>) and the total seats offered (<code>seats</code>). Only include terms that offered more than 300 seats. Sort by year, then semester.',
-      solution: `SELECT year, semester, COUNT(*) AS sections, SUM(capacity) AS seats FROM sections GROUP BY year, semester HAVING SUM(capacity) > 300 ORDER BY year, semester;`,
+      id: 'd3-10',
+      level: 3,
+      prompt: '<p>For each term, count the sections and add up the seats. A term is a year plus a semester, like 2025 Fall. Show only terms with more than 300 seats.</p><ul class="spec"><li><b>Columns:</b> <code>year</code>, <code>semester</code>, <code>sections</code>, <code>seats</code></li><li><b>Order:</b> by <code>year</code>, then by <code>semester</code>, A to Z</li><li><b>Note:</b> <code>sections</code> is the number of sections. <code>seats</code> is the sum of <code>capacity</code>.</li></ul>',
+      solution: 'SELECT year, semester, COUNT(*) AS sections, SUM(capacity) AS seats FROM sections GROUP BY year, semester HAVING SUM(capacity) > 300 ORDER BY year, semester;',
       ordered: true,
-      hints: ['A term is a (year, semester) pair: group by both.', 'Seats = SUM(capacity).', 'HAVING SUM(capacity) > 300']
+      hints: [
+        'A term is a pair (year, semester). Group by both.',
+        'seats = SUM(capacity).',
+        'HAVING SUM(capacity) > 300'
+      ]
     }
   ],
   quiz: [
-    { id: 'd3-q1', q: 'A table has 10 rows. Column <code>c</code> is NULL in 3 rows. What is <code>COUNT(c)</code>?', options: ['10', '7', '3', 'NULL'], answer: 1, why: 'COUNT(col) counts only non-NULL values: 10 - 3 = 7.' },
-    { id: 'd3-q2', q: 'Scores are 80, 60 and NULL. What is <code>AVG(score)</code>?', options: ['46.67', '70', 'NULL', '140'], answer: 1, why: 'AVG ignores the NULL: (80 + 60) / 2 = 70.' },
-    { id: 'd3-q3', q: 'Where can you NOT use <code>COUNT(*)</code>?', options: ['SELECT', 'HAVING', 'ORDER BY', 'WHERE'], answer: 3, why: 'WHERE is evaluated before grouping, so aggregates are not available there.' },
-    { id: 'd3-q4', q: 'Which query lists departments with more than 5 students?', options: ['SELECT dept_id FROM students WHERE COUNT(*) > 5 GROUP BY dept_id', 'SELECT dept_id FROM students GROUP BY dept_id HAVING COUNT(*) > 5', 'SELECT dept_id, COUNT(*) > 5 FROM students', 'SELECT dept_id FROM students HAVING dept_id > 5'], answer: 1, why: 'Group first, then filter the groups with HAVING.' },
-    { id: 'd3-q5', q: 'How does GROUP BY treat NULL values in the grouping column?', options: ['Rows with NULL are dropped', 'Each NULL row is its own group', 'All NULLs form one group', 'It raises an error'], answer: 2, why: 'For grouping (and DISTINCT), NULLs are treated as equal, so they form a single group.' },
-    { id: 'd3-q6', q: '<code>SELECT COUNT(*) FROM students WHERE 1 = 0</code> returns…', options: ['No rows', 'One row with 0', 'One row with NULL', 'An error'], answer: 1, why: 'An aggregate without GROUP BY always returns exactly one row. With no input rows, COUNT is 0 (SUM would be NULL).' },
-    { id: 'd3-q7', q: 'What is the logical evaluation order?', options: ['SELECT, FROM, WHERE, GROUP BY, HAVING', 'FROM, WHERE, GROUP BY, HAVING, SELECT', 'FROM, GROUP BY, WHERE, SELECT, HAVING', 'WHERE, FROM, GROUP BY, SELECT, HAVING'], answer: 1, why: 'Rows are picked (FROM), filtered (WHERE), grouped, groups are filtered (HAVING), then the output is computed (SELECT).' }
+    {
+      id: 'd3-q1',
+      q: 'A table has 10 rows. Column <code>c</code> is NULL in 3 rows. What is <code>COUNT(c)</code>?',
+      options: ['10', '7', '3', 'NULL'],
+      answer: 1,
+      why: 'COUNT(column) counts only the values that are not NULL: 10 − 3 = 7.'
+    },
+    {
+      id: 'd3-q2',
+      q: 'Scores are 80, 60 and NULL. What is <code>AVG(score)</code>?',
+      options: ['46.67', '70', 'NULL', '140'],
+      answer: 1,
+      why: 'AVG skips the NULL: (80 + 60) / 2 = 70.'
+    },
+    {
+      id: 'd3-q3',
+      q: 'Where can you NOT use <code>COUNT(*)</code>?',
+      options: ['SELECT', 'HAVING', 'ORDER BY', 'WHERE'],
+      answer: 3,
+      why: 'WHERE runs before the rows are grouped. So aggregates do not exist there yet.'
+    },
+    {
+      id: 'd3-q4',
+      q: 'Which query finds departments with more than 5 students?',
+      options: [
+        'SELECT dept_id FROM students WHERE COUNT(*) > 5 GROUP BY dept_id',
+        'SELECT dept_id FROM students GROUP BY dept_id HAVING COUNT(*) > 5',
+        'SELECT dept_id, COUNT(*) > 5 FROM students',
+        'SELECT dept_id FROM students HAVING dept_id > 5'
+      ],
+      answer: 1,
+      why: 'First group the rows. Then keep the groups you want with HAVING.'
+    },
+    {
+      id: 'd3-q5',
+      q: 'What does GROUP BY do with NULL values in the grouping column?',
+      options: [
+        'It drops the NULL rows',
+        'Each NULL row becomes its own group',
+        'All the NULLs go into one group',
+        'It gives an error'
+      ],
+      answer: 2,
+      why: 'For grouping (and for DISTINCT), all NULLs count as equal. So they make one group.'
+    },
+    {
+      id: 'd3-q6',
+      q: '<code>SELECT COUNT(*) FROM students WHERE 1 = 0</code> returns…',
+      options: ['No rows', 'One row with 0', 'One row with NULL', 'An error'],
+      answer: 1,
+      why: 'An aggregate without GROUP BY always returns one row. There are no input rows, so COUNT is 0. (SUM would be NULL.)'
+    },
+    {
+      id: 'd3-q7',
+      q: 'In which order does the database run these clauses?',
+      options: [
+        'SELECT, FROM, WHERE, GROUP BY, HAVING',
+        'FROM, WHERE, GROUP BY, HAVING, SELECT',
+        'FROM, GROUP BY, WHERE, SELECT, HAVING',
+        'WHERE, FROM, GROUP BY, SELECT, HAVING'
+      ],
+      answer: 1,
+      why: 'First FROM picks the rows. WHERE filters them. GROUP BY makes groups. HAVING filters the groups. Last, SELECT builds the output.'
+    }
   ],
   teach: 'Explain the difference between WHERE and HAVING to a classmate. Use the question "Which students have more than 4 graded courses?" as your example.',
   rubric: 'WHERE filters individual rows before grouping; HAVING filters groups after GROUP BY; aggregates (COUNT, AVG...) cannot be used in WHERE because groups do not exist yet; in the example, score IS NOT NULL (graded) goes in WHERE and COUNT(*) > 4 goes in HAVING; mentions logical order FROM-WHERE-GROUP BY-HAVING-SELECT; bonus: row conditions in WHERE are more efficient.'

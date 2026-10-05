@@ -18,7 +18,19 @@ LAB.days.push({
       sql: `SELECT name, year, city
 FROM students
 WHERE year = 4;`,
-      note: 'Change 4 to another year, or try WHERE city = \'Cairo\'.'
+      note: `Change 4 to another year, or try WHERE city = 'Cairo'.`,
+      predict: {
+        sql: `SELECT name, city FROM students WHERE city <> 'Cairo';`,
+        q: '<code>&lt;&gt;</code> means "not equal". Some students have no city (NULL). Are these students in the result?',
+        options: [
+          'Yes, because NULL is not Cairo',
+          'No, they are not in the result',
+          'Only if their year is NULL too',
+          'The query gives an error'
+        ],
+        answer: 1,
+        why: 'NULL means "unknown". Is an unknown city different from Cairo? We do not know, so the answer is UNKNOWN. WHERE keeps only TRUE rows, so these students are dropped.'
+      }
     },
     {
       h: 'AND, OR, NOT and the parentheses trap',
@@ -34,10 +46,10 @@ WHERE (city = 'Cairo' OR city = 'Baghdad') AND year = 4</pre>
         sql: `SELECT name, city, year
 FROM students
 WHERE city = 'Cairo' OR city = 'Baghdad' AND year = 4;`,
-        q: 'Will this query return a Cairo student who is in year 1?',
-        options: ['Yes', 'No', 'Only if year is NULL', 'The query raises an error'],
+        q: 'Does this query return a student from Cairo who is in year 1?',
+        options: ['Yes', 'No', 'Only if year is NULL', 'The query gives an error'],
         answer: 0,
-        why: 'AND binds tighter, so the condition is city = \'Cairo\' OR (city = \'Baghdad\' AND year = 4). Every Cairo student passes, whatever the year.'
+        why: `AND runs before OR. So the condition means: city = 'Cairo' OR (city = 'Baghdad' AND year = 4). Every Cairo student passes, in any year.`
       }
     },
     {
@@ -69,11 +81,11 @@ WHERE course_id LIKE 'CS%'
 FROM students
 WHERE city IS NULL;`,
       predict: {
-        sql: `SELECT COUNT(*) FROM students WHERE city = NULL;`,
-        q: 'Several students have a NULL city. What number does this query return?',
+        sql: 'SELECT COUNT(*) FROM students WHERE city = NULL;',
+        q: 'Some students have a NULL city. What number does this query return?',
         options: ['The number of NULL cities', '0', '40', 'An error'],
         answer: 1,
-        why: 'city = NULL is UNKNOWN for every row, never TRUE. No row passes the filter, so the count is 0. Use IS NULL instead.'
+        why: 'city = NULL is never TRUE. It is always UNKNOWN. So no row passes, and the count is 0. Use IS NULL instead.'
       }
     },
     {
@@ -93,7 +105,7 @@ WHERE dept_id NOT IN (1, 2, NULL);`,
     },
     {
       h: 'COALESCE fills the gaps',
-      html: `<p><code>COALESCE(a, b, c, ...)</code> returns the first argument that is not NULL. Use it to show a default value instead of an empty cell.</p>`,
+      html: '<p><code>COALESCE(a, b, c, ...)</code> returns the first argument that is not NULL. Use it to show a default value instead of an empty cell.</p>',
       sql: `SELECT name,
        COALESCE(city, 'Unknown') AS city,
        COALESCE(advisor_id, 0) AS advisor
@@ -118,10 +130,10 @@ LIMIT 8;`
 FROM enrollments
 LIMIT 12;`,
       predict: {
-        q: 'A row has score = NULL. Which branch does <code>CASE WHEN score &gt;= 60 THEN \'Pass\' ELSE \'Fail\' END</code> choose?',
+        q: `A row has score = NULL. Which result does <code>CASE WHEN score &gt;= 60 THEN 'Pass' ELSE 'Fail' END</code> give?`,
         options: ['Pass', 'Fail', 'NULL', 'An error'],
         answer: 1,
-        why: 'score >= 60 is UNKNOWN, which is not TRUE, so that WHEN does not match. The ELSE branch runs and the student is shown as Fail. That is why the lesson query checks IS NULL first.'
+        why: 'NULL >= 60 is UNKNOWN, not TRUE. So the WHEN does not match, and the ELSE part runs: the student gets Fail. That is why the lesson tests IS NULL first.'
       }
     },
     {
@@ -138,6 +150,8 @@ LIMIT 12;`,
 </tbody></table>
 <p>SQLite has no separate DATE type. Dates are text, and these functions understand the <code>YYYY-MM-DD</code> format.</p>`,
       sql: `SELECT name,
+       LENGTH(name) AS name_length,
+       LOWER(city) AS city_lower,
        SUBSTR(email, 1, INSTR(email, '@') - 1) AS username,
        STRFTIME('%Y', birth_date) AS birth_year,
        CAST((JULIANDAY('2026-10-05') - JULIANDAY(enrolled_on)) AS INTEGER) AS days_since_enrolled
@@ -161,81 +175,181 @@ LIMIT 6;`
 <li><strong>Substring:</strong> <code>SUBSTR</code> in SQLite, Oracle, MySQL, PostgreSQL. SQL Server uses <code>SUBSTRING</code>.</li></ul>`,
   exercises: [
     {
-      id: 'd2-1', level: 1,
-      prompt: 'List the <code>name</code> and <code>salary</code> of every instructor who earns more than 85000.',
-      solution: `SELECT name, salary FROM instructors WHERE salary > 85000;`,
-      hints: ['Filter rows with WHERE.', 'WHERE salary > 85000']
+      id: 'd2-1',
+      level: 1,
+      prompt: '<p>Find the instructors who earn more than 85000.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>salary</code></li></ul>',
+      solution: 'SELECT name, salary FROM instructors WHERE salary > 85000;',
+      hints: ['Use WHERE to keep only some rows.', 'WHERE salary > 85000']
     },
     {
-      id: 'd2-2', level: 1,
-      prompt: 'Which students have no declared major? Return their <code>student_id</code> and <code>name</code>.',
-      solution: `SELECT student_id, name FROM students WHERE dept_id IS NULL;`,
-      hints: ['"No major" means dept_id is missing.', 'You cannot use = to test for a missing value.', 'WHERE dept_id IS NULL']
+      id: 'd2-2',
+      level: 1,
+      prompt: '<p>Find the students who have not chosen a major yet. Their <code>dept_id</code> is empty (NULL).</p><ul class="spec"><li><b>Columns:</b> <code>student_id</code>, <code>name</code></li></ul>',
+      solution: 'SELECT student_id, name FROM students WHERE dept_id IS NULL;',
+      hints: [
+        '"No major" means dept_id has no value.',
+        'You cannot test for NULL with =.',
+        'WHERE dept_id IS NULL'
+      ]
     },
     {
-      id: 'd2-3', level: 1,
-      prompt: 'List the <code>course_id</code> and <code>title</code> of all Mathematics and Physics courses, that is, courses whose code starts with <code>MA</code> or <code>PH</code>.',
+      id: 'd2-3',
+      level: 1,
+      prompt: '<p>Find all Mathematics and Physics courses. Their code starts with <code>MA</code> or <code>PH</code>.</p><ul class="spec"><li><b>Columns:</b> <code>course_id</code>, <code>title</code></li></ul>',
       solution: `SELECT course_id, title FROM courses WHERE course_id LIKE 'MA%' OR course_id LIKE 'PH%';`,
-      hints: ['Use a pattern with a wildcard.', 'LIKE \'MA%\' matches codes that start with MA.', 'Combine two LIKE conditions with OR.']
+      hints: [
+        'Use a pattern with LIKE.',
+        `LIKE 'MA%' finds codes that start with MA.`,
+        'Join two LIKE conditions with OR.'
+      ]
     },
     {
-      id: 'd2-4', level: 2,
-      prompt: 'Find students in year 3 or 4 who live in Cairo, Baghdad or Riyadh. Return <code>name</code>, <code>city</code>, <code>year</code>.',
+      id: 'd2-4',
+      level: 2,
+      prompt: '<p>Find students who are in year 3 or year 4 and who live in Cairo, Baghdad or Riyadh.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>city</code>, <code>year</code></li></ul>',
       solution: `SELECT name, city, year FROM students WHERE year IN (3, 4) AND city IN ('Cairo', 'Baghdad', 'Riyadh');`,
-      hints: ['Two conditions must both be true.', 'IN (...) is a short way to write several ORs.', 'If you use OR for the cities, wrap it in parentheses.']
+      hints: [
+        'Both conditions must be true.',
+        'IN (...) is a short way to write many ORs.',
+        'If you use OR for the cities, put it in brackets ( ).'
+      ]
     },
     {
-      id: 'd2-5', level: 2,
-      prompt: 'List every section that runs in the year 2025 (any semester) and has a capacity between 25 and 40 seats, inclusive. Return <code>section_id</code>, <code>course_id</code>, <code>semester</code>, <code>capacity</code>.',
-      solution: `SELECT section_id, course_id, semester, capacity FROM sections WHERE year = 2025 AND capacity BETWEEN 25 AND 40;`,
-      hints: ['The table is sections.', 'BETWEEN includes both ends.', 'WHERE year = 2025 AND capacity BETWEEN ...']
+      id: 'd2-5',
+      level: 2,
+      prompt: '<p>Find the sections in the year 2025 (any semester) that have 25 to 40 seats.</p><ul class="spec"><li><b>Columns:</b> <code>section_id</code>, <code>course_id</code>, <code>semester</code>, <code>capacity</code></li><li><b>Note:</b> the number of seats is the <code>capacity</code> column. Include 25 and 40 too.</li></ul>',
+      solution: 'SELECT section_id, course_id, semester, capacity FROM sections WHERE year = 2025 AND capacity BETWEEN 25 AND 40;',
+      hints: [
+        'The table is sections.',
+        'BETWEEN includes both end values.',
+        'WHERE year = 2025 AND capacity BETWEEN ...'
+      ]
     },
     {
-      id: 'd2-6', level: 2,
-      prompt: 'For every student, show <code>name</code> and <code>city</code>, but show the text <code>Not provided</code> when the city is missing. Name the second column <code>city</code>.',
+      id: 'd2-6',
+      level: 2,
+      prompt: '<p>Show every student with their city. If the city is missing, show the text <code>Not provided</code> instead.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>city</code></li><li><b>Note:</b> the second column must be named <code>city</code>.</li></ul>',
       solution: `SELECT name, COALESCE(city, 'Not provided') AS city FROM students;`,
-      hints: ['One function returns its first non-NULL argument.', 'COALESCE(city, \'...\') AS city']
+      hints: ['One function returns the first value that is not NULL.', `COALESCE(city, '...') AS city`]
     },
     {
-      id: 'd2-7', level: 2,
-      prompt: 'List all payments made in the first half of 2026 (from 1 January to 30 June, inclusive) by bank transfer or cash. Return <code>payment_id</code>, <code>student_id</code>, <code>amount</code>, <code>paid_on</code>, <code>method</code>, sorted by <code>paid_on</code> and then by <code>payment_id</code>.',
+      id: 'd2-7',
+      level: 2,
+      prompt: '<p>Find the payments made by bank or by cash in the first half of 2026.</p><ul class="spec"><li><b>Columns:</b> <code>payment_id</code>, <code>student_id</code>, <code>amount</code>, <code>paid_on</code>, <code>method</code></li><li><b>Order:</b> by <code>paid_on</code>, oldest first, then by <code>payment_id</code></li><li><b>Note:</b> "first half" means from 2026-01-01 to 2026-06-30. Include both days. The method is <code>bank</code> or <code>cash</code>.</li></ul>',
       solution: `SELECT payment_id, student_id, amount, paid_on, method FROM payments WHERE paid_on BETWEEN '2026-01-01' AND '2026-06-30' AND method IN ('bank', 'cash') ORDER BY paid_on, payment_id;`,
       ordered: true,
-      hints: ['Dates are text in YYYY-MM-DD form, so BETWEEN works on them.', 'Method is either bank or cash: use IN.', 'ORDER BY paid_on, payment_id']
+      hints: [
+        'Dates are text like 2026-01-15, so BETWEEN works on them.',
+        'The method is bank or cash: use IN.',
+        'ORDER BY paid_on, payment_id'
+      ]
     },
     {
-      id: 'd2-8', level: 3,
-      prompt: 'Label each enrollment. Return <code>student_id</code>, <code>section_id</code>, <code>score</code> and a column <code>status</code> that is <code>In progress</code> when the score is NULL, <code>Honours</code> when score is 90 or more, <code>Pass</code> when score is 60 or more, and <code>Fail</code> otherwise.',
+      id: 'd2-8',
+      level: 3,
+      prompt: '<p>Give each enrollment a label, based on its score.</p><ul class="spec"><li><b>Columns:</b> <code>student_id</code>, <code>section_id</code>, <code>score</code>, <code>status</code></li><li><b>Note:</b> <code>status</code> is <code>In progress</code> if the score is NULL, <code>Honours</code> if the score is 90 or more, <code>Pass</code> if the score is 60 or more, and <code>Fail</code> in all other cases.</li></ul>',
       solution: `SELECT student_id, section_id, score,
   CASE WHEN score IS NULL THEN 'In progress'
        WHEN score >= 90 THEN 'Honours'
        WHEN score >= 60 THEN 'Pass'
        ELSE 'Fail' END AS status
 FROM enrollments;`,
-      hints: ['Use a searched CASE expression.', 'The first WHEN that is true wins, so order matters.', 'Check IS NULL first, otherwise NULL scores fall into ELSE.']
+      hints: [
+        'Use CASE WHEN ... THEN ... ELSE ... END.',
+        'SQL uses the first WHEN that is true. So the order of the WHENs matters.',
+        'Test IS NULL first. If you do not, NULL scores go to ELSE.'
+      ]
     },
     {
-      id: 'd2-9', level: 3,
-      prompt: 'The registrar wants students who were born in 2004 and whose email username (the part before <code>@</code>) is longer than 12 characters. Return <code>name</code>, <code>email</code>, <code>birth_date</code>.',
+      id: 'd2-9',
+      level: 3,
+      prompt: '<p>Find students who were born in 2004 and who have a long email username. The username is the part before <code>@</code>. It must be longer than 12 characters.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>email</code>, <code>birth_date</code></li></ul>',
       solution: `SELECT name, email, birth_date FROM students WHERE STRFTIME('%Y', birth_date) = '2004' AND LENGTH(SUBSTR(email, 1, INSTR(email, '@') - 1)) > 12;`,
-      hints: ['STRFTIME(\'%Y\', d) returns the year as text, so compare it with \'2004\'.', 'INSTR(email, \'@\') gives the position of the @ sign.', 'The username length is INSTR(email, \'@\') - 1. You can also use LENGTH(SUBSTR(...)).']
+      hints: [
+        `STRFTIME('%Y', date) gives the year as text. Compare it with '2004'.`,
+        `INSTR(email, '@') gives the position of the @ sign.`,
+        `The username length is INSTR(email, '@') - 1. You can also use LENGTH(SUBSTR(...)).`
+      ]
     },
     {
-      id: 'd2-10', level: 3,
-      prompt: 'Find instructors who were hired more than 10 years before 2026-10-05 (more than 3652 days) and who have no mentor. Return <code>name</code>, <code>hire_date</code>, and the number of whole days they have worked as <code>days_worked</code> (use <code>CAST(... AS INTEGER)</code> to drop the fraction).',
+      id: 'd2-10',
+      level: 3,
+      prompt: '<p>Find the instructors who have no mentor and who have worked here for more than 10 years. Count up to the date 2026-10-05. "More than 10 years" means more than 3652 days.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>hire_date</code>, <code>days_worked</code></li><li><b>Note:</b> <code>days_worked</code> is the number of whole days from <code>hire_date</code> to 2026-10-05. Use <code>CAST(... AS INTEGER)</code> to remove the decimals.</li><li><b>Note:</b> "no mentor" means <code>mentor_id</code> is NULL.</li></ul>',
       solution: `SELECT name, hire_date, CAST(JULIANDAY('2026-10-05') - JULIANDAY(hire_date) AS INTEGER) AS days_worked FROM instructors WHERE JULIANDAY('2026-10-05') - JULIANDAY(hire_date) > 3652 AND mentor_id IS NULL;`,
-      hints: ['JULIANDAY(a) - JULIANDAY(b) is the number of days between two dates.', '"No mentor" means mentor_id IS NULL.', 'You cannot use the alias days_worked in WHERE. Repeat the expression.']
+      hints: [
+        'JULIANDAY(a) - JULIANDAY(b) gives the number of days between two dates.',
+        '"No mentor" means mentor_id IS NULL.',
+        'You cannot use the name days_worked in WHERE. Write the full expression again.'
+      ]
     }
   ],
   quiz: [
-    { id: 'd2-q1', q: 'What is <code>TRUE AND UNKNOWN</code>?', options: ['TRUE', 'FALSE', 'UNKNOWN', 'NULL is not allowed in AND'], answer: 2, why: 'The result depends on the unknown value, so it is UNKNOWN. Only FALSE AND anything is certainly FALSE.' },
-    { id: 'd2-q2', q: 'What is <code>TRUE OR UNKNOWN</code>?', options: ['TRUE', 'FALSE', 'UNKNOWN', 'An error'], answer: 0, why: 'One side is already TRUE, so OR is TRUE whatever the unknown value is.' },
-    { id: 'd2-q3', q: 'Which condition finds rows where <code>grade</code> has no value?', options: ['grade = NULL', 'grade = \'\'', 'grade IS NULL', 'NOT grade'], answer: 2, why: 'Only IS NULL tests for a missing value. = NULL is always UNKNOWN, and \'\' is an empty but known string.' },
-    { id: 'd2-q4', q: '<code>WHERE salary BETWEEN 70000 AND 80000</code> is equal to…', options: ['salary > 70000 AND salary < 80000', 'salary >= 70000 AND salary <= 80000', 'salary >= 70000 AND salary < 80000', 'salary > 70000 OR salary < 80000'], answer: 1, why: 'BETWEEN includes both ends.' },
-    { id: 'd2-q5', q: 'Which value does <code>\'C_220\'</code> match with LIKE?', options: ['C220', 'CS220', 'CS1220', 'cs22'], answer: 1, why: '_ matches exactly one character. CS220 has one character (S) between C and 220.' },
-    { id: 'd2-q6', q: 'A list is <code>(1, 2, NULL)</code>. How many rows does <code>WHERE dept_id NOT IN (1, 2, NULL)</code> return?', options: ['All rows except departments 1 and 2', 'Only rows where dept_id is NULL', 'No rows', 'An error'], answer: 2, why: 'The test expands to dept_id <> 1 AND dept_id <> 2 AND dept_id <> NULL. The last part is UNKNOWN, so the whole AND is never TRUE.' },
-    { id: 'd2-q7', q: 'What does <code>COALESCE(NULL, NULL, \'x\', \'y\')</code> return?', options: ['NULL', 'x', 'y', 'x,y'], answer: 1, why: 'COALESCE returns the first argument that is not NULL.' },
-    { id: 'd2-q8', q: 'What does <code>CASE WHEN 1 = 2 THEN \'a\' END</code> return?', options: ['a', 'An empty string', 'NULL', 'An error, ELSE is required'], answer: 2, why: 'No WHEN matched and there is no ELSE, so the result is NULL.' }
+    {
+      id: 'd2-q1',
+      q: 'What is <code>TRUE AND UNKNOWN</code>?',
+      options: ['TRUE', 'FALSE', 'UNKNOWN', 'You cannot use NULL with AND'],
+      answer: 2,
+      why: 'The result depends on the unknown value. So it is UNKNOWN. Only FALSE AND something is always FALSE.'
+    },
+    {
+      id: 'd2-q2',
+      q: 'What is <code>TRUE OR UNKNOWN</code>?',
+      options: ['TRUE', 'FALSE', 'UNKNOWN', 'An error'],
+      answer: 0,
+      why: 'One side is already TRUE. So OR is TRUE, whatever the unknown value is.'
+    },
+    {
+      id: 'd2-q3',
+      q: 'Which condition finds rows where <code>grade</code> has no value?',
+      options: ['grade = NULL', `grade = ''`, 'grade IS NULL', 'NOT grade'],
+      answer: 2,
+      why: `Only IS NULL finds missing values. = NULL is always UNKNOWN. And '' is an empty text, which is a real value.`
+    },
+    {
+      id: 'd2-q4',
+      q: '<code>WHERE salary BETWEEN 70000 AND 80000</code> is the same as…',
+      options: [
+        'salary > 70000 AND salary < 80000',
+        'salary >= 70000 AND salary <= 80000',
+        'salary >= 70000 AND salary < 80000',
+        'salary > 70000 OR salary < 80000'
+      ],
+      answer: 1,
+      why: 'BETWEEN includes both end values.'
+    },
+    {
+      id: 'd2-q5',
+      q: `Which value matches the pattern <code>'C_220'</code> with LIKE?`,
+      options: ['C220', 'CS220', 'CS1220', 'cs22'],
+      answer: 1,
+      why: '_ matches exactly one character. CS220 has one character (S) between C and 220.'
+    },
+    {
+      id: 'd2-q6',
+      q: 'How many rows does <code>WHERE dept_id NOT IN (1, 2, NULL)</code> return?',
+      options: [
+        'All rows, except departments 1 and 2',
+        'Only rows where dept_id is NULL',
+        'No rows',
+        'An error'
+      ],
+      answer: 2,
+      why: 'NOT IN means: dept_id <> 1 AND dept_id <> 2 AND dept_id <> NULL. The last part is always UNKNOWN. So the whole condition is never TRUE.'
+    },
+    {
+      id: 'd2-q7',
+      q: `What does <code>COALESCE(NULL, NULL, 'x', 'y')</code> return?`,
+      options: ['NULL', 'x', 'y', 'x,y'],
+      answer: 1,
+      why: 'COALESCE returns the first value that is not NULL.'
+    },
+    {
+      id: 'd2-q8',
+      q: `What does <code>CASE WHEN 1 = 2 THEN 'a' END</code> return?`,
+      options: ['a', 'An empty text', 'NULL', 'An error, because ELSE is needed'],
+      answer: 2,
+      why: 'No WHEN is true, and there is no ELSE. So the result is NULL.'
+    }
   ],
   teach: 'Explain to a classmate why <code>WHERE city = NULL</code> returns no rows, and what three-valued logic is. Use a small example from the students table.',
   rubric: 'NULL means unknown/missing, not zero or empty string; any comparison with NULL yields UNKNOWN; WHERE keeps only rows where the condition is TRUE, so UNKNOWN rows are dropped; correct test is IS NULL / IS NOT NULL; mentions TRUE/FALSE/UNKNOWN and at least one AND/OR rule (e.g. FALSE AND UNKNOWN = FALSE, TRUE OR UNKNOWN = TRUE); bonus: NOT IN with a NULL returns nothing, COALESCE to replace NULL.'

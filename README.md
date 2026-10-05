@@ -34,7 +34,6 @@ Each feature follows a learning method with strong research behind it: retrieval
 
 Your progress (XP, streak, solved exercises, review cards) is saved automatically in your own browser (localStorage). You can download a backup file and restore it on another device.
 
-Designed and built by **Omar Alzori**.
 
 ## Run it locally
 

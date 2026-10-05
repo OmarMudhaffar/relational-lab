@@ -373,7 +373,7 @@ table.grid tbody tr:nth-child(2) { animation-delay: 20ms; } table.grid tbody tr:
 .maincol { min-width: 0; display: flex; flex-direction: column; }
 .maincol main { flex: 1; }
 .sig { border-top: 1px solid var(--line); padding-block: 26px 40px; padding-inline: clamp(16px, 4vw, 48px); text-align: center; color: var(--muted); }
-.sig-name { font-family: "Mrs Saint Delafield", "Snell Roundhand", "Brush Script MT", cursive; font-size: 46px; line-height: 1.1; color: var(--ink); letter-spacing: .01em; }
+.sig-name { font-family: "Mrs Saint Delafield", "Snell Roundhand", "Brush Script MT", cursive; font-size: 30px; line-height: 1.1; color: var(--ink); letter-spacing: .01em; }
 .sig-meta { font: 500 12px var(--f-mono); letter-spacing: .03em; margin-top: 4px; }
 
 /* ---------- 3D ---------- */
@@ -448,7 +448,90 @@ table.grid tbody tr:nth-child(2) { animation-delay: 20ms; } table.grid tbody tr:
 .saverow .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); margin-right: 8px; vertical-align: 1px; }
 label.btn { cursor: pointer; }
 
-@media (min-width: 1100px) { body.dock-open main { padding-right: 356px; } }
+@media (min-width: 1280px) { body.dock-open main { padding-right: 436px; } }
+
+/* ---------- did you know ---------- */
+.fact { position: relative; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 14px 18px 16px; margin-top: 26px; overflow: hidden; }
+.fact::before { content: "?"; position: absolute; right: -6px; bottom: -34px; font: 800 150px/1 var(--f-display); color: var(--accent-soft); pointer-events: none; }
+.fact-h { position: relative; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fact-badge { font: 700 12px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--surface); background: var(--hl); padding: 3px 9px; border-radius: 4px; }
+.fact-cat { font: 600 12px var(--f-mono); color: var(--muted); letter-spacing: .05em; text-transform: uppercase; flex: 1; }
+.fact-t { position: relative; margin: 10px 0 0; font-size: 17px; line-height: 1.55; max-width: 70ch; }
+.fact.compact { margin-top: 16px; padding: 10px 14px 12px; }
+.fact.compact .fact-t { font-size: 15px; margin-top: 6px; }
+.fact.compact::before { font-size: 100px; bottom: -24px; }
+.fact.swap .fact-t { animation: rise .35s ease both; }
+
+/* ---------- bigger 3D + full screen ---------- */
+@media (min-width: 981px) { .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: center; } }
+.hero3d .l3 { height: 440px; }
+.l3-expand { position: absolute; right: 10px; top: 10px; z-index: 1500; }
+.dock { width: 410px; }
+.dock .l3 { height: 280px; }
+.big3d { position: fixed; z-index: 55; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(1200px, calc(100vw - 32px)); height: min(820px, calc(100vh - 48px)); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; }
+.big3d-h { display: flex; align-items: center; gap: 14px; padding: 12px 14px 12px 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.big3d-h b { font: 700 17px var(--f-display); }
+.big3d-h span { flex: 1; min-width: 200px; font-size: 14px; color: var(--muted); }
+.big3d .l3 { flex: 1; background: radial-gradient(ellipse at 50% 60%, var(--accent-soft), transparent 70%), var(--surface); }
+.big3d .l3-lab { font-size: 13px; padding: 2px 8px; }
+
+/* ---------- schema panel ---------- */
+#schemaDrawer { width: min(540px, 100%); }
+.sp-top { padding: 12px 16px; border-bottom: 1px solid var(--line); display: grid; gap: 10px; }
+.sp-top p { margin: 0; font-size: 14.5px; color: var(--muted); }
+#spFind { width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); color: var(--ink); font: 15px var(--f-body); }
+.sp-body { flex: 1; overflow-y: auto; padding: 10px 12px 20px; display: grid; gap: 8px; align-content: start; }
+.sp-t { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); overflow: hidden; }
+.sp-t.flash { animation: bump .5s ease; border-color: var(--accent); }
+.sp-head { width: 100%; display: flex; align-items: center; gap: 10px; border: 0; background: none; padding: 11px 14px; cursor: pointer; text-align: left; }
+.sp-head:hover { background: var(--bg2); }
+.sp-name { font: 700 16px var(--f-mono); flex: 1; }
+.sp-rows { font: 500 13px var(--f-mono); color: var(--muted); }
+.sp-chev { font-size: 20px; line-height: 1; color: var(--muted); transition: transform .2s ease; }
+.sp-t.open .sp-chev { transform: rotate(90deg); }
+.sp-in { display: none; padding: 0 14px 14px; }
+.sp-t.open .sp-in { display: block; }
+.sp-note { margin: 0 0 10px; font-size: 14.5px; line-height: 1.5; }
+table.sp-cols { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+table.sp-cols th { text-align: left; font: 600 11.5px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--line); }
+table.sp-cols td { padding: 7px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.sp-cols tr:last-child td { border-bottom: 0; }
+table.sp-cols tr.hit td { background: var(--hl-soft); }
+.sp-c { font: 600 14.5px var(--f-mono); }
+.sp-tags { text-align: right; white-space: nowrap; }
+.pill { display: inline-block; font: 700 11px var(--f-mono); letter-spacing: .04em; padding: 2px 7px; border-radius: 10px; margin-left: 4px; border: 1px solid transparent; }
+.pill.key { background: var(--hl-soft); color: var(--hl); }
+.pill.link { background: var(--accent-soft); color: var(--accent); cursor: pointer; }
+button.pill.link:hover { border-color: var(--accent); }
+.pill.req { background: var(--bg2); color: var(--muted); font-weight: 500; }
+.sp-refby { font-size: 13.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.8; }
+.sp-exlab { font: 600 11.5px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 12px 0 6px; }
+.sp-ex .out { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.sp-legend { border-top: 1px solid var(--line); padding: 10px 16px; font-size: 13px; color: var(--muted); line-height: 2; }
+.sp-legend .pill { margin: 0 4px 0 0; }
+
+/* ---------- X-ray, readable ---------- */
+.xs-intro { margin: 0; padding: 0 14px 10px; font-size: 14px; color: var(--muted); max-width: 70ch; }
+.xs-list { list-style: none; margin: 0; padding: 0 14px 14px; display: grid; gap: 4px; }
+.xs { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; padding: 9px 0; border-top: 1px dashed var(--line); animation: rise .3s ease both; animation-delay: calc(var(--i) * 120ms); }
+.xs:first-child { border-top: 0; }
+.xs-n { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--surface); font: 700 12px var(--f-mono); }
+.xs-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.xs-k { font: 700 13px var(--f-mono); color: var(--hl); letter-spacing: .03em; }
+.xs-c { font-size: 13px; background: none; padding: 0; color: var(--ink); overflow-wrap: anywhere; }
+.xs-say { font-size: 14.5px; margin: 3px 0 6px; }
+.xs-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.xs-bar .xr-bar { flex: 1 1 160px; height: 12px; border-radius: 6px; }
+.xs-bar .xr-bar i { animation-delay: calc(var(--i) * 120ms + 100ms); }
+.xs:last-child .xr-bar i { background: var(--hl); }
+.xs-cnt { font: 500 13px var(--f-mono); white-space: nowrap; }
+.xs-cnt b { font-size: 15px; }
+.xs-d { font: 600 12px var(--f-mono); padding: 1px 7px; border-radius: 10px; white-space: nowrap; }
+.xs-d.down { background: var(--bad-soft); color: var(--bad); }
+.xs-d.up { background: var(--ok-soft); color: var(--ok); }
+.xs-d.same { background: var(--bg2); color: var(--muted); }
+.xray summary span { font-size: 13.5px; }
+@media (max-width: 820px) { .hero3d .l3 { height: 340px; } .fact-t { font-size: 15.5px; } }
 @media (max-width: 480px) { .rank { display: none; } }
 @media (max-width: 980px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 820px) {
@@ -456,7 +539,7 @@ label.btn { cursor: pointer; }
   .xr-row { grid-template-columns: 92px minmax(0, 1fr) 64px; }
   .xr-row .xr-t { display: none; }
   .hero3d .l3 { height: 280px; }
-  .sig-name { font-size: 38px; }
+  .sig-name { font-size: 26px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; transition: none !important; }
@@ -478,14 +561,14 @@ label.btn { cursor: pointer; }
 <div class="layout">
   <nav class="rail" id="rail" aria-label="Course"></nav>
   <div class="maincol"><main id="main"><div class="loading" id="boot">Starting the SQL engine…</div></main>
-  <footer class="sig"><div class="sig-name">Omar Mudhaffar</div><div class="sig-meta">Designed and built by Omar Mudhaffar · <a href="https://github.com/OmarMudhaffar/relational-lab" target="_blank" rel="noopener">Source on GitHub</a> · Relational Lab, 2026</div></footer></div>
+  <footer class="sig"><div class="sig-name">Omar Alzori</div><div class="sig-meta">Designed and built by Omar Alzori · <a href="https://github.com/OmarMudhaffar/relational-lab" target="_blank" rel="noopener">Source on GitHub</a> · Relational Lab, 2026</div></footer></div>
 </div>
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="schemaDrawer" aria-label="Database schema">
   <header><h3>Database schema</h3><button class="btn ghost small" id="closeSchema" aria-label="Close">✕</button></header>
-  <div class="ctx" id="schemaCtx">The university database. Click a table to see its columns.</div>
-  <div class="msgs" id="schemaBody"></div>
-  <div class="ctx">PK = primary key · <span style="color:var(--accent)">col → table</span> = foreign key to that table</div>
+  <div class="sp-top"><p id="schemaCtx">The university database has 8 tables. Open a table to see its columns and example rows.</p><input type="search" id="spFind" placeholder="Find a table or column, e.g. salary" aria-label="Find a table or column" autocomplete="off"></div>
+  <div class="sp-body" id="schemaBody"></div>
+  <div class="sp-legend"><span class="pill key">KEY</span> identifies each row (primary key) <span class="pill link">→ table</span> points to a row in another table (foreign key)</div>
 </aside>
 <aside class="drawer" id="drawer" aria-label="Professor chat">
   <header>
@@ -502,8 +585,12 @@ label.btn { cursor: pointer; }
   </div>
 </aside>
 <div class="dock" id="dock" hidden>
-  <div class="dock-h"><span class="pulse-dot"></span><b>Live database</b><span class="dock-sub">tables your query touches light up</span><button class="btn ghost small" id="dockToggle" aria-label="Minimize or expand the live database">–</button></div>
+  <div class="dock-h"><span class="pulse-dot"></span><b>Live database</b><span class="dock-sub">tables your query touches light up</span><button class="btn ghost small" id="dockBig" title="Open full screen">⤢ Expand</button><button class="btn ghost small" id="dockToggle" aria-label="Minimize or show the live database">–</button></div>
   <div class="dock-body l3-wrap"><div class="l3" id="dock3d"></div></div>
+</div>
+<div class="big3d" id="big3d" hidden role="dialog" aria-label="Live database, full screen">
+  <div class="big3d-h"><b>Live database</b><span>Each cylinder is a table: taller means more rows. Each line is a foreign key. Drag to turn, scroll to zoom, click a table to open it.</span><button class="btn small" id="big3dClose">Close ✕</button></div>
+  <div class="l3" id="big3dHost"></div>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -735,6 +822,72 @@ LAB.TABLE_NOTES = {
 };
 
 if (typeof module !== 'undefined') module.exports = LAB;
+
+// "Did you know?" cards. One is picked at random on each page load.
+// Categories: History, People, Fun, Real world, Internals, Tip
+LAB.FACTS = [
+  ['History', 'In June 1970, Edgar F. Codd of IBM published "A Relational Model of Data for Large Shared Data Banks". Every table you query in this lab comes from that paper.'],
+  ['History', 'SQL was first called SEQUEL (Structured English Query Language). IBM renamed it SQL because another company already owned the trademark "SEQUEL".'],
+  ['History', 'SQL was designed at IBM in 1974 by Donald Chamberlin and Raymond Boyce, the same Boyce from Boyce–Codd Normal Form (BCNF).'],
+  ['History', 'The first commercial SQL database was Oracle V2, released in 1979. There was never an Oracle V1: the company thought "version 2" sounded more trustworthy.'],
+  ['History', 'IBM\'s System R (1974–1979) was the first system to run SQL. Many ideas you use today, like the cost-based query optimizer, come from that project.'],
+  ['History', 'SQL became an ANSI standard in 1986 and an ISO standard in 1987. The latest version is SQL:2023.'],
+  ['History', 'IBM\'s IMS database was built in the 1960s for NASA\'s Apollo program, to track the millions of parts of the Saturn V rocket. Banks still use it today.'],
+  ['History', 'Peter Chen introduced the Entity–Relationship model in 1976. The ER diagrams you draw on Day 9 are almost 50 years old.'],
+  ['History', 'Codd defined 1NF, 2NF and 3NF in 1971. BCNF followed in 1974.'],
+  ['History', 'In 1985, Codd published 12 rules a database must follow to be called "relational". There are actually 13: the list starts at Rule 0.'],
+  ['History', 'The word "NoSQL" was first used in 1998 by Carlo Strozzi for a relational database that did not use SQL. It became popular again in 2009 as the name of a meetup.'],
+  ['History', 'Window functions (ROW_NUMBER, RANK, running totals) became part of the SQL standard in 2003. MySQL only added them in version 8.0, in 2018.'],
+  ['History', 'SQLite added window functions in 2018 and RIGHT and FULL OUTER JOIN only in 2022.'],
+  ['History', 'The Halloween Problem was found at IBM on Halloween 1976. A query giving a 10% raise to everyone earning under $25,000 kept raising the same people until nobody was under $25,000. The update was reading an index it was changing at the same time.'],
+  ['People', 'Four Turing Awards (the "Nobel Prize of computing") went to database pioneers: Charles Bachman (1973), Edgar Codd (1981), Jim Gray (1998) and Michael Stonebraker (2014).'],
+  ['People', 'Jim Gray won his Turing Award for his work on transactions. The ACID properties you learn on Day 11 build on his ideas.'],
+  ['People', 'The acronym ACID was coined in 1983 by Theo Härder and Andreas Reuter.'],
+  ['People', 'MySQL is named after My, the daughter of its co-founder Michael "Monty" Widenius. His later database, MariaDB, is named after his younger daughter, Maria.'],
+  ['People', 'PostgreSQL started in 1986 at UC Berkeley as "Postgres", meaning "after Ingres", an older database from the same lab.'],
+  ['People', 'SQLite was written by D. Richard Hipp in 2000 for software on a US Navy destroyer. He needed a database that worked without a server or an administrator.'],
+  ['People', 'Larry Ellison started Oracle after reading IBM\'s published research on relational databases. He shipped a product before IBM did.'],
+  ['Fun', 'The official way to say SQL is "S-Q-L", letter by letter. Millions of developers still say "sequel". Both are fine in interviews.'],
+  ['Fun', 'SQLite has no license. Its source code is in the public domain and starts with a blessing: "May you do good and not evil. May you find forgiveness for yourself and forgive others."'],
+  ['Fun', 'The PostgreSQL elephant is called Slonik, which means "little elephant" in Russian.'],
+  ['Fun', 'The MySQL dolphin is called Sakila. The name came from a user contest and was suggested by a developer from Eswatini.'],
+  ['Fun', 'MongoDB got its name from the word "humongous".'],
+  ['Fun', 'Redis stands for REmote DIctionary Server.'],
+  ['Fun', 'xkcd comic #327 shows a mother who named her son Robert\'); DROP TABLE Students;-- . The school database deleted its students table. Fans call him "Little Bobby Tables".'],
+  ['Fun', 'A SQL query walks into a bar, goes up to two tables and asks: "Can I join you?"'],
+  ['Fun', 'SELECT * FROM people WHERE has_read_the_error_message = 1; → 0 rows. Read the error message. It usually tells you the exact problem.'],
+  ['Fun', 'Nobody is sure what the "B" in B-tree stands for. It could be Boeing (where it was invented), balanced, broad, or Bayer (one of its inventors). The inventors never said.'],
+  ['Fun', 'SQL keywords are not case-sensitive. SELECT, select and SeLeCt all work. Uppercase keywords are only a convention that makes queries easier to read.'],
+  ['Real world', 'SQLite is the most widely used database engine in the world. It runs on every Android phone and iPhone, in every major web browser, and in many cars and planes. Its authors estimate over one trillion SQLite databases are in use.'],
+  ['Real world', 'Wikipedia runs on MariaDB, the open-source fork of MySQL.'],
+  ['Real world', 'In 2017, an engineer at GitLab accidentally deleted a production database. Five different backup methods all turned out to be broken. The company live-streamed the recovery and lost about six hours of data. Lesson: test your backups.'],
+  ['Real world', 'Google Spanner keeps data consistent across the planet using atomic clocks and GPS receivers in its data centers.'],
+  ['Real world', 'Apache Cassandra was built at Facebook in 2008 to power inbox search.'],
+  ['Real world', 'SQL injection was first publicly described in 1998. It is still on the OWASP Top 10 list of the most critical web security risks.'],
+  ['Real world', 'SQLite is tested to the same standard as flight software for aircraft: 100% branch test coverage. Its test code is hundreds of times larger than the database code itself.'],
+  ['Real world', 'One SQLite database file can be up to about 281 terabytes.'],
+  ['Internals', 'A B+ tree with 100 keys per node needs only 4 levels to index 100 million rows. That is why an indexed lookup is fast even on huge tables.'],
+  ['Internals', 'In SQLite, every PRIMARY KEY and UNIQUE constraint creates an index automatically. Run EXPLAIN QUERY PLAN to see it used.'],
+  ['Internals', 'Databases write changes to a log before they change the data file. This is write-ahead logging (WAL), and it is how a database survives a power cut in the middle of a transaction.'],
+  ['Internals', 'The ARIES recovery algorithm, published by IBM\'s C. Mohan in 1992, is still the basis of crash recovery in most big databases.'],
+  ['Internals', 'In relational theory a table is a set, so duplicate rows cannot exist. SQL tables are "bags" (multisets) and allow duplicates. That is why DISTINCT exists.'],
+  ['Internals', 'In Oracle, an empty string \'\' is treated as NULL. In PostgreSQL, MySQL and SQLite, \'\' and NULL are different values.'],
+  ['Internals', 'SQLite lets you store text in an INTEGER column. Since 2021 you can add STRICT to CREATE TABLE to make types strict, like in other databases.'],
+  ['Internals', 'With recursive CTEs (Day 6), SQL is Turing complete: in theory it can compute anything a normal programming language can.'],
+  ['Internals', 'The CAP theorem (Eric Brewer, 2000) says a distributed database cannot guarantee consistency, availability and partition tolerance all at once. It was proved in 2002.'],
+  ['Internals', 'Codd later proposed two kinds of NULL: "missing but applicable" (we do not know the phone number) and "not applicable" (this person has no phone). SQL kept only one.'],
+  ['Internals', 'The query optimizer may run your joins in a completely different order than you wrote them. SQL describes what you want, not how to get it.'],
+  ['Tip', '"The key, the whole key, and nothing but the key, so help me Codd." This classic line sums up 1NF, 2NF and 3NF.'],
+  ['Tip', 'Before you run an UPDATE or a DELETE, run it as a SELECT with the same WHERE. If the SELECT returns the wrong rows, so would your UPDATE.'],
+  ['Tip', 'NULL = NULL is not TRUE. It is UNKNOWN. To find missing values, always write IS NULL.'],
+  ['Tip', 'COUNT(*) counts rows. COUNT(column) counts only the rows where that column is not NULL. They can give different answers on the same table.'],
+  ['Tip', 'A WHERE condition on the right table of a LEFT JOIN quietly turns it into an INNER JOIN. Put that condition in the ON clause instead.'],
+  ['Tip', 'Without ORDER BY, the database may return rows in any order, and the order can change between runs.'],
+  ['Tip', 'NOT IN with a list that contains a NULL returns no rows at all. Use NOT EXISTS when NULLs are possible.'],
+  ['Tip', 'Wrapping an indexed column in a function, like WHERE UPPER(name) = \'ALI\', usually stops the database from using the index.'],
+  ['Tip', 'Never build SQL by gluing user input into a string. Use parameterized queries (placeholders like ?), and SQL injection becomes impossible.'],
+  ['Tip', 'Read a query in the order the database runs it: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT. The Query X-ray in this lab shows exactly that.']
+];
 
 // ---- day01.js
 LAB.days.push({
@@ -4928,7 +5081,8 @@ function viewHome() {
     '<section class="hero"><div><div class="eyebrow">Your personal database course</div><h1>Fourteen days to <em>fluent SQL</em> and solid database design.</h1>' +
     '<p>A real SQL engine runs in this page. You read a short idea, predict what happens, run it, then solve graded problems on a university database.' + (HOSTED ? ' A professor is one click away when you get stuck.' : ' Hints and model solutions are there when you get stuck.') + '</p>' +
     '<div class="actions"><a class="btn primary" href="#day-' + nd + '">' + (started ? 'Continue with Day ' + nd : 'Start Day 1') + '</a><a class="btn" href="#playground">Open the playground</a>' + (dueCards().length ? '<a class="btn" href="#review">Review ' + dueCards().length + ' cards</a>' : '') + '</div></div>' +
-    '<div class="l3-wrap hero3d"><div class="l3" id="home3d"></div><p class="l3-cap">The database you will work with, live: 8 tables linked by foreign keys. Drag to turn it. Click a table to see its columns.</p></div></section>' +
+    '<div class="l3-wrap hero3d"><div class="l3" id="home3d"><button class="btn small l3-expand" data-big3d="1">⤢ Full screen</button></div><p class="l3-cap">The database you will work with, live. Each cylinder is a table (taller = more rows), each line a foreign key. Drag to turn it, scroll to zoom, click a table to see its columns.</p></div></section>' +
+    factHTML(false) +
     '<section class="section"><h2>Your progress</h2><p class="lead">Every request you solve earns XP and moves you up the ranks. ' + (P.start ? 'Calendar day ' + pd + ' of 14.' : 'Your 14 days start when you begin Day 1.') + '</p>' + progressHTML() + '<div class="map" style="margin-top:18px">' + map + '</div><div class="map-caption"><span>Fill = progress per day</span><span>Orange outline = your next day</span></div></section>' +
     '<section class="section"><h2>The daily routine</h2><p class="lead">About 2.5 hours a day. Do the blocks in this order: the first and last blocks are where most of the remembering happens.</p><div class="routine">' +
     routine.map(r => '<div style="flex:' + parseInt(r[0]) + ' 1 0"><b>' + r[0] + '</b><span>' + r[1] + '</span><small>' + r[2] + '</small></div>').join('') + '</div></section>' +
@@ -4957,7 +5111,7 @@ function viewDay(n, tabOverride) {
   const st = dayStats(day);
   const doneFlags = { learn: st.seen >= st.segs, practice: st.exDone === st.exTotal, recall: st.qDone === st.qTotal, explain: !!st.teach };
   let h = '<div class="col"><header class="dayhead"><div class="eyebrow">Day ' + pad2(day.n) + ' · ' + esc(day.tag) + ' · about ' + (day.hours || 2.5) + ' h</div><h1>' + esc(day.title) + '</h1>' +
-    '<ul class="goals">' + day.goals.map(g => '<li>' + g + '</li>').join('') + '</ul></header>' +
+    '<ul class="goals">' + day.goals.map(g => '<li>' + g + '</li>').join('') + '</ul>' + factHTML(true) + '</header>' +
     '<nav class="steps-nav" role="tablist">' + TABS.map(([k, l], i) => '<button role="tab" data-tab="' + k + '" class="' + (k === tab ? 'on ' : '') + (doneFlags[k] ? 'done' : '') + '"><b>' + (doneFlags[k] ? '✓' : i + 1) + '</b>' + l + (k === 'practice' ? ' <span class="eyebrow">' + st.exDone + '/' + st.exTotal + '</span>' : '') + '</button>').join('') + '</nav><div id="tabBody"></div></div>';
   $('#main').innerHTML = h;
   $$('.steps-nav button').forEach(b => b.onclick = () => { viewDay(n, b.dataset.tab); window.scrollTo({ top: 0 }); });
@@ -5243,18 +5397,56 @@ function tablesFor(ex) {
   } catch (e) {}
   return (tablesCache[ex.id] = names);
 }
+const PLAIN_TYPE = { integer: 'whole number', int: 'whole number', text: 'text', real: 'decimal number', numeric: 'number', '': 'any value' };
+let spSetup = null;
+function schemaPanelHTML(db, focus) {
+  const tables = (db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY rowid")[0] || { values: [] }).values.map(v => v[0]);
+  const refBy = {};
+  const meta = tables.map(t => {
+    const q = t.replace(/'/g, "''");
+    const cols = (db.exec("SELECT name, type, pk, \"notnull\" FROM pragma_table_info('" + q + "')")[0] || { values: [] }).values;
+    const fk = {}; (db.exec("SELECT \"from\", \"table\", \"to\" FROM pragma_foreign_key_list('" + q + "')")[0] || { values: [] }).values.forEach(([f, tt, to]) => { fk[f] = tt; (refBy[tt] = refBy[tt] || []).push(t + '.' + f); });
+    let n = 0; try { n = db.exec('SELECT COUNT(*) FROM "' + t.replace(/"/g, '""') + '"')[0].values[0][0]; } catch (e) {}
+    return { t, cols, fk, n };
+  });
+  return meta.map(({ t, cols, fk, n }) => {
+    const open = focus === t;
+    const search = (t + ' ' + cols.map(c => c[0]).join(' ')).toLowerCase();
+    return '<section class="sp-t' + (open ? ' open' : '') + '" data-table="' + esc(t) + '" data-search="' + esc(search) + '">' +
+      '<button class="sp-head" data-sptoggle="' + esc(t) + '" aria-expanded="' + open + '"><span class="sp-name">' + esc(t) + '</span><span class="sp-rows">' + n + ' rows</span><span class="sp-chev" aria-hidden="true">›</span></button>' +
+      '<div class="sp-in">' + (LAB.TABLE_NOTES[t] ? '<p class="sp-note">' + esc(LAB.TABLE_NOTES[t]) + '</p>' : '') +
+      '<table class="sp-cols"><thead><tr><th>Column</th><th>Holds</th><th></th></tr></thead><tbody>' +
+      cols.map(([c, ty, pk, nn]) => '<tr data-col="' + esc(c.toLowerCase()) + '"><td class="sp-c">' + esc(c) + '</td><td>' + esc(PLAIN_TYPE[(ty || '').toLowerCase()] || (ty || '').toLowerCase()) + '</td><td class="sp-tags">' + (pk ? '<span class="pill key">KEY</span>' : '') + (fk[c] ? '<button class="pill link" data-spgo="' + esc(fk[c]) + '" title="Open ' + esc(fk[c]) + '">→ ' + esc(fk[c]) + '</button>' : '') + (nn && !pk ? '<span class="pill req">required</span>' : '') + '</td></tr>').join('') +
+      '</tbody></table>' +
+      (refBy[t] ? '<p class="sp-refby">Other tables point here: ' + refBy[t].map(r => '<code>' + esc(r) + '</code>').join(' ') + '</p>' : '') +
+      '<div class="sp-ex" data-ex="' + esc(t) + '"></div></div></section>';
+  }).join('');
+}
+function spFillExample(sec) {
+  const box = $('.sp-ex', sec); if (!box || box.dataset.done) return;
+  const t = sec.dataset.table; const db = freshDB(spSetup);
+  const r = runAll(db, 'SELECT * FROM "' + t.replace(/"/g, '""') + '" LIMIT 3'); db.close();
+  box.dataset.done = '1';
+  box.innerHTML = '<div class="sp-exlab">Example rows</div><div class="out">' + runResultHTML(r).replace(/<div class="meta">[\s\S]*?<\/div>/, '') + '</div>';
+}
+function spOpen(sec, on) {
+  sec.classList.toggle('open', on); $('.sp-head', sec).setAttribute('aria-expanded', on);
+  if (on) spFillExample(sec);
+}
 function openSchema(focus, setup) {
-  const d = freshDB(setup);
-  $('#schemaBody').innerHTML = schemaHTML(d, { open: focus ? [focus] : [], preview: true });
+  spSetup = setup || null;
+  const d = freshDB(spSetup);
+  $('#schemaBody').innerHTML = schemaPanelHTML(d, focus);
   d.close();
-  $('#schemaCtx').textContent = setup ? 'The university database plus the tables this exercise creates in its setup.' : 'The university database. Click a table to see its columns.';
+  $('#schemaCtx').textContent = setup ? 'The university database, plus the tables this exercise creates in its setup. Open a table to see its columns and example rows.' : 'The university database has 8 tables. Open a table to see its columns and example rows.';
+  $('#spFind').value = '';
   $('#schemaDrawer').classList.add('open'); $('#scrim').hidden = false;
-  if (focus) { const el = $('#schemaBody details[data-table="' + CSS.escape(focus) + '"]'); if (el) el.scrollIntoView({ block: 'start' }); }
+  if (focus) { const sec = $('#schemaBody .sp-t[data-table="' + CSS.escape(focus) + '"]'); if (sec) { spOpen(sec, true); setTimeout(() => sec.scrollIntoView({ block: 'start' }), 30); } }
   $('#schemaBody').onclick = e => {
-    const b = e.target.closest('[data-preview]'); if (!b) return;
-    const t = b.dataset.preview; const db = freshDB(setup);
-    const r = runAll(db, 'SELECT * FROM "' + t.replace(/"/g, '""') + '" LIMIT 5'); db.close();
-    b.nextElementSibling.innerHTML = '<div class="out">' + runResultHTML(r) + '</div>';
+    const go = e.target.closest('[data-spgo]');
+    if (go) { const sec = $('#schemaBody .sp-t[data-table="' + CSS.escape(go.dataset.spgo) + '"]'); if (sec) { spOpen(sec, true); sec.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' }); sec.classList.remove('flash'); void sec.offsetWidth; sec.classList.add('flash'); } return; }
+    const h = e.target.closest('[data-sptoggle]');
+    if (h) { const sec = h.closest('.sp-t'); spOpen(sec, !sec.classList.contains('open')); }
   };
 }
 function closeSchema() { $('#schemaDrawer').classList.remove('open'); if (!$('#drawer').classList.contains('open') && !$('#rail').classList.contains('open')) $('#scrim').hidden = true; }
@@ -5454,14 +5646,72 @@ function xray(db, sql) {
 const XR_KEY = 'relational-lab-xray-open';
 let xrayOpen = true; try { xrayOpen = localStorage.getItem(XR_KEY) !== '0'; } catch (e) {}
 document.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('xray')) { xrayOpen = e.target.open; try { localStorage.setItem(XR_KEY, xrayOpen ? '1' : '0'); } catch (err) {} } }, true);
+function firstWord(t) { const m = /^\s*("?[A-Za-z_][A-Za-z0-9_]*"?)/.exec(t || ''); return m ? m[1].replace(/"/g, '') : 'the table'; }
+function xraySay(s, prev) {
+  const k = s.k, t = firstWord(s.t);
+  if (k === 'FROM') return /,/.test(s.t) ? 'Pair every row of these tables with every row of the others.' : 'Start with every row of the <b>' + esc(t) + '</b> table.';
+  if (k === 'LEFT JOIN') return 'Attach the matching rows of <b>' + esc(t) + '</b>. Rows with no match are kept, with NULL in the new columns.';
+  if (k === 'RIGHT JOIN') return 'Attach the rows of <b>' + esc(t) + '</b>. Every row of ' + esc(t) + ' is kept, even with no match.';
+  if (k === 'FULL JOIN') return 'Combine with <b>' + esc(t) + '</b> and keep unmatched rows from both sides.';
+  if (k === 'CROSS JOIN') return 'Pair every row so far with every row of <b>' + esc(t) + '</b>.';
+  if (/NATURAL/.test(k)) return 'Join <b>' + esc(t) + '</b> on every column that has the same name in both tables.';
+  if (/JOIN/.test(k)) return 'Attach the matching rows of <b>' + esc(t) + '</b>. Rows with no match are dropped.';
+  if (k === 'WHERE') return 'Keep only the rows where this condition is true.';
+  if (k === 'GROUP BY') return 'Put rows with the same value together. Each group becomes one row.';
+  if (k === 'HAVING') return 'Keep only the groups where this condition is true.';
+  if (k === 'SELECT DISTINCT') return 'Build the columns you asked for, then remove duplicate rows.';
+  if (k === 'SELECT') return 'Build the columns you asked for (and compute any expressions).';
+  if (k === 'ORDER BY') return 'Sort the rows. Nothing is added or removed.';
+  if (k === 'LIMIT') return 'Keep only the first rows.';
+  return '';
+}
 function xrayHTML(stages) {
   if (!stages) return '';
   const max = Math.max(1, ...stages.map(s => s.n));
-  const short = t => { t = String(t).replace(/\s+/g, ' '); return t.length > 70 ? t.slice(0, 68) + '…' : t; };
-  return '<details class="xray"' + (xrayOpen ? ' open' : '') + '><summary><b>Query X-ray</b><span>how the database built this result, in the order it really runs</span></summary><div class="xr">' +
-    stages.map((s, i) => '<div class="xr-row" style="--i:' + i + '"><span class="xr-k">' + esc(s.k) + '</span><span class="xr-t" title="' + esc(s.t) + '">' + hl(short(s.t)).replace(/\n$/, '') + '</span><span class="xr-bar"><i style="width:' + Math.max(1.5, 100 * s.n / max).toFixed(1) + '%"></i></span><span class="xr-n">' + s.n + '<small>' + (s.note === 'groups' ? ' groups' : ' rows') + '</small></span></div>').join('') +
-    '</div></details>';
+  const short = t => { t = String(t).replace(/\s+/g, ' '); return t.length > 90 ? t.slice(0, 88) + '…' : t; };
+  let prev = null;
+  const rows = stages.map((s, i) => {
+    const unit = s.note === 'groups' ? (s.n === 1 ? 'group' : 'groups') : (s.n === 1 ? 'row' : 'rows');
+    let delta = '';
+    if (prev !== null && s.k !== 'ORDER BY') {
+      if (s.n < prev) delta = '<span class="xs-d down">−' + (prev - s.n) + ' removed</span>';
+      else if (s.n > prev) delta = '<span class="xs-d up">+' + (s.n - prev) + ' added</span>';
+      else delta = '<span class="xs-d same">no change</span>';
+    }
+    prev = s.n;
+    return '<li class="xs" style="--i:' + i + '"><span class="xs-n">' + (i + 1) + '</span><div class="xs-m">' +
+      '<div class="xs-top"><span class="xs-k">' + esc(s.k) + '</span><code class="xs-c" title="' + esc(s.t) + '">' + hl(short(s.t)).replace(/\n$/, '') + '</code></div>' +
+      '<div class="xs-say">' + xraySay(s) + '</div>' +
+      '<div class="xs-bar"><span class="xr-bar"><i style="width:' + Math.max(1.5, 100 * s.n / max).toFixed(1) + '%"></i></span><span class="xs-cnt"><b>' + s.n + '</b> ' + unit + '</span>' + delta + '</div></div></li>';
+  }).join('');
+  return '<details class="xray"' + (xrayOpen ? ' open' : '') + '><summary><b>Query X-ray</b><span>See how your result was built, step by step</span></summary>' +
+    '<p class="xs-intro">The database does not read your query from top to bottom. It runs it in the order below. The bar shows how many rows are left after each step.</p><ol class="xs-list">' + rows + '</ol></details>';
 }
+
+/* ---------------- did you know ---------------- */
+const FACT_KEY = 'relational-lab-fact';
+let factIdx = -1;
+function nextFact() {
+  const n = (LAB.FACTS || []).length; if (!n) return -1;
+  let last = -1; try { last = Number(localStorage.getItem(FACT_KEY)); } catch (e) {}
+  let i = Math.floor(Math.random() * n); if (n > 1 && (i === last || i === factIdx)) i = (i + 1 + Math.floor(Math.random() * (n - 1))) % n;
+  factIdx = i; try { localStorage.setItem(FACT_KEY, String(i)); } catch (e) {}
+  return i;
+}
+function factInner(i) {
+  const [cat, text] = LAB.FACTS[i];
+  return '<div class="fact-h"><span class="fact-badge">Did you know?</span><span class="fact-cat">' + esc(cat) + '</span><button class="btn ghost small" data-fact-next="1">Another one ↻</button></div><p class="fact-t">' + esc(text) + '</p>';
+}
+function factHTML(compact) {
+  const i = nextFact(); if (i < 0) return '';
+  return '<aside class="fact' + (compact ? ' compact' : '') + '" aria-live="polite">' + factInner(i) + '</aside>';
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-big3d]')) { openBig3D(); return; }
+  const b = e.target.closest('[data-fact-next]'); if (!b) return;
+  const card = b.closest('.fact'); card.innerHTML = factInner(nextFact());
+  card.classList.remove('swap'); void card.offsetWidth; card.classList.add('swap');
+});
 
 /* ---------------- scenario: requests from university offices ---------------- */
 const OFFICES = [['payments', 'Finance Office', 'FO'], ['prereqs', 'Curriculum Committee', 'CC'], ['enrollments', "Registrar's Office", 'RO'], ['sections', "Registrar's Office", 'RO'], ['instructors', 'Human Resources', 'HR'], ['departments', "Dean's Office", 'DO'], ['students', 'Student Affairs', 'SA'], ['courses', 'Curriculum Committee', 'CC']];
@@ -5529,7 +5779,7 @@ function celebrate(article, gain) {
 /* ---------------- live 3D database ---------------- */
 const Live3D = (function () {
   let renderer = null, scene, camera, root, nodes = {}, edges = [], packets = [], labels = null, tip = null, host = null, raf = 0, visible = true, failed = false;
-  let rotY = 0.5, rotX = 0.42, auto = !reduceMotion, drag = null, lastT = 0, hover = null;
+  let rotY = 0.5, rotX = 0.42, auto = !reduceMotion, drag = null, lastT = 0, hover = null, baseDist = 12.5, zoom = 1;
   const ORDER = ['students', 'enrollments', 'sections', 'courses', 'prereqs', 'departments', 'instructors', 'payments'];
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888';
   function colors() { return { accent: new THREE.Color(css('--accent')), hl: new THREE.Color(css('--hl')), line: new THREE.Color(css('--muted')) }; }
@@ -5590,6 +5840,7 @@ const Live3D = (function () {
     });
     el.addEventListener('pointerup', () => { if (drag && !drag.moved && hover) openSchema(hover); drag = null; });
     el.addEventListener('pointerleave', () => { tip.hidden = true; hover = null; });
+    el.addEventListener('wheel', e => { if (!host || !host.closest('.big3d, .hero3d')) return; e.preventDefault(); zoom = Math.max(0.55, Math.min(1.7, zoom * (e.deltaY > 0 ? 1.07 : 0.93))); loop(performance.now()); }, { passive: false });
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const recolor = () => { const c = colors(); Object.values(nodes).forEach(n => n.mats.forEach(m => { m.color.copy(c.accent); m.emissive.copy(c.hl); })); edges.forEach(e => e.mat.color.copy(c.line)); };
     if (mq.addEventListener) mq.addEventListener('change', recolor);
@@ -5613,7 +5864,7 @@ const Live3D = (function () {
     const w = host.clientWidth, h = host.clientHeight;
     if (!w || !h) return;
     renderer.setSize(w, h, false); renderer.domElement.style.width = w + 'px'; renderer.domElement.style.height = h + 'px';
-    camera.aspect = w / h; camera.position.set(0, 0, w / h < 1.2 ? 16 : 12.5); camera.updateProjectionMatrix();
+    camera.aspect = w / h; baseDist = Math.max(12.5, 6.4 / (Math.tan(19 * Math.PI / 180) * camera.aspect)); camera.updateProjectionMatrix();
   }
   function moving() { return auto || packets.length || Object.values(nodes).some(n => n.heat > 0) || drag; }
   function loop(t) {
@@ -5622,7 +5873,7 @@ const Live3D = (function () {
     const dt = Math.max(0, Math.min(0.05, (t - (lastT || t)) / 1000)); lastT = Math.max(t, lastT);
     if (auto) rotY += dt * 0.18;
     root.rotation.set(0, rotY, 0); root.updateMatrixWorld();
-    const dist = camera.position.length() || 12.5;
+    const dist = baseDist * zoom;
     camera.position.set(0, Math.sin(rotX) * dist, Math.cos(rotX) * dist); camera.lookAt(0, 0.4, 0);
     Object.values(nodes).forEach(n => {
       n.heat = Math.max(0, n.heat - dt * 0.4);
@@ -5693,6 +5944,17 @@ function placeLive() {
   if (st !== 'min') Live3D.mount($('#dock3d'));
 }
 function liveRun(sql) { Live3D.pulse(tablesIn(sql)); }
+function openBig3D() {
+  if (!Live3D.ok()) return;
+  $('#big3d').hidden = false; $('#scrim').hidden = false;
+  Live3D.mount($('#big3dHost'));
+}
+function closeBig3D() {
+  if ($('#big3d').hidden) return;
+  $('#big3d').hidden = true;
+  if (!$('#drawer').classList.contains('open') && !$('#schemaDrawer').classList.contains('open')) $('#scrim').hidden = true;
+  placeLive();
+}
 
 /* ---------------- progress panel ---------------- */
 function progressHTML() {
@@ -5752,11 +6014,22 @@ function route() {
 }
 window.addEventListener('hashchange', () => { route(); window.scrollTo({ top: 0 }); });
 $('#menuBtn').onclick = () => { $('#rail').classList.add('open'); $('#scrim').hidden = false; };
-$('#scrim').onclick = () => { closeRail(); closeTutor(); closeSchema(); };
+$('#scrim').onclick = () => { closeRail(); closeTutor(); closeSchema(); closeBig3D(); };
 $('#schemaBtn').onclick = () => openSchema(null);
+$('#dockBig').onclick = openBig3D;
+$('#big3dClose').onclick = closeBig3D;
 $('#dockToggle').onclick = () => { const st = dockState() === 'min' ? 'open' : 'min'; try { localStorage.setItem(DOCK_KEY, st); } catch (e) {} placeLive(); };
 $('#closeSchema').onclick = closeSchema;
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSchema(); closeTutor(); closeRail(); } });
+$('#spFind').addEventListener('input', () => {
+  const q = $('#spFind').value.trim().toLowerCase();
+  $$('#schemaBody .sp-t').forEach(sec => {
+    const hit = !q || sec.dataset.search.includes(q);
+    sec.hidden = !hit;
+    $$('tr[data-col]', sec).forEach(tr => tr.classList.toggle('hit', !!q && tr.dataset.col.includes(q)));
+    if (q && hit) spOpen(sec, true);
+  });
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeBig3D(); closeSchema(); closeTutor(); closeRail(); } });
 $('#tutorBtn').onclick = openTutor;
 $('#closeTutor').onclick = closeTutor;
 $('#sendTutor').onclick = () => { const t = $('#tutorInput'); const v = t.value; t.value = ''; askTutor(v); };

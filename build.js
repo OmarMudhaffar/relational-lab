@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const dir = __dirname;
 const safe = s => s.replace(/<\/script/gi, '<\\/script');
-const seed = fs.readFileSync(path.join(dir, 'seed.js'), 'utf8');
+const seed = fs.readFileSync(path.join(dir, 'seed.js'), 'utf8') + '\n' + fs.readFileSync(path.join(dir, 'facts.js'), 'utf8');
 const days = fs.readdirSync(path.join(dir, 'days')).filter(f => /^day\d+\.js$/.test(f)).sort()
   .map(f => '// ---- ' + f + '\n' + fs.readFileSync(path.join(dir, 'days', f), 'utf8')).join('\n');
 const page = fs.readFileSync(path.join(dir, 'app.html'), 'utf8')

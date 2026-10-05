@@ -281,6 +281,12 @@ textarea.plain { width: 100%; min-height: 180px; padding: 12px 14px; border: 1px
 .schema .c span:last-child { color: var(--muted); }
 .schema .k { color: var(--hl); font-weight: 600; }
 .schema .fk { color: var(--accent); }
+.schema .pv .grid-wrap { max-height: 220px; border: 1px solid var(--line); border-radius: 4px; }
+#schemaBody { display: block; }
+#schemaBody .schema { border: 0; }
+.tables-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+.tchip { font: 500 12.5px var(--f-mono); border: 1px solid var(--line); background: var(--code-bg); color: var(--ink); border-radius: 4px; padding: 1px 8px; cursor: pointer; }
+.tchip:hover { border-color: var(--accent); color: var(--accent); }
 .history { margin-top: 18px; }
 .history button { display: block; width: 100%; text-align: left; border: 0; border-top: 1px solid var(--line); background: none; padding: 7px 4px; font: 12.5px/1.4 var(--f-mono); color: var(--muted); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .history button:hover { color: var(--ink); }
@@ -342,6 +348,7 @@ textarea.plain { width: 100%; min-height: 180px; padding: 12px 14px; border: 1px
   <a class="brand" href="#home"><b>Relational Lab</b><span>14 DAYS · SQL &amp; DATABASE DESIGN</span></a>
   <div class="spacer"></div>
   <div class="meter" title="Overall progress"><div class="track"><div class="fill" id="meterFill" style="width:0%"></div></div><span id="meterTxt">0%</span></div>
+  <button class="btn small" id="schemaBtn" aria-label="Show the database schema">Schema</button>
   <a class="btn small" href="#review" id="reviewBtn">Review <span class="badge" id="dueBadge" hidden>0</span></a>
   <button class="btn small" id="tutorBtn" hidden><span class="lbl-long">Ask the </span>Professor</button>
 </div>
@@ -350,6 +357,12 @@ textarea.plain { width: 100%; min-height: 180px; padding: 12px 14px; border: 1px
   <main id="main"><div class="loading" id="boot">Starting the SQL engine…</div></main>
 </div>
 <div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="schemaDrawer" aria-label="Database schema">
+  <header><h3>Database schema</h3><button class="btn ghost small" id="closeSchema" aria-label="Close">✕</button></header>
+  <div class="ctx" id="schemaCtx">The university database. Click a table to see its columns.</div>
+  <div class="msgs" id="schemaBody"></div>
+  <div class="ctx">PK = primary key · <span style="color:var(--accent)">col → table</span> = foreign key to that table</div>
+</aside>
 <aside class="drawer" id="drawer" aria-label="Professor chat">
   <header>
     <h3>Ask the professor</h3>
@@ -629,7 +642,7 @@ LAB.days.push({
       html: `<p>A <strong>primary key (PK)</strong> is a column (or group of columns) whose value is unique and never NULL. It names exactly one row. <code>students.student_id</code> is a primary key.</p>
 <p>A <strong>foreign key (FK)</strong> is a column whose values must match a primary key in another table. <code>students.dept_id</code> references <code>departments.dept_id</code>, so the database refuses a student whose department does not exist. This rule is called <strong>referential integrity</strong>.</p>
 <div class="callout"><strong>Other key words you will see in exams.</strong> A <em>superkey</em> is any set of columns that is unique. A <em>candidate key</em> is a minimal superkey (remove any column and it stops being unique). The primary key is the candidate key the designer picked. <code>email</code> is also a candidate key in <code>students</code>, which is why it is declared <code>UNIQUE</code>.</div>
-<p>Open the <strong>Schema</strong> panel on the right at any time to see every table, its columns and its keys.</p>`
+<p>Press <strong>Schema</strong> in the top bar at any time to see every table, its columns and its keys. In Practice, every exercise also lists the tables it uses: click a name to see its columns.</p>`
     },
     {
       h: 'SELECT and FROM',
@@ -4892,7 +4905,8 @@ function exHTML(ex, idx) {
   const hintsShown = rec.hints || 0;
   const canSolve = rec.done || (rec.attempts || 0) >= 2 || hintsShown >= ex.hints.length;
   let h = '<article class="ex' + (rec.done ? ' done' : '') + '" id="ex-' + esc(ex.id) + '"><div class="ex-h"><span class="id">' + pad2(idx + 1) + '</span><span class="lvl" title="Level ' + ex.level + '">' + [1, 2, 3].map(l => '<i class="' + (l <= ex.level ? 'on' : '') + '"></i>').join('') + '</span>' + (ex.kind === 'script' ? '<span class="eyebrow">' + (ex.plan ? 'index task' : 'build task') + '</span>' : '') + status + '</div>';
-  h += '<div class="ex-p prose">' + ex.prompt + (ex.ordered ? '<p class="note">Row order is checked.</p>' : '') + (ex.setup ? '<details><summary class="note" style="cursor:pointer">Setup SQL that runs before yours</summary><pre class="code">' + hl(ex.setup) + '</pre></details>' : '') + '</div>';
+  const tl = tablesFor(ex);
+  h += '<div class="ex-p prose">' + ex.prompt + (tl.length ? '<div class="tables-line">Tables: ' + tl.map(t => '<button class="tchip" data-schema="' + esc(t) + '" data-setupof="' + esc(ex.id) + '" title="Show the columns of ' + esc(t) + '">' + esc(t) + '</button>').join('') + '</div>' : '') + (ex.ordered ? '<p class="note">Row order is checked.</p>' : '') + (ex.setup ? '<details><summary class="note" style="cursor:pointer">Setup SQL that runs before yours</summary><pre class="code">' + hl(ex.setup) + '</pre></details>' : '') + '</div>';
   h += '<div class="console">' + editorHTML('ex:' + ex.id, draft, 4) + '<div class="toolbar"><button class="btn small" data-exrun="' + ex.id + '">Run</button><button class="btn primary small" data-excheck="' + ex.id + '">Check answer</button><button class="btn ghost small" data-exhint="' + ex.id + '"' + (hintsShown >= ex.hints.length ? ' disabled' : '') + '>Hint ' + Math.min(hintsShown + 1, ex.hints.length) + '/' + ex.hints.length + '</button>' + (ex.kind !== 'script' ? '<button class="btn ghost small" data-exexp="' + ex.id + '">' + (s.showExp ? 'Hide' : 'Show') + ' expected result</button>' : '') + '<button class="btn ghost small" data-exsol="' + ex.id + '"' + (canSolve ? '' : ' disabled title="Unlocks after 2 checks or all hints"') + '>' + (s.showSol ? 'Hide' : 'Model') + ' solution</button><button class="btn ghost small tutor-only" data-exask="' + ex.id + '" hidden>Ask the professor</button></div>' +
     '<div class="out"' + (s.run ? '' : ' hidden') + '>' + (s.run ? runResultHTML(s.run) : '') + (s.plan ? '<div class="meta"><span>Plan: ' + esc(s.plan) + '</span></div>' : '') + '</div></div>';
   if (s.fb) h += '<div class="fb ' + (s.fb.pass ? 'pass' : 'fail') + '">' + (s.fb.pass ? '<strong>Correct.</strong> ' + (rec.usedSolution ? 'Next time try it without the solution.' : 'Read the model solution and compare it with yours.') : '<strong>' + esc(s.fb.msg) + '</strong>' + (s.fb.sub ? '<span class="sub">' + esc(s.fb.sub) + '</span>' : '')) + '</div>';
@@ -4903,7 +4917,7 @@ function exHTML(ex, idx) {
 }
 function renderPractice(day, body) {
   const st = dayStats(day);
-  let h = '<p class="prose note" style="margin-top:0">Solve in order: levels go from ● to ●●●. Each exercise runs on a fresh copy of the database, so you cannot break anything. Model solutions unlock after two checks or after all hints.</p><div class="listing">';
+  let h = '<p class="prose note" style="margin-top:0">Solve in order: levels go from ● to ●●●. Each exercise runs on a fresh copy of the database, so you cannot break anything. Model solutions unlock after two checks or after all hints. Click a table name to see its columns, or press <strong>Schema</strong> in the top bar.</p><div class="listing">';
   day.exercises.forEach((ex, i) => { h += exHTML(ex, i); });
   h += '</div><div class="next-row"><span class="note">' + st.exDone + ' of ' + st.exTotal + ' solved.</span><button class="btn primary" data-goto="recall">Go to recall quiz →</button></div>';
   body.innerHTML = h;
@@ -5060,7 +5074,8 @@ function viewReview() {
 
 /* ---------------- views: playground ---------------- */
 let PG = null; let pgRun = null; let pgHist = [];
-function schemaHTML(db) {
+function schemaHTML(db, opts) {
+  opts = opts || {};
   let h = '<div class="schema">';
   const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY rowid");
   (tables[0] ? tables[0].values : []).forEach(([t]) => {
@@ -5068,11 +5083,46 @@ function schemaHTML(db) {
     const fks = db.exec("SELECT \"from\", \"table\" FROM pragma_foreign_key_list('" + t.replace(/'/g, "''") + "')");
     const fkMap = {}; (fks[0] ? fks[0].values : []).forEach(([f, tt]) => { fkMap[f] = tt; });
     let n = 0; try { n = db.exec('SELECT COUNT(*) FROM "' + t.replace(/"/g, '""') + '"')[0].values[0][0]; } catch (e) {}
-    h += '<details><summary>' + esc(t) + '<small>' + n + ' rows</small></summary><div class="cols">' + (LAB.TABLE_NOTES[t] ? '<p>' + esc(LAB.TABLE_NOTES[t]) + '</p>' : '') +
-      (cols ? cols.values : []).map(([c, ty, pk]) => '<div class="c"><span class="' + (pk ? 'k' : fkMap[c] ? 'fk' : '') + '">' + esc(c) + (pk ? ' · PK' : '') + (fkMap[c] ? ' → ' + esc(fkMap[c]) : '') + '</span><span>' + esc((ty || '').toLowerCase()) + '</span></div>').join('') + '</div></details>';
+    h += '<details data-table="' + esc(t) + '"' + (opts.open && opts.open.includes(t) ? ' open' : '') + '><summary>' + esc(t) + '<small>' + n + ' rows</small></summary><div class="cols">' + (LAB.TABLE_NOTES[t] ? '<p>' + esc(LAB.TABLE_NOTES[t]) + '</p>' : '') +
+      (cols ? cols.values : []).map(([c, ty, pk]) => '<div class="c"><span class="' + (pk ? 'k' : fkMap[c] ? 'fk' : '') + '">' + esc(c) + (pk ? ' · PK' : '') + (fkMap[c] ? ' → ' + esc(fkMap[c]) : '') + '</span><span>' + esc((ty || '').toLowerCase()) + '</span></div>').join('') + (opts.preview ? '<button class="btn small ghost" data-preview="' + esc(t) + '" style="margin-top:6px;padding-left:0">Show first 5 rows</button><div class="pv"></div>' : '') + '</div></details>';
   });
   return h + '</div>';
 }
+const tablesCache = {};
+function tablesFor(ex) {
+  if (tablesCache[ex.id]) return tablesCache[ex.id];
+  let names = [];
+  try {
+    const d = freshDB(ex.setup);
+    const r = d.exec("SELECT name FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%'");
+    d.close();
+    const known = new Set((r[0] ? r[0].values : []).map(v => v[0].toLowerCase()));
+    const words = (ex.solution + ' ' + (ex.plan ? ex.plan.query : '')).replace(/--[^\n]*/g, ' ').replace(/'(?:[^']|'')*'/g, ' ').match(/[A-Za-z_][A-Za-z0-9_]*/g) || [];
+    words.forEach(w => { const l = w.toLowerCase(); if (known.has(l) && !names.includes(l)) names.push(l); });
+  } catch (e) {}
+  return (tablesCache[ex.id] = names);
+}
+function openSchema(focus, setup) {
+  const d = freshDB(setup);
+  $('#schemaBody').innerHTML = schemaHTML(d, { open: focus ? [focus] : [], preview: true });
+  d.close();
+  $('#schemaCtx').textContent = setup ? 'The university database plus the tables this exercise creates in its setup.' : 'The university database. Click a table to see its columns.';
+  $('#schemaDrawer').classList.add('open'); $('#scrim').hidden = false;
+  if (focus) { const el = $('#schemaBody details[data-table="' + CSS.escape(focus) + '"]'); if (el) el.scrollIntoView({ block: 'start' }); }
+  $('#schemaBody').onclick = e => {
+    const b = e.target.closest('[data-preview]'); if (!b) return;
+    const t = b.dataset.preview; const db = freshDB(setup);
+    const r = runAll(db, 'SELECT * FROM "' + t.replace(/"/g, '""') + '" LIMIT 5'); db.close();
+    b.nextElementSibling.innerHTML = '<div class="out">' + runResultHTML(r) + '</div>';
+  };
+}
+function closeSchema() { $('#schemaDrawer').classList.remove('open'); if (!$('#drawer').classList.contains('open') && !$('#rail').classList.contains('open')) $('#scrim').hidden = true; }
+document.addEventListener('click', e => {
+  const c = e.target.closest('[data-schema]'); if (!c) return;
+  const exId = c.dataset.setupof; let setup = null;
+  if (exId) { const ex = DAYS.flatMap(d => d.exercises).find(x => x.id === exId); setup = ex && ex.setup; }
+  openSchema(c.dataset.schema, setup);
+});
 function viewPlayground() {
   if (!PG) PG = freshDB();
   const v = editors['pg'] !== undefined ? editors['pg'] : "-- Anything goes here. Changes persist until you reset.\nSELECT s.name, d.name AS major, s.year\nFROM students s\nLEFT JOIN departments d ON d.dept_id = s.dept_id\nORDER BY s.year DESC, s.name;";
@@ -5148,7 +5198,7 @@ function renderMsgs() {
   box.scrollTop = box.scrollHeight;
 }
 function openTutor() { $('#drawer').classList.add('open'); $('#scrim').hidden = false; setTutorContext(); setTimeout(() => $('#tutorInput').focus(), 50); }
-function closeTutor() { $('#drawer').classList.remove('open'); $('#scrim').hidden = true; }
+function closeTutor() { $('#drawer').classList.remove('open'); if (!$('#schemaDrawer').classList.contains('open')) $('#scrim').hidden = true; }
 async function askTutor(text) {
   if (!sampleFn || !text.trim()) return;
   if (tutorCtl) tutorCtl.abort();
@@ -5196,7 +5246,10 @@ function route() {
 }
 window.addEventListener('hashchange', () => { route(); window.scrollTo({ top: 0 }); });
 $('#menuBtn').onclick = () => { $('#rail').classList.add('open'); $('#scrim').hidden = false; };
-$('#scrim').onclick = () => { closeRail(); closeTutor(); };
+$('#scrim').onclick = () => { closeRail(); closeTutor(); closeSchema(); };
+$('#schemaBtn').onclick = () => openSchema(null);
+$('#closeSchema').onclick = closeSchema;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSchema(); closeTutor(); closeRail(); } });
 $('#tutorBtn').onclick = openTutor;
 $('#closeTutor').onclick = closeTutor;
 $('#sendTutor').onclick = () => { const t = $('#tutorInput'); const v = t.value; t.value = ''; askTutor(v); };

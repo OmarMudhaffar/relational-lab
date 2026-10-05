@@ -32,7 +32,7 @@ LAB.days.push({
       html: `<p>A <strong>primary key (PK)</strong> is a column (or group of columns) whose value is unique and never NULL. It names exactly one row. <code>students.student_id</code> is a primary key.</p>
 <p>A <strong>foreign key (FK)</strong> is a column whose values must match a primary key in another table. <code>students.dept_id</code> references <code>departments.dept_id</code>, so the database refuses a student whose department does not exist. This rule is called <strong>referential integrity</strong>.</p>
 <div class="callout"><strong>Other key words you will see in exams.</strong> A <em>superkey</em> is any set of columns that is unique. A <em>candidate key</em> is a minimal superkey (remove any column and it stops being unique). The primary key is the candidate key the designer picked. <code>email</code> is also a candidate key in <code>students</code>, which is why it is declared <code>UNIQUE</code>.</div>
-<p>Open the <strong>Schema</strong> panel on the right at any time to see every table, its columns and its keys.</p>`
+<p>Press <strong>Schema</strong> in the top bar at any time to see every table, its columns and its keys. In Practice, every exercise also lists the tables it uses: click a name to see its columns.</p>`
     },
     {
       h: 'SELECT and FROM',

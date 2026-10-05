@@ -144,33 +144,38 @@ FROM students;`
       prompt: '<p>This query is slow on a big table. It reads (scans) every row of <code>students</code>:</p><pre class="code">SELECT name, email FROM students WHERE city = \'Cairo\';</pre><ul class="spec"><li><b>Create:</b> an index that makes the plan a <code>SEARCH</code> on students.</li></ul>',
       solution: `CREATE INDEX idx_students_city ON students(city);`,
       plan: { query: `SELECT name, email FROM students WHERE city = 'Cairo'`, mustContain: 'SEARCH students USING' },
-      hints: ['Index the column that is in the WHERE clause.', 'CREATE INDEX some_name ON table(column);', 'CREATE INDEX idx_students_city ON students(city);']
+      hints: ['Index the column that is in the WHERE clause.', 'CREATE INDEX some_name ON table(column);', 'CREATE INDEX idx_students_city ON students(city);'],
+      explain: `<p><b>The idea:</b> The query filters on <code>city</code>. An index on <code>city</code> lets the database jump straight to the Cairo rows instead of reading every row.</p><p><b>How it works:</b> <code>CREATE INDEX idx_students_city ON students(city)</code> builds a sorted B+ tree of city values. Each entry points to its row. Now the plan changes from <code>SCAN students</code> (read all rows) to <code>SEARCH students USING INDEX idx_students_city (city=?)</code> (look up only the matching rows).</p><p><b>Common mistake:</b> Creating the index on <code>name</code> or <code>email</code>. Those are the columns you show, not the column you filter on. The index must match the WHERE.</p>`
     },
     {
       id: 'd12-2', level: 1, kind: 'script',
       prompt: '<p>Many queries look for the students of one section. They filter <code>enrollments</code> by <code>section_id</code>:</p><pre class="code">SELECT student_id, grade FROM enrollments WHERE section_id = 12;</pre><ul class="spec"><li><b>Create:</b> an index named <code>idx_enr_section</code> that this query uses.</li><li><b>Note:</b> the primary key is <code>(student_id, section_id)</code>. It starts with <code>student_id</code>, so it does not help here (leftmost-prefix rule).</li></ul>',
       solution: `CREATE INDEX idx_enr_section ON enrollments(section_id);`,
       plan: { query: `SELECT student_id, grade FROM enrollments WHERE section_id = 12`, mustContain: 'idx_enr_section' },
-      hints: ['The primary key index starts with student_id. It cannot search by section_id alone.', 'CREATE INDEX idx_enr_section ON enrollments(...);']
+      hints: ['The primary key index starts with student_id. It cannot search by section_id alone.', 'CREATE INDEX idx_enr_section ON enrollments(...);'],
+      explain: `<p><b>The idea:</b> The primary key index starts with <code>student_id</code>, so it cannot help a search on <code>section_id</code> alone. You need a new index that starts with <code>section_id</code>.</p><p><b>How it works:</b> <code>CREATE INDEX idx_enr_section ON enrollments(section_id)</code> sorts the rows by section. The query <code>WHERE section_id = 12</code> can now find section 12 directly. The plan changes from <code>SCAN</code> to <code>SEARCH enrollments USING INDEX idx_enr_section</code>.</p><p><b>Common mistake:</b> Creating <code>ON enrollments(student_id, section_id)</code>. That is the same order as the primary key, so the leftmost-prefix rule still blocks it. The first column must be the one in WHERE.</p>`
     },
     {
       id: 'd12-3', level: 1, kind: 'script',
       prompt: '<p>Make this range query use an index:</p><pre class="code">SELECT name FROM instructors WHERE salary BETWEEN 80000 AND 95000;</pre><ul class="spec"><li><b>Create:</b> an index so the plan shows <code>SEARCH instructors USING ...</code>.</li></ul>',
       solution: `CREATE INDEX idx_instr_salary ON instructors(salary);`,
       plan: { query: `SELECT name FROM instructors WHERE salary BETWEEN 80000 AND 95000`, mustContain: 'SEARCH instructors USING' },
-      hints: ['B+ tree indexes keep keys in order, so they can find ranges.', 'Index the salary column.']
+      hints: ['B+ tree indexes keep keys in order, so they can find ranges.', 'Index the salary column.'],
+      explain: `<p><b>The idea:</b> A B+ tree keeps values in sorted order. So an index on <code>salary</code> also helps range conditions like BETWEEN, not only <code>=</code>.</p><p><b>How it works:</b> <code>CREATE INDEX idx_instr_salary ON instructors(salary)</code> sorts the salaries. For <code>BETWEEN 80000 AND 95000</code>, the database finds 80000 in the tree. Then it reads forward until it passes 95000. The plan becomes <code>SEARCH instructors USING INDEX ... (salary&gt;? AND salary&lt;?)</code>.</p><p><b>Common mistake:</b> Thinking indexes only work with <code>=</code>. They also work with <code>&lt;</code>, <code>&gt;</code> and BETWEEN, because the values are sorted.</p>`
     },
     {
       id: 'd12-4', level: 2,
       prompt: '<p>There is an index on <code>instructors(hire_date)</code>. This query cannot use it, because it puts a function on the column:</p><pre class="code">SELECT name, hire_date FROM instructors WHERE substr(hire_date, 1, 4) = \'2017\';</pre><p>Rewrite it. It must return the same rows. Use a condition on <code>hire_date</code> with no function on it (a sargable condition).</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>hire_date</code></li></ul>',
       solution: `SELECT name, hire_date FROM instructors WHERE hire_date >= '2017-01-01' AND hire_date < '2018-01-01';`,
-      hints: ['Do not put any function on hire_date.', 'Dates in YYYY-MM-DD text sort correctly as text, so a range works.', "hire_date >= '2017-01-01' AND hire_date < '2018-01-01'"]
+      hints: ['Do not put any function on hire_date.', 'Dates in YYYY-MM-DD text sort correctly as text, so a range works.', "hire_date >= '2017-01-01' AND hire_date < '2018-01-01'"],
+      explain: `<p><b>The idea:</b> A function on the column, like <code>substr(hire_date, 1, 4)</code>, hides the column from the index. Write the same filter as a range on the plain column instead.</p><p><b>How it works:</b> "Hired in 2017" means the date is on or after <code>'2017-01-01'</code> and before <code>'2018-01-01'</code>. Dates in YYYY-MM-DD format sort correctly as text. So <code>hire_date &gt;= '2017-01-01' AND hire_date &lt; '2018-01-01'</code> returns the same rows, and the index on <code>hire_date</code> can be used.</p><p><b>Common mistake:</b> Writing <code>hire_date &lt;= '2017-12-31'</code>. It misses a value like <code>'2017-12-31 14:00'</code> if a time is stored. Using <code>&lt; '2018-01-01'</code> is safer.</p>`
     },
     {
       id: 'd12-5', level: 2,
       prompt: '<p>Rewrite this query so <code>salary</code> stands alone on one side of the comparison. It must return the same rows:</p><pre class="code">SELECT name, salary FROM instructors WHERE salary * 12 &gt; 1000000;</pre><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>salary</code></li></ul>',
       solution: `SELECT name, salary FROM instructors WHERE salary > 1000000 / 12.0;`,
-      hints: ['Move the 12 to the other side: divide both sides by 12.', 'Write 12.0, so SQLite does not do whole-number division.', 'WHERE salary > 1000000 / 12.0']
+      hints: ['Move the 12 to the other side: divide both sides by 12.', 'Write 12.0, so SQLite does not do whole-number division.', 'WHERE salary > 1000000 / 12.0'],
+      explain: `<p><b>The idea:</b> Move the math to the other side of the comparison. Then <code>salary</code> stands alone, and an index on salary could be used.</p><p><b>How it works:</b> <code>salary * 12 &gt; 1000000</code> means the same as <code>salary &gt; 1000000 / 12.0</code>. We divide both sides by 12. Using <code>12.0</code> keeps the decimals: 1000000 / 12.0 is about 83333.33.</p><p><b>Common mistake:</b> Writing <code>1000000 / 12</code>. In SQLite this is integer division and gives 83333, not 83333.33. A salary of 83333.2 would then be kept by mistake, but 83333.2 × 12 is less than 1000000.</p>`
     },
     {
       id: 'd12-6', level: 2, kind: 'script',
@@ -178,34 +183,39 @@ FROM students;`
       setup: `CREATE INDEX idx_pay_date_student ON payments(paid_on, student_id);`,
       solution: `CREATE INDEX idx_pay_student_method ON payments(student_id, method);`,
       plan: { query: `SELECT * FROM payments WHERE student_id = 1010 AND method = 'card'`, mustContain: 'idx_pay_student_method' },
-      hints: ['The old index starts with paid_on. The query does not filter on paid_on (leftmost-prefix rule).', 'Both filtered columns use =, so both can go into the index.', 'CREATE INDEX idx_pay_student_method ON payments(student_id, method);']
+      hints: ['The old index starts with paid_on. The query does not filter on paid_on (leftmost-prefix rule).', 'Both filtered columns use =, so both can go into the index.', 'CREATE INDEX idx_pay_student_method ON payments(student_id, method);'],
+      explain: `<p><b>The idea:</b> The leftmost-prefix rule: an index helps only if the query filters on its first column. The old index starts with <code>paid_on</code>, but the query filters on <code>student_id</code> and <code>method</code>.</p><p><b>How it works:</b> <code>CREATE INDEX idx_pay_student_method ON payments(student_id, method)</code> starts with <code>student_id</code>. The database finds student 1010 in the index. Inside that part, the rows are sorted by <code>method</code>, so it finds <code>'card'</code> quickly too. The plan now uses this index for both conditions.</p><p><b>Common mistake:</b> Putting the columns in the wrong order, or adding <code>student_id</code> as the second column of an index that starts with <code>paid_on</code>. The first column must be one the WHERE uses with <code>=</code>.</p>`
     },
     {
       id: 'd12-7', level: 3, kind: 'script',
       prompt: '<p>Create one index that makes this query <strong>covering</strong>. Covering means the database reads only the index, not the table:</p><pre class="code">SELECT student_id, paid_on FROM payments\nWHERE student_id = 1005 AND paid_on &gt;= \'2026-01-01\';</pre><ul class="spec"><li><b>Create:</b> an index so the plan says <code>USING COVERING INDEX</code>.</li></ul>',
       solution: `CREATE INDEX idx_pay_student_date ON payments(student_id, paid_on);`,
       plan: { query: `SELECT student_id, paid_on FROM payments WHERE student_id = 1005 AND paid_on >= '2026-01-01'`, mustContain: 'USING COVERING INDEX' },
-      hints: ['The index must hold every column the query uses: student_id and paid_on.', 'Put the column with = first, and the range column last.', 'CREATE INDEX ... ON payments(student_id, paid_on);']
+      hints: ['The index must hold every column the query uses: student_id and paid_on.', 'Put the column with = first, and the range column last.', 'CREATE INDEX ... ON payments(student_id, paid_on);'],
+      explain: `<p><b>The idea:</b> A covering index holds every column the query needs. The database answers from the index alone and never opens the table.</p><p><b>How it works:</b> The query filters on <code>student_id</code> and <code>paid_on</code>, and returns only those two columns. <code>CREATE INDEX idx_pay_student_date ON payments(student_id, paid_on)</code> stores exactly these two. The database finds student 1005, reads the dates from 2026-01-01 onward, and returns them. The plan says <code>USING COVERING INDEX</code>.</p><p><b>Common mistake:</b> An index on <code>student_id</code> only. It finds the rows, but then it must read the table to get <code>paid_on</code>. So it is not covering.</p>`
     },
     {
       id: 'd12-8', level: 3, kind: 'script',
       prompt: '<p>The app searches cities without caring about capital letters:</p><pre class="code">SELECT name FROM students WHERE lower(city) = \'cairo\';</pre><p>A normal index on <code>city</code> does not help, because the query puts <code>lower()</code> on the column.</p><ul class="spec"><li><b>Create:</b> an <strong>expression index</strong> (an index on <code>lower(city)</code>) so the plan shows <code>SEARCH students USING ...</code>.</li></ul>',
       solution: `CREATE INDEX idx_students_lower_city ON students(lower(city));`,
       plan: { query: `SELECT name FROM students WHERE lower(city) = 'cairo'`, mustContain: 'SEARCH students USING' },
-      hints: ['You can index an expression, not only a column.', 'The expression in the index must be exactly the same as in the query.', 'CREATE INDEX idx_students_lower_city ON students(lower(city));']
+      hints: ['You can index an expression, not only a column.', 'The expression in the index must be exactly the same as in the query.', 'CREATE INDEX idx_students_lower_city ON students(lower(city));'],
+      explain: `<p><b>The idea:</b> The query searches on <code>lower(city)</code>, not on <code>city</code>. So index the expression itself. Then the database can look up the lower-case value directly.</p><p><b>How it works:</b> <code>CREATE INDEX idx_students_lower_city ON students(lower(city))</code> stores the lower-case version of every city. When the query asks for <code>lower(city) = 'cairo'</code>, the expression matches the index exactly. The plan becomes <code>SEARCH students USING INDEX idx_students_lower_city</code>.</p><p><b>Common mistake:</b> Creating a plain index <code>ON students(city)</code>. The query does not filter on <code>city</code> but on <code>lower(city)</code>, so the plain index is not used.</p>`
     },
     {
       id: 'd12-9', level: 3, kind: 'script',
       prompt: '<p>Teachers often list the students who have no grade yet (grade is NULL) in one section:</p><pre class="code">SELECT student_id FROM enrollments WHERE grade IS NULL AND section_id = 30;</pre><ul class="spec"><li><b>Create:</b> a <strong>partial index</strong> named <code>idx_in_progress</code> on <code>section_id</code>. It must only include rows where <code>grade IS NULL</code>. The plan must use it.</li><li><b>Note:</b> a partial index stores only the rows that match its own WHERE.</li></ul>',
       solution: `CREATE INDEX idx_in_progress ON enrollments(section_id) WHERE grade IS NULL;`,
       plan: { query: `SELECT student_id FROM enrollments WHERE grade IS NULL AND section_id = 30`, mustContain: 'idx_in_progress' },
-      hints: ['A partial index has its own WHERE at the end of CREATE INDEX.', 'CREATE INDEX idx_in_progress ON enrollments(section_id) WHERE ...;']
+      hints: ['A partial index has its own WHERE at the end of CREATE INDEX.', 'CREATE INDEX idx_in_progress ON enrollments(section_id) WHERE ...;'],
+      explain: `<p><b>The idea:</b> A partial index stores only some rows: the ones that match its own WHERE. It is smaller and faster when the query always asks for the same kind of rows.</p><p><b>How it works:</b> <code>CREATE INDEX idx_in_progress ON enrollments(section_id) WHERE grade IS NULL</code> indexes only rows with no grade yet. The query also says <code>grade IS NULL</code>, so the database knows the index has every row it needs. It finds section 30 in this small index.</p><p><b>Common mistake:</b> Forgetting the <code>WHERE grade IS NULL</code> part. Then it is a normal index, not a partial one. Another mistake: <code>WHERE grade = NULL</code>, which never matches anything.</p>`
     },
     {
       id: 'd12-10', level: 2,
       prompt: '<p>Before you choose indexes, measure how many different values a column has (its selectivity). Return one row about the <code>payments</code> table.</p><ul class="spec"><li><b>Columns:</b> <code>total_rows</code>, <code>distinct_students</code> (different <code>student_id</code> values), <code>distinct_methods</code> (different methods), <code>method_selectivity</code></li><li><b>Note:</b> <code>method_selectivity</code> = 1.0 divided by the number of different methods, rounded to 3 decimals.</li></ul>',
       solution: `SELECT COUNT(*) AS total_rows, COUNT(DISTINCT student_id) AS distinct_students, COUNT(DISTINCT method) AS distinct_methods, ROUND(1.0 / COUNT(DISTINCT method), 3) AS method_selectivity FROM payments;`,
-      hints: ['COUNT(DISTINCT column) counts the different values.', 'Use 1.0, so the division keeps decimals.', 'ROUND(1.0 / COUNT(DISTINCT method), 3)']
+      hints: ['COUNT(DISTINCT column) counts the different values.', 'Use 1.0, so the division keeps decimals.', 'ROUND(1.0 / COUNT(DISTINCT method), 3)'],
+      explain: `<p><b>The idea:</b> Selectivity tells you if an index is useful. A column with few different values, like <code>method</code>, matches many rows per value. So an index on it helps little.</p><p><b>How it works:</b> <code>COUNT(*)</code> counts all payments. <code>COUNT(DISTINCT student_id)</code> and <code>COUNT(DISTINCT method)</code> count the different values. <code>ROUND(1.0 / COUNT(DISTINCT method), 3)</code> gives the share of rows each method matches: with 3 methods, about 0.333.</p><p><b>Common mistake:</b> Writing <code>1 / COUNT(DISTINCT method)</code>. With whole numbers, SQLite gives 0. Use <code>1.0</code> to get a decimal answer.</p>`
     }
   ],
   quiz: [

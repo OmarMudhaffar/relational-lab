@@ -196,7 +196,8 @@ WHERE NOT EXISTS (
         'First write a query that returns only the average salary.',
         'Put that query in brackets on the right side of >.',
         'WHERE salary > (SELECT AVG(...) FROM ...)'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> First compute one number, the average. Then compare each row with it. A scalar subquery does this.</p><p><b>How it works:</b> The subquery <code>(SELECT AVG(salary) FROM instructors)</code> runs once and returns one number. <code>FROM instructors WHERE salary &gt; (...)</code> keeps instructors above it.</p><p><b>Common mistake:</b> Writing <code>WHERE salary &gt; AVG(salary)</code> gives an error. Aggregates cannot be used directly in WHERE.</p>"
     },
     {
       id: 'd5-2',
@@ -207,7 +208,8 @@ WHERE NOT EXISTS (
         'The building is in departments. The student is in students. dept_id links them.',
         'The inner query should return a list of dept_id values.',
         'WHERE dept_id IN (SELECT dept_id FROM departments WHERE building IN (...))'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>IN (subquery)</code> compares each value with a list that another query builds.</p><p><b>How it works:</b> The subquery returns the dept_id of departments in Turing Hall or Tesla Center. <code>FROM students WHERE dept_id IN (...)</code> keeps students whose major is in that list.</p><p><b>Common mistake:</b> Writing <code>dept_id = (SELECT dept_id ...)</code> fails when the subquery returns more than one value. Use IN for a list.</p>"
     },
     {
       id: 'd5-3',
@@ -218,7 +220,8 @@ WHERE NOT EXISTS (
         'Questions with "never" or "no" fit NOT EXISTS well.',
         'The inner query looks for a section of the current course.',
         'WHERE NOT EXISTS (SELECT 1 FROM sections s WHERE s.course_id = c.course_id)'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>NOT EXISTS</code> asks: \"is there no matching row?\". It fits \"never offered\".</p><p><b>How it works:</b> <code>FROM courses c</code> takes each course. For each one, the subquery looks for a section with the same course_id. <code>NOT EXISTS</code> keeps the course when no section is found.</p><p><b>Common mistake:</b> Writing <code>course_id NOT IN (SELECT course_id FROM sections)</code> works here. But it breaks if that list ever contains a NULL.</p>"
     },
     {
       id: 'd5-4',
@@ -229,7 +232,8 @@ WHERE NOT EXISTS (
         'Did you get 0 rows? Read the lesson part about the NOT IN trap.',
         'NOT EXISTS is safe with NULLs.',
         'Or keep NOT IN, but add WHERE instructor_id IS NOT NULL inside the subquery.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> This is the NOT IN trap. The list of section teachers contains a NULL, so use <code>NOT EXISTS</code>.</p><p><b>How it works:</b> <code>FROM instructors i</code> takes each teacher. The subquery looks for a section where <code>s.instructor_id = i.instructor_id</code>. <code>NOT EXISTS</code> keeps teachers with no such section. NULLs simply never match, so they cause no harm.</p><p><b>Common mistake:</b> Writing <code>instructor_id NOT IN (SELECT instructor_id FROM sections)</code> returns no rows at all, because the list contains NULL.</p>"
     },
     {
       id: 'd5-5',
@@ -240,7 +244,8 @@ WHERE NOT EXISTS (
         'A JOIN repeats a student who paid cash twice. EXISTS keeps each student once.',
         `The inner query needs two conditions: the same student, and method = 'cash'.`,
         'WHERE EXISTS (SELECT 1 FROM payments p WHERE p.student_id = st.student_id AND ...)'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>EXISTS</code> checks \"is there at least one?\". Each student appears once, however many cash payments they made.</p><p><b>How it works:</b> <code>FROM students st</code> takes each student. The subquery looks for a payment by that student with <code>method = 'cash'</code>. <code>EXISTS</code> keeps the student if one is found.</p><p><b>Common mistake:</b> A <code>JOIN</code> with payments repeats a student once per cash payment, unless you add DISTINCT.</p>"
     },
     {
       id: 'd5-6',
@@ -251,7 +256,8 @@ WHERE NOT EXISTS (
         'The average is different for each department. So the subquery must know the department of the outer row.',
         'Use two aliases for the same table, for example i (outer) and i2 (inner).',
         'WHERE i.salary > (SELECT AVG(i2.salary) FROM instructors i2 WHERE i2.dept_id = i.dept_id)'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A correlated subquery runs again for each outer row, using that row's values.</p><p><b>How it works:</b> <code>FROM instructors i</code> takes each teacher. For that row, the subquery computes <code>AVG(i2.salary)</code> of the same department (<code>i2.dept_id = i.dept_id</code>). <code>WHERE i.salary &gt; (...)</code> keeps people above their own department's average.</p><p><b>Common mistake:</b> Leaving out <code>WHERE i2.dept_id = i.dept_id</code> compares everyone with the average of all instructors.</p>"
     },
     {
       id: 'd5-7',
@@ -262,7 +268,8 @@ WHERE NOT EXISTS (
         'You need two steps: count per student, then take the average of those counts.',
         'Put the count per student in a subquery inside FROM.',
         'SELECT ROUND(AVG(n), 2) FROM (SELECT student_id, COUNT(*) AS n FROM enrollments GROUP BY ...) AS t'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> This is an average of counts, so count first, then average. A subquery in FROM (a derived table) does the first step.</p><p><b>How it works:</b> The inner query <code>GROUP BY student_id</code> gives one row per student with <code>COUNT(*) AS n</code>. The outer query treats it as a table named <code>per_student</code>. <code>ROUND(AVG(n), 2)</code> averages those counts.</p><p><b>Common mistake:</b> Writing <code>AVG(COUNT(*))</code> gives an error. You cannot put one aggregate directly inside another.</p>"
     },
     {
       id: 'd5-8',
@@ -273,7 +280,8 @@ WHERE NOT EXISTS (
         'Make two lists: courses that are a prerequisite, and courses that have a prerequisite.',
         'You want the first list minus the second list.',
         'SELECT prereq_id FROM prereqs EXCEPT SELECT course_id FROM prereqs'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> \"In list A but not in list B\" is exactly <code>EXCEPT</code>.</p><p><b>How it works:</b> The first query lists every course that is a prerequisite (<code>prereq_id</code>). The second lists every course that has a prerequisite (<code>course_id</code>). <code>EXCEPT</code> keeps the rows of the first list that are not in the second.</p><p><b>Common mistake:</b> Writing <code>INTERSECT</code> keeps courses that are in both lists. That is the opposite of a root course.</p>"
     },
     {
       id: 'd5-9',
@@ -284,7 +292,8 @@ WHERE NOT EXISTS (
         'You need the name, so join enrollments to students.',
         'The section average changes for each row. Use a correlated subquery on enrollments with a second alias.',
         'AVG skips NULL scores, and NULL > anything is not TRUE. So rows with no score drop out by themselves.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Compare each score with the average of its own section. A correlated subquery does this.</p><p><b>How it works:</b> <code>FROM enrollments e JOIN students st</code> adds the student name. For each row, the subquery computes <code>AVG(e2.score)</code> where <code>e2.section_id = e.section_id</code>. <code>WHERE e.score &gt; (...)</code> keeps scores above that section's average.</p><p><b>Common mistake:</b> Using one average for all sections compares students with the wrong group.</p>"
     },
     {
       id: 'd5-10',
@@ -295,7 +304,8 @@ WHERE NOT EXISTS (
         'Change "took every course" into "there is no Biology course that they did not take".',
         'Use two NOT EXISTS, one inside the other. The outer one goes over the Biology courses. The inner one looks for an enrollment of this student in that course.',
         'Another way: GROUP BY student and compare COUNT(DISTINCT course_id) with (SELECT COUNT(*) FROM courses WHERE dept_id = 4).'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> \"Took every course\" is relational division. Say it as a double negative: there is no Biology course that the student did not take.</p><p><b>How it works:</b> The outer query takes each student. The middle <code>NOT EXISTS</code> looks for a Biology course (<code>c.dept_id = 4</code>). The inner <code>NOT EXISTS</code> checks that the student has no enrollment in a section of that course. If no such missing course exists, the student took them all.</p><p><b>Common mistake:</b> Writing <code>course_id IN (Biology courses)</code> finds students who took at least one Biology course, not all of them.</p>"
     }
   ],
   quiz: [

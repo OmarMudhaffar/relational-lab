@@ -207,7 +207,8 @@ ORDER BY total_salary DESC;`
         "Step 1, inside WITH: group the instructors by dept_id and compute AVG(salary).",
         "Step 2: join the WITH result to departments to get the name.",
         "WITH dept_pay AS (SELECT dept_id, AVG(salary) AS avg_salary FROM instructors GROUP BY dept_id) SELECT ..."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> First compute one average per department. Then filter those averages. A CTE lets you do this in two clear, named steps.</p><p><b>How it works:</b> The step <code>dept_pay</code> groups instructors by <code>dept_id</code> and computes <code>AVG(salary)</code> for each group. The main query treats <code>dept_pay</code> like a small table. It joins it to <code>departments</code> to get the name. Then <code>WHERE dp.avg_salary &gt; 80000</code> keeps only the rich departments.</p><p><b>Common mistake:</b> Writing <code>WHERE AVG(salary) &gt; 80000</code> in one query. WHERE runs before grouping, so it cannot use AVG. Use a CTE (or HAVING) instead.</p>"
     },
     {
       id: 'd6-2', level: 1,
@@ -217,7 +218,8 @@ ORDER BY total_salary DESC;`
         "You want one row per instructor. So do not use GROUP BY.",
         "Use AVG(...) OVER (PARTITION BY ...).",
         "Remember WHERE dept_id IS NOT NULL."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You want a group average, but you also want to keep every instructor row. A window function does exactly this. GROUP BY would squash the rows together.</p><p><b>How it works:</b> <code>WHERE dept_id IS NOT NULL</code> removes the instructor without a department. Then <code>AVG(salary) OVER (PARTITION BY dept_id)</code> computes the average of each department. Every row gets the average of its own department, and no row disappears.</p><p><b>Common mistake:</b> Using <code>GROUP BY dept_id</code>. Then you get one row per department, and you lose the instructor names.</p>"
     },
     {
       id: 'd6-3', level: 1,
@@ -227,7 +229,8 @@ ORDER BY total_salary DESC;`
         "The numbering starts again in each department. That is PARTITION BY.",
         "Titles are unique, so ROW_NUMBER gives the same result every time.",
         "ROW_NUMBER() OVER (PARTITION BY dept_id ORDER BY title)"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You need numbers 1, 2, 3 that start again in each department. That is <code>ROW_NUMBER()</code> with a partition.</p><p><b>How it works:</b> <code>PARTITION BY dept_id</code> splits the courses into one group per department. <code>ORDER BY title</code> sorts each group A to Z. <code>ROW_NUMBER()</code> then gives 1 to the first title in each group, 2 to the next, and so on.</p><p><b>Common mistake:</b> Forgetting <code>PARTITION BY dept_id</code>. Then the numbers run from 1 to 23 across all courses and never start again.</p>"
     },
     {
       id: 'd6-4', level: 2,
@@ -237,7 +240,8 @@ ORDER BY total_salary DESC;`
         "\"Same rank, then skip the next number\" describes one of the three ranking functions.",
         "RANK() skips numbers after a tie. DENSE_RANK() does not.",
         "RANK() OVER (PARTITION BY dept_id ORDER BY credits DESC)"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You need a ranking where ties share a place and the next place is skipped (1, 1, 3). That is exactly how <code>RANK()</code> works.</p><p><b>How it works:</b> <code>PARTITION BY dept_id</code> makes a separate ranking for each department. <code>ORDER BY credits DESC</code> puts the course with the most credits first. Courses with the same credits get the same rank, and the next rank jumps.</p><p><b>Common mistake:</b> Using <code>DENSE_RANK()</code>, which gives 1, 1, 2 (no gap). Or using <code>ROW_NUMBER()</code>, which gives different numbers to equal credits.</p>"
     },
     {
       id: 'd6-5', level: 2,
@@ -247,7 +251,8 @@ ORDER BY total_salary DESC;`
         "Rank the students inside each section. Then keep rank 1.",
         "WHERE cannot use a window function. Put the ranking in a WITH step first.",
         "Use RANK, not ROW_NUMBER, so ties stay."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> This is the \"top N per group\" pattern. Rank the rows inside each group, then keep rank 1. You cannot filter on a window function in WHERE, so the ranking goes in a CTE first.</p><p><b>How it works:</b> The CTE <code>ranked</code> keeps only rows with a score. It gives each enrollment a <code>RANK()</code> inside its section, highest score first. The main query keeps <code>WHERE pos = 1</code>. RANK gives the same rank to equal scores, so a tie at the top shows both students.</p><p><b>Common mistake:</b> Using <code>MAX(score)</code> with <code>GROUP BY section_id</code> only. You get the best score, but not the student who made it.</p>"
     },
     {
       id: 'd6-6', level: 2,
@@ -258,7 +263,8 @@ ORDER BY total_salary DESC;`
         "A running total is SUM with an ORDER BY inside OVER.",
         "Start a new total for each student with PARTITION BY.",
         "SUM(amount) OVER (PARTITION BY student_id ORDER BY paid_on, payment_id)"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A running total is a SUM over \"all rows up to this one\". A window with ORDER BY gives exactly that.</p><p><b>How it works:</b> <code>PARTITION BY student_id</code> keeps each student's payments separate. <code>ORDER BY paid_on, payment_id</code> decides which payment counts as \"earlier\". With ORDER BY inside OVER, <code>SUM(amount)</code> adds the current payment to all earlier ones. The final <code>ORDER BY</code> sorts the output the same way, so you can read it.</p><p><b>Common mistake:</b> Leaving out <code>ORDER BY</code> inside OVER. Then every row shows the student's full total, not a running total.</p>"
     },
     {
       id: 'd6-7', level: 2,
@@ -268,7 +274,8 @@ ORDER BY total_salary DESC;`
         "LAG gives you the date of the previous payment.",
         "Inside OVER, use PARTITION BY student_id and ORDER BY paid_on.",
         "julianday(paid_on) - julianday(LAG(paid_on) OVER (...))"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You compare each payment with the one before it. <code>LAG()</code> reads a value from the previous row in the window.</p><p><b>How it works:</b> <code>LAG(paid_on) OVER (PARTITION BY student_id ORDER BY paid_on)</code> gives the date of the same student's previous payment. <code>julianday()</code> turns both dates into day numbers. Subtracting them gives the days in between. A student's first payment has no previous row, so LAG gives NULL, and the result is NULL too.</p><p><b>Common mistake:</b> Forgetting <code>PARTITION BY student_id</code>. Then LAG reads the previous payment of a different student.</p>"
     },
     {
       id: 'd6-8', level: 2,
@@ -278,7 +285,8 @@ ORDER BY total_salary DESC;`
         "A chain of unknown length needs a recursive CTE (WITH RECURSIVE).",
         "Start with the direct prerequisites of CS420. Then add the prerequisites of the courses you already found.",
         "WITH RECURSIVE chain(course_id) AS (SELECT prereq_id FROM prereqs WHERE course_id = 'CS420' UNION SELECT p.prereq_id FROM prereqs p JOIN chain ...)"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Prerequisites form a chain with no fixed length. A recursive CTE follows a chain step by step until there are no more steps.</p><p><b>How it works:</b> The first SELECT is the start: the direct prerequisites of CS420. The second SELECT runs again and again. Each time it joins <code>prereqs</code> to the courses already found in <code>chain</code>, and adds their prerequisites. It stops when no new courses appear. <code>UNION</code> (not UNION ALL) removes duplicates, so each course appears once.</p><p><b>Common mistake:</b> Writing a normal JOIN of prereqs to itself. That finds only two levels, not \"any level\".</p>"
     },
     {
       id: 'd6-9', level: 3,
@@ -288,7 +296,8 @@ ORDER BY total_salary DESC;`
         "Start with every instructor whose mentor_id IS NULL, with depth 0.",
         "Then add the instructors whose mentor is already in the tree, with depth + 1.",
         "JOIN tree t ON i.mentor_id = t.instructor_id"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Mentors form a tree. Start at the top (no mentor) and walk down one level at a time, counting the levels.</p><p><b>How it works:</b> The start rows are the instructors with <code>mentor_id IS NULL</code>, at depth 0. The recursive part joins <code>instructors</code> to the rows already in <code>tree</code>. It finds people whose <code>mentor_id</code> is someone in the tree, and gives them <code>t.depth + 1</code>. It stops when nobody new is found.</p><p><b>Common mistake:</b> Joining in the wrong direction, <code>i.instructor_id = t.mentor_id</code>. That walks up the tree instead of down.</p>"
     },
     {
       id: 'd6-10', level: 3,
@@ -298,7 +307,8 @@ ORDER BY total_salary DESC;`
         "First group by department to get each total.",
         "The grand total can come from a window over the grouped rows: SUM(SUM(salary)) OVER ().",
         "Multiply by 100.0 (not 100) so the division keeps decimals. Then ROUND(..., 1)."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You need each department's total and also the grand total of all departments. A window over the grouped result can see all groups at once.</p><p><b>How it works:</b> The JOIN keeps instructors that have a department. <code>GROUP BY d.name</code> makes one row per department with <code>SUM(i.salary)</code>. Then <code>SUM(SUM(i.salary)) OVER ()</code> adds up those group totals. <code>OVER ()</code> means \"over all rows\". Dividing gives the share. <code>100.0</code> keeps decimals, and <code>ROUND(..., 1)</code> rounds the result.</p><p><b>Common mistake:</b> Dividing by <code>SUM(i.salary)</code> without OVER. Inside a group that is the same number, so every department shows 100.</p>"
     }
   ],
   quiz: [

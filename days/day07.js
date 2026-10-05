@@ -179,7 +179,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "\"Show every department\" means the departments table must keep all its rows.",
         "LEFT JOIN from departments to students. Then GROUP BY department.",
         "COUNT(*) gives 1 for an empty department. Count a column from students instead."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> \"Show every department, even with 0 students\" means you must keep departments that have no match. That calls for a LEFT JOIN.</p><p><b>How it works:</b> <code>departments LEFT JOIN students</code> keeps every department. A department without students gets one row with NULL student columns. <code>GROUP BY</code> makes one row per department. <code>COUNT(s.student_id)</code> counts only real students, so the empty departments show 0.</p><p><b>Common mistake:</b> Using <code>COUNT(*)</code>. It counts the NULL row too, so empty departments show 1 instead of 0.</p>"
     },
     {
       id: 'd7-2', level: 1,
@@ -189,7 +190,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "To search inside text, use LIKE.",
         "% matches any number of characters, before or after the word.",
         "WHERE title LIKE '%Systems%'"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You search for a word inside text. That is a job for <code>LIKE</code> with the <code>%</code> wildcard.</p><p><b>How it works:</b> <code>%</code> means \"any text, or nothing\". So <code>'%Systems%'</code> matches any title that has \"Systems\" anywhere: at the start, middle or end.</p><p><b>Common mistake:</b> Writing <code>title = 'Systems'</code>. That only matches a title that is exactly the word Systems, so it finds nothing.</p>"
     },
     {
       id: 'd7-3', level: 2,
@@ -199,7 +201,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "You need one row per enrollment plus one value per section. GROUP BY would merge the rows.",
         "A window function with PARTITION BY section_id keeps every row.",
         "Remove rows without a score first: WHERE score IS NOT NULL."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Each row needs the average of its section next to it. A window keeps the rows and adds the group average.</p><p><b>How it works:</b> <code>WHERE score IS NOT NULL</code> removes the courses still in progress. Then <code>AVG(score) OVER (PARTITION BY section_id)</code> computes each section's average and puts it on every row of that section. <code>ROUND(..., 2)</code> keeps two decimals.</p><p><b>Common mistake:</b> Using <code>GROUP BY section_id</code>. That returns one row per section, and you lose the student rows.</p>"
     },
     {
       id: 'd7-4', level: 1,
@@ -209,7 +212,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "\"No advisor\" means the advisor_id value is missing (NULL).",
         "You cannot test NULL with =.",
         "WHERE advisor_id IS NULL"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> \"Has no advisor\" means the advisor column is empty, which is NULL. NULL needs its own test.</p><p><b>How it works:</b> <code>WHERE advisor_id IS NULL</code> keeps the students whose advisor is unknown. The SELECT shows their name and city.</p><p><b>Common mistake:</b> Writing <code>advisor_id = NULL</code>. A comparison with NULL is never TRUE, so you get no rows at all.</p>"
     },
     {
       id: 'd7-5', level: 2,
@@ -219,7 +223,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "Count the sections of each instructor: join, then GROUP BY instructor.",
         "A condition on a count goes in HAVING, not in WHERE.",
         "Group by instructor_id and name, in case two instructors have the same name."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Count sections per instructor, then keep only the big counts. Filtering on a count needs HAVING.</p><p><b>How it works:</b> The JOIN pairs each instructor with each section they teach. <code>GROUP BY i.instructor_id, i.name</code> makes one row per instructor. <code>COUNT(*)</code> counts their sections. <code>HAVING COUNT(*) &gt;= 3</code> keeps only those with 3 or more.</p><p><b>Common mistake:</b> Putting <code>COUNT(*) &gt;= 3</code> in WHERE. WHERE runs before the rows are grouped, so the database gives an error.</p>"
     },
     {
       id: 'd7-6', level: 2,
@@ -229,7 +234,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "Both names are in the same table. So you need the table twice.",
         "Give the two copies different aliases, for example i and m.",
         "JOIN instructors m ON m.instructor_id = i.mentor_id"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> The mentor is also an instructor, in the same table. So you join the table to itself, with two different aliases.</p><p><b>How it works:</b> <code>i</code> is the instructor and <code>m</code> is the mentor. The condition <code>m.instructor_id = i.mentor_id</code> finds the mentor's row. An INNER JOIN drops instructors without a mentor, which is what the question asks.</p><p><b>Common mistake:</b> Writing <code>m.mentor_id = i.instructor_id</code>. That reverses the roles and shows who each person mentors.</p>"
     },
     {
       id: 'd7-7', level: 1,
@@ -239,7 +245,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "\"Never\" is a sign for NOT EXISTS (or LEFT JOIN ... IS NULL).",
         "Use NOT EXISTS with a subquery on enrollments that links to the outer student.",
         "WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.student_id = st.student_id)"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> \"Never enrolled\" means: no matching row exists in enrollments. <code>NOT EXISTS</code> says exactly that.</p><p><b>How it works:</b> For each student, the inner query looks for an enrollment with the same <code>student_id</code>. If it finds none, <code>NOT EXISTS</code> is TRUE and the student is kept.</p><p><b>Common mistake:</b> Using an INNER JOIN with enrollments. The join keeps only students who <em>have</em> enrollments, which is the opposite of the question.</p>"
     },
     {
       id: 'd7-8', level: 2,
@@ -249,7 +256,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "Make the label with a CASE expression.",
         "Then group by that label.",
         "CASE WHEN grade IS NULL THEN 'in progress' ELSE 'graded' END"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You make a new label for each row, then count rows per label. CASE builds the label, and GROUP BY counts.</p><p><b>How it works:</b> <code>CASE WHEN grade IS NULL THEN 'in progress' ELSE 'graded' END</code> gives every enrollment one of two labels. <code>GROUP BY status</code> puts rows with the same label together. <code>COUNT(*)</code> counts each group. SQLite lets GROUP BY use the alias <code>status</code>.</p><p><b>Common mistake:</b> Writing <code>WHEN grade = NULL</code>. That is never TRUE, so every row is labeled graded.</p>"
     },
     {
       id: 'd7-9', level: 2,
@@ -259,7 +267,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "Path: students → enrollments → sections → instructors.",
         "A student may have taken several of his sections. Remove the copies.",
         "Use DISTINCT, or an EXISTS subquery."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> The link from a student to a teacher passes through several tables. You follow the path: students → enrollments → sections → instructors.</p><p><b>How it works:</b> Each JOIN moves one step along the path using the foreign keys. <code>WHERE i.name = 'Marco Rossi'</code> keeps only his sections. A student can take several of his sections, so <code>DISTINCT</code> shows each name once.</p><p><b>Common mistake:</b> Forgetting <code>DISTINCT</code>. A student who took two of his sections then appears twice.</p>"
     },
     {
       id: 'd7-10', level: 2,
@@ -269,7 +278,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "You want the cities that are in both lists.",
         "INTERSECT keeps the values that are in both lists.",
         "INTERSECT treats NULLs as equal. So remove NULL cities in both halves."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You want cities that appear in two lists at the same time. That is what <code>INTERSECT</code> does.</p><p><b>How it works:</b> The first SELECT lists the cities of Computer Science students. The second lists the cities of Mathematics students. <code>INTERSECT</code> keeps only cities in both lists, and removes duplicates. <code>city IS NOT NULL</code> ignores unknown cities.</p><p><b>Common mistake:</b> Writing <code>WHERE dept_id = 1 AND dept_id = 2</code>. One student cannot be in two departments, so this returns nothing.</p>"
     },
     {
       id: 'd7-11', level: 3,
@@ -279,7 +289,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "Step 1: the average score of each student. Step 2: the highest of those averages.",
         "A WITH step lets you use the averages twice.",
         "WHERE avg_score = (SELECT MAX(avg_score) FROM avgs). ORDER BY ... LIMIT 1 would hide ties."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> First compute each student's average. Then find the largest average and keep the students who have it. A CTE lets you use the averages twice.</p><p><b>How it works:</b> The CTE <code>avgs</code> groups scored enrollments by student and computes <code>AVG(score)</code>. The main query joins <code>avgs</code> to <code>students</code> for the name. The subquery <code>(SELECT MAX(avg_score) FROM avgs)</code> finds the top average. Comparing with <code>=</code> keeps all students who share that top value.</p><p><b>Common mistake:</b> Using <code>ORDER BY avg_score DESC LIMIT 1</code>. If two students share the top average, LIMIT 1 shows only one of them.</p>"
     },
     {
       id: 'd7-12', level: 3,
@@ -290,7 +301,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "strftime('%Y-%m', paid_on) turns a date into its month.",
         "First compute the total of each month (GROUP BY in a WITH step). Then compare each month with the one before.",
         "total - LAG(total) OVER (ORDER BY month). Keep only 2026 before grouping."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> First turn payments into one total per month. Then compare each month with the month before. That is a CTE plus <code>LAG()</code>.</p><p><b>How it works:</b> The CTE <code>monthly</code> keeps payments from 2026. <code>strftime('%Y-%m', paid_on)</code> turns each date into a month like 2026-03. It groups by month and sums the amounts. The main query uses <code>LAG(total) OVER (ORDER BY month)</code> to read the previous month's total. Subtracting gives the change. The first month has no previous row, so its change is NULL.</p><p><b>Common mistake:</b> Putting LAG on the raw payments instead of the monthly totals. Then you compare single payments, not months.</p>"
     }
   ],
   quiz: [

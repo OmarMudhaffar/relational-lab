@@ -157,7 +157,8 @@ ORDER BY avg_score DESC;`,
 FROM sqlite_master m, pragma_table_info(m.name) p
 WHERE m.type = 'table' AND m.name IN ('doctors', 'patients')
 ORDER BY tbl, col;`,
-        hints: ['Write two CREATE TABLE statements.', 'Required means NOT NULL. Optional but unique means UNIQUE without NOT NULL.', 'doctor_id INTEGER PRIMARY KEY, name TEXT NOT NULL, specialty TEXT NOT NULL ...']
+        hints: ['Write two CREATE TABLE statements.', 'Required means NOT NULL. Optional but unique means UNIQUE without NOT NULL.', 'doctor_id INTEGER PRIMARY KEY, name TEXT NOT NULL, specialty TEXT NOT NULL ...'],
+      explain: `<p><b>The idea:</b> Each table gets a primary key. Rules from the description become constraints: required means <code>NOT NULL</code>, and "no two the same" means <code>UNIQUE</code>.</p><p><b>How it works:</b> <code>doctor_id INTEGER PRIMARY KEY</code> identifies each doctor. <code>name</code> and <code>specialty</code> get <code>NOT NULL</code> because they are required. In <code>patients</code>, <code>phone TEXT UNIQUE</code> blocks two patients with one phone, but still allows NULL. <code>birth_date</code> has no constraint because it is optional.</p><p><b>Common mistake:</b> Writing <code>phone TEXT NOT NULL UNIQUE</code>. The description says the phone is optional, so NOT NULL is wrong here.</p>`
       },
       {
         id: 'd14-2', level: 2, kind: 'script',
@@ -175,7 +176,8 @@ SELECT 'uniq', group_concat(name, ','), NULL, NULL FROM (
 UNION ALL
 SELECT 'check', (SELECT instr(sql, 'cancelled') > 0 AND instr(sql, 'done') > 0 FROM sqlite_master WHERE name = 'appointments'), NULL, NULL
 ORDER BY what, a;`,
-        hints: ['A foreign key: doctor_id INTEGER NOT NULL REFERENCES doctors(doctor_id).', "status TEXT NOT NULL DEFAULT 'booked' CHECK (status IN ('booked','done','cancelled'))", 'No double booking: add UNIQUE (doctor_id, starts_at) at the end of the column list.']
+        hints: ['A foreign key: doctor_id INTEGER NOT NULL REFERENCES doctors(doctor_id).', "status TEXT NOT NULL DEFAULT 'booked' CHECK (status IN ('booked','done','cancelled'))", 'No double booking: add UNIQUE (doctor_id, starts_at) at the end of the column list.'],
+      explain: `<p><b>The idea:</b> Appointments link a patient to a doctor. This is a 1:N relationship from each side, so the foreign keys go in <code>appointments</code>.</p><p><b>How it works:</b> <code>patient_id INTEGER NOT NULL REFERENCES patients(patient_id)</code> is a required foreign key. <code>doctor_id</code> works the same way. <code>status ... DEFAULT 'booked' CHECK (status IN ('booked','done','cancelled'))</code> fills a value when none is given and allows only three words. <code>UNIQUE (doctor_id, starts_at)</code> stops one doctor from having two appointments at the same time.</p><p><b>Common mistake:</b> Forgetting <code>NOT NULL</code> on the foreign keys. A foreign key alone still allows NULL, so you could save an appointment with no patient.</p>`
       },
       {
         id: 'd14-3', level: 2, kind: 'script',
@@ -186,7 +188,8 @@ ORDER BY what, a;`,
 UNION ALL
 SELECT 'fk', f."from", f."table", coalesce(f."to", f."from") FROM pragma_foreign_key_list('prescriptions') f
 ORDER BY what, a;`,
-        hints: ['A primary key on two columns is written at the end: PRIMARY KEY (appt_id, drug).', 'appt_id INTEGER NOT NULL REFERENCES appointments(appt_id)']
+        hints: ['A primary key on two columns is written at the end: PRIMARY KEY (appt_id, drug).', 'appt_id INTEGER NOT NULL REFERENCES appointments(appt_id)'],
+      explain: `<p><b>The idea:</b> A prescription belongs to one appointment, and one drug appears only once per appointment. So the pair <code>(appt_id, drug)</code> is the primary key: a composite key.</p><p><b>How it works:</b> <code>appt_id ... REFERENCES appointments(appt_id)</code> links each prescription to its appointment. <code>drug</code> and <code>dose</code> are <code>NOT NULL</code>. <code>PRIMARY KEY (appt_id, drug)</code> at the end makes the pair unique. The same drug can still appear in other appointments.</p><p><b>Common mistake:</b> Writing <code>drug TEXT PRIMARY KEY</code>. Then each drug could appear only once in the whole clinic, not once per appointment.</p>`
       },
       {
         id: 'd14-4', level: 2, kind: 'script',
@@ -198,7 +201,8 @@ UPDATE appointments SET status = 'cancelled' WHERE appt_id = 9;
 INSERT INTO appointments (appt_id, patient_id, doctor_id, starts_at) VALUES (12, 2, 4, '2026-10-14 09:30');
 COMMIT;`,
         check: `SELECT appt_id, patient_id, doctor_id, starts_at, status FROM appointments ORDER BY appt_id;`,
-        hints: ['Dates in YYYY-MM-DD HH:MM text compare correctly with <.', 'Only booked appointments become done. Appointment 4 is cancelled and must stay cancelled.', 'Leave status out of the INSERT column list, so the DEFAULT is used.']
+        hints: ['Dates in YYYY-MM-DD HH:MM text compare correctly with <.', 'Only booked appointments become done. Appointment 4 is cancelled and must stay cancelled.', 'Leave status out of the INSERT column list, so the DEFAULT is used.'],
+      explain: `<p><b>The idea:</b> Three changes that belong together go in one transaction. If any step fails, none of them is saved.</p><p><b>How it works:</b> <code>BEGIN</code> starts. The first UPDATE changes old booked appointments to done: <code>WHERE status = 'booked' AND starts_at &lt; '2026-10-01'</code>. The second UPDATE cancels appointment 9. The INSERT lists only four columns, so <code>status</code> gets its default, <code>'booked'</code>. <code>COMMIT</code> saves all three.</p><p><b>Common mistake:</b> Forgetting <code>status = 'booked'</code> in the first WHERE. Then cancelled appointments in the past become done too, which is wrong.</p>`
       },
       {
         id: 'd14-5', level: 3, kind: 'script',
@@ -206,7 +210,8 @@ COMMIT;`,
         setup: FULL,
         solution: `CREATE INDEX idx_appt_patient ON appointments(patient_id, starts_at);`,
         plan: { query: `SELECT starts_at, status FROM appointments WHERE patient_id = 3 ORDER BY starts_at`, mustContain: 'SEARCH appointments USING' },
-        hints: ['patient_id is a foreign key with no index yet.', 'Add starts_at as the second column. Then the index also gives the ORDER BY for free.']
+        hints: ['patient_id is a foreign key with no index yet.', 'Add starts_at as the second column. Then the index also gives the ORDER BY for free.'],
+      explain: `<p><b>The idea:</b> The query filters on <code>patient_id</code> and sorts by <code>starts_at</code>. One index on both columns, in this order, helps with the filter and the sort.</p><p><b>How it works:</b> <code>CREATE INDEX idx_appt_patient ON appointments(patient_id, starts_at)</code> sorts rows by patient, then by time. The database finds patient 3 in the index. Its rows are already in time order, so no extra sort step is needed. The plan changes from <code>SCAN</code> to <code>SEARCH appointments USING INDEX</code>.</p><p><b>Common mistake:</b> Putting <code>starts_at</code> first: <code>(starts_at, patient_id)</code>. The WHERE uses <code>patient_id</code>, so by the leftmost-prefix rule this index cannot be used for the search.</p>`
       },
       {
         id: 'd14-6', level: 1,
@@ -216,7 +221,8 @@ COMMIT;`,
 FROM appointments a JOIN patients p ON p.patient_id = a.patient_id JOIN doctors d ON d.doctor_id = a.doctor_id
 WHERE a.status = 'booked' AND a.starts_at >= '2026-10-01' ORDER BY a.starts_at;`,
         ordered: true,
-        hints: ['Join appointments to patients and to doctors.', "WHERE a.status = 'booked' AND a.starts_at >= '2026-10-01'", 'ORDER BY a.starts_at']
+        hints: ['Join appointments to patients and to doctors.', "WHERE a.status = 'booked' AND a.starts_at >= '2026-10-01'", 'ORDER BY a.starts_at'],
+      explain: `<p><b>The idea:</b> The appointment table holds only ids. Join it to <code>patients</code> and <code>doctors</code> to get the names, then filter and sort.</p><p><b>How it works:</b> <code>appointments a JOIN patients p ON p.patient_id = a.patient_id</code> adds the patient name. The second JOIN adds the doctor name. <code>WHERE a.status = 'booked' AND a.starts_at &gt;= '2026-10-01'</code> keeps future booked visits. <code>ORDER BY a.starts_at</code> lists them from early to late. Aliases <code>patient</code> and <code>doctor</code> name the columns.</p><p><b>Common mistake:</b> Forgetting <code>a.status = 'booked'</code>. Then cancelled and done appointments appear in the list too.</p>`
       },
       {
         id: 'd14-7', level: 2,
@@ -225,7 +231,8 @@ WHERE a.status = 'booked' AND a.starts_at >= '2026-10-01' ORDER BY a.starts_at;`
         solution: `SELECT d.name AS doctor, COUNT(a.appt_id) AS active_appts
 FROM doctors d LEFT JOIN appointments a ON a.doctor_id = d.doctor_id AND a.status <> 'cancelled'
 GROUP BY d.doctor_id, d.name;`,
-        hints: ['LEFT JOIN keeps doctors with no appointments.', 'Put the status filter in the ON clause. In WHERE it would remove the doctors with no rows.', 'Use COUNT(a.appt_id), not COUNT(*).']
+        hints: ['LEFT JOIN keeps doctors with no appointments.', 'Put the status filter in the ON clause. In WHERE it would remove the doctors with no rows.', 'Use COUNT(a.appt_id), not COUNT(*).'],
+      explain: `<p><b>The idea:</b> To keep doctors with 0 appointments, use a LEFT JOIN. Put the "not cancelled" filter in the ON clause, not in WHERE.</p><p><b>How it works:</b> <code>doctors d LEFT JOIN appointments a ON a.doctor_id = d.doctor_id AND a.status &lt;&gt; 'cancelled'</code> attaches only active appointments. A doctor with none still gets one row with NULLs. <code>COUNT(a.appt_id)</code> counts only real appointments, so that doctor shows 0. <code>GROUP BY d.doctor_id, d.name</code> makes one row per doctor.</p><p><b>Common mistake:</b> Writing <code>WHERE a.status &lt;&gt; 'cancelled'</code>. For a doctor with no appointments, status is NULL, and the WHERE removes that row. The LEFT JOIN becomes an inner join, and the 0 disappears.</p>`
       },
       {
         id: 'd14-8', level: 3,
@@ -235,7 +242,8 @@ GROUP BY d.doctor_id, d.name;`,
 FROM patients p JOIN appointments a ON a.patient_id = p.patient_id
 WHERE a.status <> 'cancelled'
 GROUP BY p.patient_id, p.name HAVING COUNT(DISTINCT a.doctor_id) > 1;`,
-        hints: ['Group by patient.', 'COUNT(DISTINCT doctor_id) counts different doctors.', 'Keep only the groups you want with HAVING ... > 1.']
+        hints: ['Group by patient.', 'COUNT(DISTINCT doctor_id) counts different doctors.', 'Keep only the groups you want with HAVING ... > 1.'],
+      explain: `<p><b>The idea:</b> Count the <em>different</em> doctors per patient with <code>COUNT(DISTINCT ...)</code>. Then keep patients with more than one, using HAVING.</p><p><b>How it works:</b> The JOIN links each patient to their appointments. <code>WHERE a.status &lt;&gt; 'cancelled'</code> ignores cancelled visits. <code>GROUP BY p.patient_id, p.name</code> makes one group per patient. <code>COUNT(DISTINCT a.doctor_id)</code> counts each doctor once, even with many visits. <code>HAVING ... &gt; 1</code> keeps patients who see 2 or more doctors.</p><p><b>Common mistake:</b> Writing <code>COUNT(a.doctor_id)</code> without DISTINCT. A patient with two visits to the same doctor would count as 2 and appear by mistake.</p>`
       },
       {
         id: 'd14-9', level: 2,
@@ -245,19 +253,22 @@ FROM departments d JOIN instructors i ON i.dept_id = d.dept_id
 GROUP BY d.dept_id, d.name HAVING COUNT(*) >= 2
 ORDER BY avg_salary DESC, department;`,
         ordered: true,
-        hints: ['Join departments and instructors.', 'GROUP BY the department, HAVING COUNT(*) >= 2.', 'ROUND(AVG(i.salary)), then ORDER BY avg_salary DESC, department.']
+        hints: ['Join departments and instructors.', 'GROUP BY the department, HAVING COUNT(*) >= 2.', 'ROUND(AVG(i.salary)), then ORDER BY avg_salary DESC, department.'],
+      explain: `<p><b>The idea:</b> Join departments to instructors, make one group per department, and keep groups with 2 or more people.</p><p><b>How it works:</b> <code>JOIN instructors i ON i.dept_id = d.dept_id</code> pairs each instructor with their department. <code>GROUP BY d.dept_id, d.name</code> makes one group per department. <code>COUNT(*)</code> counts instructors and <code>ROUND(AVG(i.salary))</code> gives the average, rounded. <code>HAVING COUNT(*) &gt;= 2</code> drops small departments. <code>ORDER BY avg_salary DESC, department</code> sorts the result.</p><p><b>Common mistake:</b> Using <code>WHERE COUNT(*) &gt;= 2</code>. WHERE cannot use aggregates. The filter on groups must go in HAVING.</p>`
       },
       {
         id: 'd14-10', level: 2,
         prompt: '<p><strong>Final exam.</strong> Find the students who have <strong>never</strong> enrolled in any section.</p><ul class="spec"><li><b>Columns:</b> <code>student_id</code>, <code>name</code></li></ul>',
         solution: `SELECT s.student_id, s.name FROM students s WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.student_id = s.student_id);`,
-        hints: ['For "never" questions use NOT EXISTS, NOT IN, or LEFT JOIN ... IS NULL.', 'SELECT ... FROM students s WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.student_id = s.student_id)']
+        hints: ['For "never" questions use NOT EXISTS, NOT IN, or LEFT JOIN ... IS NULL.', 'SELECT ... FROM students s WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.student_id = s.student_id)'],
+      explain: `<p><b>The idea:</b> "Never enrolled" means there is no matching row in <code>enrollments</code>. <code>NOT EXISTS</code> tests exactly this, row by row.</p><p><b>How it works:</b> For each student <code>s</code>, the subquery looks for an enrollment with the same <code>student_id</code>. <code>SELECT 1</code> is enough, because only the existence of a row matters. If the subquery finds nothing, <code>NOT EXISTS</code> is true, and the student is kept.</p><p><b>Common mistake:</b> Using <code>NOT IN (SELECT student_id FROM enrollments)</code> on a column that can be NULL. One NULL in the list makes NOT IN return no rows. NOT EXISTS has no such problem. A LEFT JOIN with <code>IS NULL</code> also works.</p>`
       },
       {
         id: 'd14-11', level: 2,
         prompt: '<p><strong>Final exam.</strong> List every course that has prerequisites, with the title of each required course. Show one row for each pair.</p><ul class="spec"><li><b>Columns:</b> <code>course</code> (the course title), <code>prerequisite</code> (the title of the required course)</li></ul>',
         solution: `SELECT c.title AS course, pc.title AS prerequisite FROM prereqs p JOIN courses c ON c.course_id = p.course_id JOIN courses pc ON pc.course_id = p.prereq_id;`,
-        hints: ['You need courses twice: once for the course, once for the prerequisite. Use two aliases.', 'prereqs links them: p.course_id and p.prereq_id.']
+        hints: ['You need courses twice: once for the course, once for the prerequisite. Use two aliases.', 'prereqs links them: p.course_id and p.prereq_id.'],
+      explain: `<p><b>The idea:</b> <code>prereqs</code> holds two course ids per row. To show two titles, join <code>courses</code> twice, with a different alias each time: a self join.</p><p><b>How it works:</b> <code>JOIN courses c ON c.course_id = p.course_id</code> finds the title of the course. <code>JOIN courses pc ON pc.course_id = p.prereq_id</code> finds the title of the required course. The SELECT names them <code>course</code> and <code>prerequisite</code>. Each row of <code>prereqs</code> becomes one row of the result.</p><p><b>Common mistake:</b> Joining <code>courses</code> only once. Then you cannot show two different titles in the same row.</p>`
       },
       {
         id: 'd14-12', level: 3,
@@ -269,13 +280,15 @@ ORDER BY avg_salary DESC, department;`,
   WHERE e.score IS NOT NULL
 )
 SELECT course_id, name, score FROM ranked WHERE rnk = 1;`,
-        hints: ['You need the course of each enrollment: join enrollments to sections.', 'RANK() OVER (PARTITION BY course_id ORDER BY score DESC) gives 1 to the top score of each course. Ties share the same rank.', 'You cannot use a window function in WHERE. Compute it in a CTE or subquery first, then keep rnk = 1.']
+        hints: ['You need the course of each enrollment: join enrollments to sections.', 'RANK() OVER (PARTITION BY course_id ORDER BY score DESC) gives 1 to the top score of each course. Ties share the same rank.', 'You cannot use a window function in WHERE. Compute it in a CTE or subquery first, then keep rnk = 1.'],
+      explain: `<p><b>The idea:</b> "The best per group, including ties" is a job for <code>RANK()</code> with <code>PARTITION BY</code>. Then keep the rows with rank 1.</p><p><b>How it works:</b> The CTE <code>ranked</code> joins enrollments to sections (for <code>course_id</code>) and to students (for the name). <code>RANK() OVER (PARTITION BY s.course_id ORDER BY e.score DESC)</code> numbers the scores inside each course, the highest first. Students who tie get the same rank. The outer query keeps <code>rnk = 1</code>, so all top students are shown.</p><p><b>Common mistake:</b> Using <code>ROW_NUMBER()</code>. It gives different numbers to a tie, so only one of the top students appears. Filtering <code>WHERE rnk = 1</code> inside the CTE is also not allowed, because window functions run after WHERE.</p>`
       },
       {
         id: 'd14-13', level: 3,
         prompt: '<p><strong>Final exam.</strong> For every payment, show a running total for that student.</p><ul class="spec"><li><b>Columns:</b> <code>student_id</code>, <code>paid_on</code>, <code>amount</code>, <code>running_total</code></li><li><b>Note:</b> <code>running_total</code> is the sum of this student\'s payments up to this one, including it, in date order.</li></ul>',
         solution: `SELECT student_id, paid_on, amount, SUM(amount) OVER (PARTITION BY student_id ORDER BY paid_on) AS running_total FROM payments;`,
-        hints: ['A running total is a window SUM with ORDER BY inside OVER.', 'Start again for each student with PARTITION BY student_id.']
+        hints: ['A running total is a window SUM with ORDER BY inside OVER.', 'Start again for each student with PARTITION BY student_id.'],
+      explain: `<p><b>The idea:</b> A running total is <code>SUM() OVER</code> with an ORDER BY. Each row adds its amount to the rows before it, and every row stays in the result.</p><p><b>How it works:</b> <code>PARTITION BY student_id</code> starts a new total for each student. <code>ORDER BY paid_on</code> adds the payments in date order. For each row, the window sums this payment and all earlier payments of the same student. Unlike GROUP BY, no rows are merged.</p><p><b>Common mistake:</b> Writing <code>SUM(amount) OVER (PARTITION BY student_id)</code> without ORDER BY. Then every row shows the student's full total, not a running total.</p>`
       },
       {
         id: 'd14-14', level: 3,
@@ -287,7 +300,8 @@ GROUP BY s.student_id, s.name
 HAVING AVG(e.score) > (SELECT AVG(score) FROM enrollments)
 ORDER BY avg_score DESC, s.name;`,
         ordered: true,
-        hints: ['Find each student\'s average with GROUP BY.', 'Compare it to one value from a subquery: (SELECT AVG(score) FROM enrollments). AVG skips NULLs.', 'A condition on an aggregate goes in HAVING. Compare the average before rounding.']
+        hints: ['Find each student\'s average with GROUP BY.', 'Compare it to one value from a subquery: (SELECT AVG(score) FROM enrollments). AVG skips NULLs.', 'A condition on an aggregate goes in HAVING. Compare the average before rounding.'],
+      explain: `<p><b>The idea:</b> Compare each student's average with one number: the average of all graded enrollments. A scalar subquery in HAVING gives that number.</p><p><b>How it works:</b> The JOIN and <code>WHERE e.score IS NOT NULL</code> keep graded enrollments. <code>GROUP BY s.student_id, s.name</code> makes one group per student. <code>(SELECT AVG(score) FROM enrollments)</code> returns one number for the whole table. AVG ignores NULL scores, so it uses graded enrollments only. <code>HAVING AVG(e.score) &gt; (...)</code> keeps students above it.</p><p><b>Common mistake:</b> Comparing the rounded value: <code>HAVING ROUND(AVG(e.score), 1) &gt; ...</code>. Rounding can push a student over or under the line. Compare the exact average and round only in the SELECT.</p>`
       }
     ],
     quiz: [

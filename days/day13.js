@@ -216,7 +216,8 @@ SELECT student_id FROM payments;`,
 SELECT s.student_id, s.name, s.email, d.name AS dept_name
 FROM students s LEFT JOIN departments d ON d.dept_id = s.dept_id;`,
       check: `SELECT student_id, name, email, dept_name FROM student_directory ORDER BY student_id;`,
-      hints: ['CREATE VIEW name AS SELECT ...', 'To keep students with no department, use a LEFT JOIN.', 'Rename departments.name with AS dept_name.']
+      hints: ['CREATE VIEW name AS SELECT ...', 'To keep students with no department, use a LEFT JOIN.', 'Rename departments.name with AS dept_name.'],
+      explain: `<p><b>The idea:</b> A view saves a query under a name. Later, anyone can use <code>student_directory</code> like a table, without writing the join again.</p><p><b>How it works:</b> <code>CREATE VIEW student_directory AS</code> is followed by a normal SELECT. It joins <code>students s</code> to <code>departments d</code> on <code>dept_id</code>. <code>d.name AS dept_name</code> gives the column its name. <code>LEFT JOIN</code> keeps students with no department, with <code>dept_name</code> NULL. The view stores no data. It runs its query each time someone reads it.</p><p><b>Common mistake:</b> Using an inner <code>JOIN</code>. Then students with no department disappear from the view.</p>`
     },
     {
       id: 'd13-2', level: 1, kind: 'script',
@@ -226,7 +227,8 @@ SELECT c.course_id, c.title, COUNT(s.section_id) AS n_sections
 FROM courses c LEFT JOIN sections s ON s.course_id = c.course_id
 GROUP BY c.course_id, c.title;`,
       check: `SELECT course_id, title, n_sections FROM course_offerings ORDER BY course_id;`,
-      hints: ['LEFT JOIN courses to sections, so courses with no sections stay.', 'COUNT(s.section_id) counts only matched rows, so it gives 0. COUNT(*) would give 1.', 'GROUP BY c.course_id, c.title']
+      hints: ['LEFT JOIN courses to sections, so courses with no sections stay.', 'COUNT(s.section_id) counts only matched rows, so it gives 0. COUNT(*) would give 1.', 'GROUP BY c.course_id, c.title'],
+      explain: `<p><b>The idea:</b> A view can hold a grouped query too. Count sections per course, and use a LEFT JOIN so courses with no sections still appear with 0.</p><p><b>How it works:</b> <code>courses c LEFT JOIN sections s</code> keeps every course. <code>GROUP BY c.course_id, c.title</code> makes one row per course. <code>COUNT(s.section_id)</code> counts only real sections. For a course with no sections, <code>s.section_id</code> is NULL, so the count is 0.</p><p><b>Common mistake:</b> Writing <code>COUNT(*)</code>. It counts the one row that the LEFT JOIN keeps for a course without sections, so it shows 1 instead of 0.</p>`
     },
     {
       id: 'd13-3', level: 2,
@@ -238,7 +240,8 @@ JOIN sections sec ON sec.section_id = e.section_id
 JOIN courses c ON c.course_id = sec.course_id;`,
       solution: `SELECT student, ROUND(AVG(score), 1) AS avg_score FROM transcript WHERE score IS NOT NULL GROUP BY student_id, student HAVING COUNT(score) >= 3 ORDER BY avg_score DESC, student;`,
       ordered: true,
-      hints: ['Use the view like a table: FROM transcript.', 'Graded means score is not NULL. COUNT(score) skips NULLs.', 'GROUP BY the student, HAVING COUNT(score) >= 3, then ORDER BY.']
+      hints: ['Use the view like a table: FROM transcript.', 'Graded means score is not NULL. COUNT(score) skips NULLs.', 'GROUP BY the student, HAVING COUNT(score) >= 3, then ORDER BY.'],
+      explain: `<p><b>The idea:</b> Use the view like a table. All the joins are hidden inside <code>transcript</code>, so your query only needs to filter, group and sort.</p><p><b>How it works:</b> <code>WHERE score IS NOT NULL</code> keeps graded courses only. <code>GROUP BY student_id, student</code> makes one group per student. <code>HAVING COUNT(score) &gt;= 3</code> keeps students with 3 or more graded courses. <code>ROUND(AVG(score), 1)</code> gives the average. <code>ORDER BY avg_score DESC, student</code> sorts the result.</p><p><b>Common mistake:</b> Grouping by <code>student</code> only. Two students with the same name would be mixed into one group. Grouping by <code>student_id</code> keeps them apart.</p>`
     },
     {
       id: 'd13-4', level: 2, kind: 'script',
@@ -253,7 +256,8 @@ END;
 UPDATE enrollments SET grade = 'B' WHERE student_id = 1001 AND section_id = 18;
 UPDATE enrollments SET grade = 'C' WHERE student_id = 1003 AND section_id = 8;`,
       check: `SELECT student_id, section_id, old_grade, new_grade FROM grade_log ORDER BY student_id, section_id;`,
-      hints: ['CREATE TRIGGER name AFTER UPDATE OF grade ON enrollments BEGIN ... END;', 'Inside: INSERT INTO grade_log (...) VALUES (OLD.student_id, OLD.section_id, OLD.grade, NEW.grade);', 'Put a semicolon after the INSERT and after END. Then run the two UPDATEs.']
+      hints: ['CREATE TRIGGER name AFTER UPDATE OF grade ON enrollments BEGIN ... END;', 'Inside: INSERT INTO grade_log (...) VALUES (OLD.student_id, OLD.section_id, OLD.grade, NEW.grade);', 'Put a semicolon after the INSERT and after END. Then run the two UPDATEs.'],
+      explain: `<p><b>The idea:</b> A trigger is code the database runs by itself after a change. Here, every grade change writes one row into a log table.</p><p><b>How it works:</b> <code>AFTER UPDATE OF grade ON enrollments</code> means: run after any UPDATE that changes <code>grade</code>. Inside, <code>OLD</code> is the row before the change and <code>NEW</code> is the row after. The INSERT copies the student, the section, <code>OLD.grade</code> and <code>NEW.grade</code> into <code>grade_log</code>. The two UPDATEs at the end make the trigger run twice, so the log gets two rows.</p><p><b>Common mistake:</b> Writing <code>NEW.grade</code> for both columns. Then the log loses the old grade. Another mistake is to forget the two UPDATEs, so the trigger never runs.</p>`
     },
     {
       id: 'd13-5', level: 2, kind: 'script',
@@ -270,7 +274,8 @@ INSERT INTO payments VALUES (500, 1001, 300, '2026-09-15', 'card');`,
   instr(upper(sql), 'RAISE') > 0 AS raises,
   (SELECT COUNT(*) FROM payments WHERE payment_id = 500 AND amount = 300) AS valid_row
 FROM sqlite_master WHERE type = 'trigger' ORDER BY name;`,
-      hints: ['Use WHEN, so the trigger runs only for bad rows.', "The body is SELECT RAISE(ABORT, 'Amount must be positive');", 'End with the INSERT of the good payment. It must pass the trigger.']
+      hints: ['Use WHEN, so the trigger runs only for bad rows.', "The body is SELECT RAISE(ABORT, 'Amount must be positive');", 'End with the INSERT of the good payment. It must pass the trigger.'],
+      explain: `<p><b>The idea:</b> A <code>BEFORE INSERT</code> trigger checks a row before it is saved. <code>RAISE(ABORT, ...)</code> stops the insert with your message.</p><p><b>How it works:</b> <code>BEFORE INSERT ON payments</code> runs before each new payment. <code>WHEN NEW.amount &lt;= 0</code> makes it act only for bad amounts. Then <code>SELECT RAISE(ABORT, 'Amount must be positive')</code> cancels the INSERT. The good payment of 300 passes the check and is saved.</p><p><b>Common mistake:</b> Using <code>AFTER INSERT</code>. Then the bad row is already saved when the trigger runs. Another mistake is to forget the <code>WHEN</code> part, so every payment is blocked, even good ones.</p>`
     },
     {
       id: 'd13-6', level: 3, kind: 'script',
@@ -291,31 +296,36 @@ END;
 UPDATE enrollments SET score = 91 WHERE student_id = 1002 AND section_id = 21;
 UPDATE enrollments SET score = 58 WHERE student_id = 1002 AND section_id = 33;`,
       check: `SELECT student_id, section_id, grade, score FROM enrollments WHERE student_id = 1002 ORDER BY section_id;`,
-      hints: ['The trigger body updates the same row: WHERE student_id = NEW.student_id AND section_id = NEW.section_id.', 'Find the letter with CASE WHEN NEW.score >= 90 THEN \'A\' ... END.', 'The trigger runs only when score changes. So changing grade inside it does not run it again.']
+      hints: ['The trigger body updates the same row: WHERE student_id = NEW.student_id AND section_id = NEW.section_id.', 'Find the letter with CASE WHEN NEW.score >= 90 THEN \'A\' ... END.', 'The trigger runs only when score changes. So changing grade inside it does not run it again.'],
+      explain: `<p><b>The idea:</b> When the score changes, a trigger computes the matching letter grade with CASE. The two columns can never disagree.</p><p><b>How it works:</b> <code>AFTER UPDATE OF score ON enrollments</code> runs after a score change. The inner UPDATE sets <code>grade</code> with a CASE. It checks NULL first, then <code>&gt;= 90</code>, <code>&gt;= 80</code> and so on, from high to low. <code>WHERE student_id = NEW.student_id AND section_id = NEW.section_id</code> changes only the row that changed. The two UPDATEs at the end give scores 91 (grade A) and 58 (grade F).</p><p><b>Common mistake:</b> Writing the CASE tests from low to high, like <code>WHEN NEW.score &gt;= 60 THEN 'D'</code> first. CASE stops at the first true test, so 91 would get a D. Forgetting the WHERE updates every row in the table.</p>`
     },
     {
       id: 'd13-7', level: 1,
       prompt: '<p>Write this relational algebra expression in SQL: <code>π<sub>name, email</sub> ( σ<sub>year = 4</sub> ( students ) )</code></p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>email</code></li><li><b>Note:</b> relational algebra works with sets, so there are no duplicate rows.</li></ul>',
       solution: `SELECT DISTINCT name, email FROM students WHERE year = 4;`,
-      hints: ['σ (selection) is WHERE. π (projection) is the SELECT list.', 'π removes duplicates: use SELECT DISTINCT.']
+      hints: ['σ (selection) is WHERE. π (projection) is the SELECT list.', 'π removes duplicates: use SELECT DISTINCT.'],
+      explain: `<p><b>The idea:</b> σ (selection) is WHERE. π (projection) is the column list in SELECT. Relational algebra works with sets, so add DISTINCT.</p><p><b>How it works:</b> Read the expression from the inside out. <code>σ year = 4 (students)</code> keeps fourth-year students: <code>WHERE year = 4</code>. <code>π name, email</code> keeps two columns: <code>SELECT DISTINCT name, email</code>.</p><p><b>Common mistake:</b> Mixing up σ and π. σ chooses rows, π chooses columns. Writing <code>SELECT *</code> ignores the π part.</p>`
     },
     {
       id: 'd13-8', level: 2,
       prompt: '<p>Write this expression in SQL. It gives the names of students who got at least one A: <code>π<sub>name</sub> ( students ⋈<sub>students.student_id = enrollments.student_id</sub> σ<sub>grade = \'A\'</sub> ( enrollments ) )</code></p><ul class="spec"><li><b>Columns:</b> <code>name</code></li><li><b>Note:</b> each name appears once.</li></ul>',
       solution: `SELECT DISTINCT s.name FROM students s JOIN enrollments e ON s.student_id = e.student_id WHERE e.grade = 'A';`,
-      hints: ['⋈ with a condition is JOIN ... ON.', 'The σ on enrollments becomes a WHERE condition.', 'A student with two A grades must appear once: use DISTINCT.']
+      hints: ['⋈ with a condition is JOIN ... ON.', 'The σ on enrollments becomes a WHERE condition.', 'A student with two A grades must appear once: use DISTINCT.'],
+      explain: `<p><b>The idea:</b> ⋈ is a JOIN with the condition under it. σ on the inside is a WHERE. π on the outside is the SELECT list.</p><p><b>How it works:</b> <code>σ grade = 'A' (enrollments)</code> keeps enrollments with an A. <code>students ⋈ ...</code> joins them to students on <code>student_id</code>. <code>π name</code> keeps only the name. In SQL: <code>JOIN ... ON s.student_id = e.student_id WHERE e.grade = 'A'</code>, and <code>SELECT DISTINCT s.name</code>. DISTINCT matters because a student with two A grades would appear twice.</p><p><b>Common mistake:</b> Forgetting DISTINCT. Relational algebra returns a set, so each name appears once.</p>`
     },
     {
       id: 'd13-9', level: 2,
       prompt: '<p>Write this expression in SQL. It gives the courses that never had a section: <code>π<sub>course_id</sub> ( courses ) − π<sub>course_id</sub> ( sections )</code></p><ul class="spec"><li><b>Columns:</b> <code>course_id</code></li></ul>',
       solution: `SELECT course_id FROM courses EXCEPT SELECT course_id FROM sections;`,
-      hints: ['− is set difference: rows in the first result but not in the second.', 'In SQL it is EXCEPT (MINUS in Oracle).']
+      hints: ['− is set difference: rows in the first result but not in the second.', 'In SQL it is EXCEPT (MINUS in Oracle).'],
+      explain: `<p><b>The idea:</b> The minus sign − in relational algebra is set difference. In SQL, set difference is <code>EXCEPT</code>.</p><p><b>How it works:</b> <code>π course_id (courses)</code> is every course: <code>SELECT course_id FROM courses</code>. <code>π course_id (sections)</code> is every course that has a section. <code>EXCEPT</code> keeps rows of the first list that are not in the second. The result is the courses that never had a section.</p><p><b>Common mistake:</b> Swapping the two sides. <code>sections EXCEPT courses</code> asks for sections with no course, which returns nothing. In Oracle, the keyword is <code>MINUS</code>.</p>`
     },
     {
       id: 'd13-10', level: 3,
       prompt: '<p>Write this expression in SQL. It pairs each instructor with their mentor: <code>π<sub>i.name, m.name</sub> ( σ<sub>i.mentor_id = m.instructor_id</sub> ( ρ<sub>i</sub>(instructors) × ρ<sub>m</sub>(instructors) ) )</code></p><ul class="spec"><li><b>Columns:</b> <code>mentee</code> (the instructor name), <code>mentor</code> (the mentor name)</li></ul>',
       solution: `SELECT DISTINCT i.name AS mentee, m.name AS mentor FROM instructors i, instructors m WHERE i.mentor_id = m.instructor_id;`,
-      hints: ['ρ gives the same table two names: the aliases i and m.', '× and then σ is a join: FROM i, m WHERE ..., or JOIN ... ON.', 'SELECT DISTINCT i.name AS mentee, m.name AS mentor ...']
+      hints: ['ρ gives the same table two names: the aliases i and m.', '× and then σ is a join: FROM i, m WHERE ..., or JOIN ... ON.', 'SELECT DISTINCT i.name AS mentee, m.name AS mentor ...'],
+      explain: `<p><b>The idea:</b> ρ renames a table, so you can use instructors twice: once as <code>i</code> (the mentee) and once as <code>m</code> (the mentor). × with σ is the old way to write a join.</p><p><b>How it works:</b> <code>ρ i (instructors) × ρ m (instructors)</code> pairs every instructor with every instructor: <code>FROM instructors i, instructors m</code>. <code>σ i.mentor_id = m.instructor_id</code> keeps the real pairs: the WHERE. <code>π i.name, m.name</code> is the SELECT, with aliases <code>mentee</code> and <code>mentor</code>.</p><p><b>Common mistake:</b> Writing <code>m.mentor_id = i.instructor_id</code>. That turns the pairs around, so the mentor appears in the mentee column.</p>`
     }
   ],
   quiz: [

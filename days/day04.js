@@ -198,7 +198,8 @@ ORDER BY students DESC, d.name;`
       hints: [
         'courses.dept_id points to departments.dept_id.',
         'JOIN departments d ON d.dept_id = c.dept_id'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> The department name is in another table. A <code>JOIN</code> brings it in by matching the keys.</p><p><b>How it works:</b> <code>FROM courses c</code> takes every course. <code>JOIN departments d ON d.dept_id = c.dept_id</code> attaches the matching department to each course. <code>SELECT</code> shows the course columns and <code>d.name AS department</code>.</p><p><b>Common mistake:</b> Forgetting the <code>ON</code> condition pairs every course with every department (23 × 8 = 184 rows).</p>"
     },
     {
       id: 'd4-2',
@@ -208,7 +209,8 @@ ORDER BY students DESC, d.name;`
       hints: [
         'An INNER JOIN drops sections without an instructor by itself.',
         'JOIN instructors i ON i.instructor_id = x.instructor_id'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> An INNER <code>JOIN</code> keeps only rows that have a match. That is exactly \"skip sections with no instructor\".</p><p><b>How it works:</b> <code>FROM sections x</code> takes every section. <code>JOIN instructors i ON i.instructor_id = x.instructor_id</code> attaches the teacher. The section with a NULL instructor has no match, so it drops out.</p><p><b>Common mistake:</b> Writing <code>LEFT JOIN</code> keeps that section with a NULL instructor. The question asks you to skip it.</p>"
     },
     {
       id: 'd4-3',
@@ -219,7 +221,8 @@ ORDER BY students DESC, d.name;`
         'You need students with no matching row in enrollments.',
         'Use LEFT JOIN. Then keep the rows where the right side is empty.',
         'WHERE e.student_id IS NULL'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> To find rows with no match, use a <code>LEFT JOIN</code> and keep the rows where the right side is NULL.</p><p><b>How it works:</b> <code>FROM students s LEFT JOIN enrollments e</code> keeps every student, even with no enrollment. For those students, the enrollment columns are NULL. <code>WHERE e.student_id IS NULL</code> keeps exactly them.</p><p><b>Common mistake:</b> Writing an INNER <code>JOIN</code> removes the students with no enrollment before WHERE runs, so the answer is empty.</p>"
     },
     {
       id: 'd4-4',
@@ -231,7 +234,8 @@ ORDER BY students DESC, d.name;`
         'Path: enrollments → sections → courses.',
         'Filter with WHERE e.student_id = 1010.',
         'ORDER BY x.year, x.semester, c.course_id'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> The data is spread over three tables. Follow the keys: enrollments → sections → courses.</p><p><b>How it works:</b> <code>FROM enrollments e</code> starts with the grades. <code>JOIN sections x</code> adds the semester and year. <code>JOIN courses c</code> adds the title. <code>WHERE e.student_id = 1010</code> keeps one student. <code>ORDER BY x.year, x.semester, c.course_id</code> sorts the transcript.</p><p><b>Common mistake:</b> Writing <code>course_id</code> without a table name gives \"ambiguous column name\". Both sections and courses have that column.</p>"
     },
     {
       id: 'd4-5',
@@ -242,7 +246,8 @@ ORDER BY students DESC, d.name;`
         'Departments with 0 instructors must stay. Which join keeps them?',
         'Group by the department.',
         'Use COUNT(i.instructor_id), not COUNT(*). Then empty departments get 0.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> To show groups with zero, start from the table that must keep all its rows and <code>LEFT JOIN</code>. Then count a column from the right side.</p><p><b>How it works:</b> <code>FROM departments d LEFT JOIN instructors i</code> keeps every department. <code>GROUP BY d.dept_id, d.name</code> makes one group per department. <code>COUNT(i.instructor_id)</code> skips NULLs, so Philosophy shows 0.</p><p><b>Common mistake:</b> Writing <code>COUNT(*)</code> gives 1 for Philosophy, because the LEFT JOIN row itself is counted.</p>"
     },
     {
       id: 'd4-6',
@@ -253,7 +258,8 @@ ORDER BY students DESC, d.name;`
         'Join instructors to itself. Use two aliases.',
         'Which join keeps instructors who have no mentor?',
         'ON m.instructor_id = i.mentor_id'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A table can join to itself. Give it two aliases: one for the instructor, one for the mentor.</p><p><b>How it works:</b> <code>FROM instructors i</code> is the instructor. <code>LEFT JOIN instructors m ON m.instructor_id = i.mentor_id</code> finds the mentor row. LEFT JOIN keeps instructors with no mentor, and their mentor is NULL.</p><p><b>Common mistake:</b> Writing an INNER <code>JOIN</code> drops the instructors who have no mentor.</p>"
     },
     {
       id: 'd4-7',
@@ -264,7 +270,8 @@ ORDER BY students DESC, d.name;`
         'prereqs stores only codes. You need courses twice: once for the course, once for the prerequisite.',
         'Use two aliases for courses, for example c and p.',
         'JOIN courses p ON p.course_id = r.prereq_id'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>prereqs</code> holds only codes. Join <code>courses</code> twice to get both titles.</p><p><b>How it works:</b> <code>FROM prereqs r</code> takes each pair. <code>JOIN courses c ON c.course_id = r.course_id</code> finds the course title. <code>JOIN courses p ON p.course_id = r.prereq_id</code> finds the prerequisite title. <code>SELECT</code> renames them course and requires.</p><p><b>Common mistake:</b> Joining <code>courses</code> only once can give only one of the two titles.</p>"
     },
     {
       id: 'd4-8',
@@ -276,7 +283,8 @@ ORDER BY students DESC, d.name;`
         'Path: instructors → sections → enrollments.',
         'Group by the instructor. Then filter the groups.',
         'HAVING COUNT(*) >= 10 ORDER BY enrollments DESC, instructor'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Join along the path, then group and filter the groups.</p><p><b>How it works:</b> <code>FROM instructors i</code> joins their sections, then the enrollments of those sections. Each row is now one enrollment. <code>GROUP BY i.instructor_id, i.name</code> makes one group per teacher. <code>HAVING COUNT(*) &gt;= 10</code> keeps busy teachers. <code>ORDER BY enrollments DESC, instructor</code> sorts.</p><p><b>Common mistake:</b> Writing <code>WHERE COUNT(*) &gt;= 10</code> gives an error. Filters on a count belong in HAVING.</p>"
     },
     {
       id: 'd4-9',
@@ -288,7 +296,8 @@ ORDER BY students DESC, d.name;`
         'Every department must appear. So start from departments and use LEFT JOIN.',
         'If you put year = 4 in WHERE, departments with 0 seniors disappear.',
         'Put s.year = 4 inside ON, and count s.student_id.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> With a LEFT JOIN, put the filter on the right table inside <code>ON</code>. That keeps the departments with zero.</p><p><b>How it works:</b> <code>FROM departments d LEFT JOIN students s ON s.dept_id = d.dept_id AND s.year = 4</code> attaches only year-4 students. Departments with none still stay. <code>COUNT(s.student_id)</code> counts them, giving 0 when there are none. Then sort by seniors and name.</p><p><b>Common mistake:</b> Writing <code>WHERE s.year = 4</code> removes the NULL rows, so departments with no seniors disappear. The LEFT JOIN quietly becomes an INNER JOIN.</p>"
     },
     {
       id: 'd4-10',
@@ -299,7 +308,8 @@ ORDER BY students DESC, d.name;`
         `Path: students → enrollments → sections. Compare the section's instructor with the student's advisor.`,
         `Join instructors on s.advisor_id to get the advisor's name.`,
         'A student can share several sections with the advisor. Use DISTINCT.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Join four tables, then compare two columns: the section teacher and the student's advisor.</p><p><b>How it works:</b> <code>FROM students s</code> joins their enrollments and sections. <code>JOIN instructors i ON i.instructor_id = s.advisor_id</code> gets the advisor's name. <code>WHERE x.instructor_id = s.advisor_id</code> keeps sections taught by the advisor. <code>DISTINCT</code> shows each student once.</p><p><b>Common mistake:</b> Forgetting <code>DISTINCT</code> repeats a student who took two sections with their advisor.</p>"
     }
   ],
   quiz: [

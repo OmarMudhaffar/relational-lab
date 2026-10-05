@@ -179,7 +179,8 @@ LIMIT 6;`
       level: 1,
       prompt: '<p>Find the instructors who earn more than 85000.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>salary</code></li></ul>',
       solution: 'SELECT name, salary FROM instructors WHERE salary > 85000;',
-      hints: ['Use WHERE to keep only some rows.', 'WHERE salary > 85000']
+      hints: ['Use WHERE to keep only some rows.', 'WHERE salary > 85000'],
+      explain: "<p><b>The idea:</b> <code>WHERE</code> keeps only the rows where the condition is true.</p><p><b>How it works:</b> <code>FROM instructors</code> takes all 16 instructors. <code>WHERE salary &gt; 85000</code> tests each row and keeps the ones above 85000. <code>SELECT name, salary</code> shows two columns.</p><p><b>Common mistake:</b> Writing <code>salary &gt;= 85000</code> also keeps an instructor who earns exactly 85000. \"More than\" means <code>&gt;</code>.</p>"
     },
     {
       id: 'd2-2',
@@ -190,7 +191,8 @@ LIMIT 6;`
         '"No major" means dept_id has no value.',
         'You cannot test for NULL with =.',
         'WHERE dept_id IS NULL'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A missing value is NULL. You can only find it with <code>IS NULL</code>.</p><p><b>How it works:</b> <code>FROM students</code> takes all students. <code>WHERE dept_id IS NULL</code> keeps the students with no major. <code>SELECT student_id, name</code> shows two columns.</p><p><b>Common mistake:</b> Writing <code>WHERE dept_id = NULL</code> returns no rows. NULL is never equal to anything, not even to NULL.</p>"
     },
     {
       id: 'd2-3',
@@ -201,7 +203,8 @@ LIMIT 6;`
         'Use a pattern with LIKE.',
         `LIKE 'MA%' finds codes that start with MA.`,
         'Join two LIKE conditions with OR.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>LIKE</code> matches a text pattern. <code>%</code> means \"any characters after this\".</p><p><b>How it works:</b> <code>FROM courses</code> takes all courses. <code>course_id LIKE 'MA%'</code> is true for codes that start with MA. <code>OR course_id LIKE 'PH%'</code> also keeps codes that start with PH.</p><p><b>Common mistake:</b> Writing <code>AND</code> instead of <code>OR</code> returns nothing. A code cannot start with MA and with PH at the same time.</p>"
     },
     {
       id: 'd2-4',
@@ -212,7 +215,8 @@ LIMIT 6;`
         'Both conditions must be true.',
         'IN (...) is a short way to write many ORs.',
         'If you use OR for the cities, put it in brackets ( ).'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>IN (...)</code> is a short way to write many <code>OR</code> tests. Two <code>IN</code> lists joined with <code>AND</code> must both be true.</p><p><b>How it works:</b> <code>FROM students</code> takes all students. <code>year IN (3, 4)</code> keeps years 3 and 4. <code>AND city IN ('Cairo', 'Baghdad', 'Riyadh')</code> also requires one of the three cities.</p><p><b>Common mistake:</b> Writing <code>year = 3 OR year = 4 AND city IN (...)</code> without brackets is wrong. AND runs before OR, so every year-3 student comes back, from any city.</p>"
     },
     {
       id: 'd2-5',
@@ -223,14 +227,16 @@ LIMIT 6;`
         'The table is sections.',
         'BETWEEN includes both end values.',
         'WHERE year = 2025 AND capacity BETWEEN ...'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>BETWEEN a AND b</code> includes both ends, so it fits \"25 to 40 seats\" exactly.</p><p><b>How it works:</b> <code>FROM sections</code> takes all sections. <code>WHERE year = 2025</code> keeps one year. <code>AND capacity BETWEEN 25 AND 40</code> keeps capacities from 25 to 40, including 25 and 40. <code>SELECT</code> shows four columns.</p><p><b>Common mistake:</b> Writing <code>capacity &gt; 25 AND capacity &lt; 40</code> leaves out sections with exactly 25 or 40 seats.</p>"
     },
     {
       id: 'd2-6',
       level: 2,
       prompt: '<p>Show every student with their city. If the city is missing, show the text <code>Not provided</code> instead.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>city</code></li><li><b>Note:</b> the second column must be named <code>city</code>.</li></ul>',
       solution: `SELECT name, COALESCE(city, 'Not provided') AS city FROM students;`,
-      hints: ['One function returns the first value that is not NULL.', `COALESCE(city, '...') AS city`]
+      hints: ['One function returns the first value that is not NULL.', `COALESCE(city, '...') AS city`],
+      explain: "<p><b>The idea:</b> <code>COALESCE(a, b)</code> returns <code>a</code>, or <code>b</code> when <code>a</code> is NULL. It fills the gaps.</p><p><b>How it works:</b> <code>FROM students</code> takes every student. <code>COALESCE(city, 'Not provided')</code> keeps the real city, or puts the text when the city is NULL. <code>AS city</code> keeps the column name <code>city</code>.</p><p><b>Common mistake:</b> Writing <code>WHERE city IS NULL</code> returns only the students with no city. The question wants every student.</p>"
     },
     {
       id: 'd2-7',
@@ -242,7 +248,8 @@ LIMIT 6;`
         'Dates are text like 2026-01-15, so BETWEEN works on them.',
         'The method is bank or cash: use IN.',
         'ORDER BY paid_on, payment_id'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Two conditions must both be true: a date range and a payment method. Then sort by date.</p><p><b>How it works:</b> <code>FROM payments</code> takes all payments. <code>paid_on BETWEEN '2026-01-01' AND '2026-06-30'</code> keeps the first half of 2026, including both days. <code>AND method IN ('bank', 'cash')</code> keeps two methods. <code>ORDER BY paid_on, payment_id</code> sorts by date, then by id for payments on the same day.</p><p><b>Common mistake:</b> Writing <code>method = 'bank' OR method = 'cash' AND paid_on BETWEEN ...</code> without brackets keeps bank payments from any date, because AND runs before OR.</p>"
     },
     {
       id: 'd2-8',
@@ -258,7 +265,8 @@ FROM enrollments;`,
         'Use CASE WHEN ... THEN ... ELSE ... END.',
         'SQL uses the first WHEN that is true. So the order of the WHENs matters.',
         'Test IS NULL first. If you do not, NULL scores go to ELSE.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>CASE</code> is an if-then-else inside a query. It returns the result of the first <code>WHEN</code> that is true.</p><p><b>How it works:</b> <code>FROM enrollments</code> takes every enrollment. For each row, <code>CASE</code> tests in order: score IS NULL gives 'In progress', score &gt;= 90 gives 'Honours', score &gt;= 60 gives 'Pass'. Otherwise <code>ELSE 'Fail'</code>. <code>AS status</code> names the column.</p><p><b>Common mistake:</b> Putting <code>WHEN score &gt;= 60</code> before <code>WHEN score &gt;= 90</code> labels a 95 as Pass. The first true WHEN wins, so the order matters.</p>"
     },
     {
       id: 'd2-9',
@@ -269,7 +277,8 @@ FROM enrollments;`,
         `STRFTIME('%Y', date) gives the year as text. Compare it with '2004'.`,
         `INSTR(email, '@') gives the position of the @ sign.`,
         `The username length is INSTR(email, '@') - 1. You can also use LENGTH(SUBSTR(...)).`
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Build the username with text functions, then test it in <code>WHERE</code>.</p><p><b>How it works:</b> <code>FROM students</code> takes all students. <code>STRFTIME('%Y', birth_date) = '2004'</code> keeps students born in 2004. <code>INSTR(email, '@')</code> finds the position of @. <code>SUBSTR(email, 1, ... - 1)</code> takes the part before it, and <code>LENGTH(...) &gt; 12</code> tests its length.</p><p><b>Common mistake:</b> Writing <code>LENGTH(email) &gt; 12</code> measures the whole email, including \"@uni.edu\". Almost every student then matches.</p>"
     },
     {
       id: 'd2-10',
@@ -280,7 +289,8 @@ FROM enrollments;`,
         'JULIANDAY(a) - JULIANDAY(b) gives the number of days between two dates.',
         '"No mentor" means mentor_id IS NULL.',
         'You cannot use the name days_worked in WHERE. Write the full expression again.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Use <code>JULIANDAY</code> to count days between two dates, and <code>IS NULL</code> to find \"no mentor\".</p><p><b>How it works:</b> <code>FROM instructors</code> takes all instructors. In <code>WHERE</code>, <code>JULIANDAY('2026-10-05') - JULIANDAY(hire_date) &gt; 3652</code> keeps people hired more than 3652 days ago. <code>AND mentor_id IS NULL</code> keeps those with no mentor. In <code>SELECT</code>, <code>CAST(... AS INTEGER)</code> shows whole days.</p><p><b>Common mistake:</b> Writing the alias in WHERE, like <code>WHERE days_worked &gt; 3652</code>, fails in most databases. WHERE runs before SELECT, so the alias does not exist yet.</p>"
     }
   ],
   quiz: [

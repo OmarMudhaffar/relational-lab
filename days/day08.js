@@ -243,7 +243,8 @@ SELECT dept_id, name, main_building, phone FROM departments;`
         "INSERT INTO table (columns) VALUES (values);",
         "Text values go in single quotes. Numbers do not.",
         "INSERT INTO departments (dept_id, name, building, budget) VALUES (9, 'Data Science', ...);"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Adding a new row is an INSERT. Naming the columns makes the statement clear and safe.</p><p><b>How it works:</b> <code>INSERT INTO departments (dept_id, name, building, budget)</code> lists the columns. <code>VALUES (9, 'Data Science', 'Turing Hall', 300000)</code> gives one value per column, in the same order. Text goes in single quotes, and numbers do not.</p><p><b>Common mistake:</b> Putting the values in a different order from the column list. Then the name could end up in the building column.</p>"
     },
     {
       id: 'd8-2', level: 1, kind: 'script',
@@ -255,7 +256,8 @@ WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History');`,
         "First write a SELECT that returns only the History instructors.",
         "The new value can use the old one: SET salary = salary + 4000",
         "WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History')"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Change many rows at once with UPDATE. A subquery finds the department id from its name, so you do not need to know the number.</p><p><b>How it works:</b> <code>SET salary = salary + 4000</code> adds 4000 to the current salary. The subquery <code>(SELECT dept_id FROM departments WHERE name = 'History')</code> returns the History id. <code>WHERE dept_id = (...)</code> limits the change to History instructors.</p><p><b>Common mistake:</b> Forgetting the WHERE. Then every instructor in the university gets the raise.</p>"
     },
     {
       id: 'd8-3', level: 1, kind: 'script',
@@ -266,7 +268,8 @@ WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History');`,
         "First preview the rows: SELECT * FROM payments WHERE ...",
         "Join the two conditions with AND. Dates in YYYY-MM-DD form compare correctly as text.",
         "DELETE FROM payments WHERE method = 'cash' AND paid_on < '2025-07-01';"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> DELETE removes the rows that match a condition. The condition must describe only the wrong rows.</p><p><b>How it works:</b> <code>method = 'cash'</code> picks cash payments. <code>paid_on &lt; '2025-07-01'</code> picks the ones before that date. Dates are stored as YYYY-MM-DD text, so text comparison works. Both conditions are joined with AND, so a row must match both.</p><p><b>Common mistake:</b> Using OR instead of AND. Then you delete all cash payments and all old payments.</p>"
     },
     {
       id: 'd8-4', level: 2, kind: 'script',
@@ -283,7 +286,8 @@ WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History');`,
         "Required means NOT NULL. \"No two the same\" means UNIQUE.",
         "A foreign key on one column: dept_id INTEGER REFERENCES departments(dept_id)",
         "The CHECK is not graded, but write it: CHECK (founded_year >= 1950)"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Each rule in the description becomes a constraint, so the database protects the data for you.</p><p><b>How it works:</b> <code>club_id INTEGER PRIMARY KEY</code> identifies each club. <code>NOT NULL UNIQUE</code> on name means every club has a name and no two names repeat. <code>CHECK (founded_year &gt;= 1950)</code> rejects old years. A NULL year still passes, so the column stays optional. <code>REFERENCES departments(dept_id)</code> makes dept_id a foreign key.</p><p><b>Common mistake:</b> Adding <code>NOT NULL</code> to founded_year or dept_id. The task says they are optional.</p>"
     },
     {
       id: 'd8-5', level: 2, kind: 'script',
@@ -301,7 +305,8 @@ WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History');`,
         "A primary key on two columns goes on its own line at the end: PRIMARY KEY (a, b)",
         "DEFAULT 'member' uses single quotes.",
         "Each id column needs its own REFERENCES."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Many students join many clubs. That is an M:N relationship, so it needs a link table with two foreign keys.</p><p><b>How it works:</b> <code>club_id</code> and <code>student_id</code> each reference their own table. <code>role TEXT NOT NULL DEFAULT 'member'</code> means a role is always stored. If you leave it out, it becomes member. <code>PRIMARY KEY (club_id, student_id)</code> is a composite key. A student can join a club only once.</p><p><b>Common mistake:</b> Making only <code>club_id</code> the primary key. Then each club could have only one member.</p>"
     },
     {
       id: 'd8-6', level: 2, kind: 'script',
@@ -320,7 +325,8 @@ HAVING AVG(score) >= 80;`,
         "First write the SELECT alone and check its rows.",
         "AVG already ignores NULL values.",
         "Keep the groups with HAVING AVG(score) >= 80. Then put INSERT INTO honor_roll (student_id, avg_score) in front."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You can fill a table from a query. <code>INSERT ... SELECT</code> inserts every row the SELECT returns.</p><p><b>How it works:</b> The SELECT groups enrollments by student and computes the average score. <code>AVG</code> ignores NULL scores, so courses in progress do not count. <code>HAVING AVG(score) &gt;= 80</code> keeps the good students. <code>ROUND(AVG(score), 1)</code> stores the rounded value. Each result row becomes a row of <code>honor_roll</code>.</p><p><b>Common mistake:</b> Writing <code>HAVING ROUND(AVG(score), 1) &gt;= 80</code>. Rounding first can let in a student with an average of 79.96.</p>"
     },
     {
       id: 'd8-7', level: 2, kind: 'script',
@@ -333,7 +339,8 @@ UPDATE students SET phone = '+20 100 100 1002' WHERE student_id = 1002;`,
         "ALTER TABLE students ADD COLUMN phone TEXT;",
         "Use one UPDATE per student, each with its own WHERE.",
         "Phone numbers are text, so use single quotes."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Changing a live table takes two steps. First change its structure with ALTER TABLE. Then fill the new column with UPDATE.</p><p><b>How it works:</b> <code>ALTER TABLE students ADD COLUMN phone TEXT</code> adds an empty column. Every student now has NULL there. Each <code>UPDATE ... WHERE student_id = ...</code> sets the phone of exactly one student.</p><p><b>Common mistake:</b> Using INSERT to add the phone numbers. INSERT creates new rows. Here the students already exist, so you UPDATE them.</p>"
     },
     {
       id: 'd8-8', level: 3, kind: 'script',
@@ -352,7 +359,8 @@ ON CONFLICT (course_id) DO UPDATE SET section_count = excluded.section_count;`,
         "Put INSERT INTO course_stats (course_id, section_count) in front of it.",
         "Add ON CONFLICT (course_id) DO UPDATE SET section_count = excluded.section_count",
         "If SQLite says \"near DO: syntax error\", the SELECT needs a GROUP BY (or WHERE true) before ON CONFLICT."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Some rows exist and some do not. An \"upsert\" inserts new rows and updates existing ones in one statement.</p><p><b>How it works:</b> The SELECT counts sections per course. <code>INSERT INTO course_stats</code> tries to insert each count. When a course already exists, the primary key conflicts. <code>ON CONFLICT (course_id) DO UPDATE</code> then updates that row instead. <code>excluded.section_count</code> means \"the value we tried to insert\".</p><p><b>Common mistake:</b> Writing a plain INSERT. It fails with a UNIQUE error on the three rows that already exist.</p>"
     },
     {
       id: 'd8-9', level: 3, kind: 'script',
@@ -374,7 +382,8 @@ DELETE FROM departments WHERE dept_id = 8;`,
         "Delete from the bottom of the chain up: children before parents.",
         "Use nested IN subqueries to find the sections of the Philosophy courses.",
         "Check prereqs too: does any prerequisite row use a Philosophy course?"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Foreign keys stop you from deleting a row that other rows still point to. So you delete from the bottom up: children first, parents last.</p><p><b>How it works:</b> Enrollments point to sections, so they go first. Sections point to courses, so they go next. Prereqs point to courses in two columns, so rows that mention a Philosophy course are removed. Then the courses go, and finally the department. Each step uses nested subqueries to find the Philosophy rows.</p><p><b>Common mistake:</b> Deleting the department first. The foreign key check fails, because its courses still point to it.</p>"
     },
     {
       id: 'd8-10', level: 3, kind: 'script',
@@ -390,7 +399,8 @@ DELETE FROM departments WHERE dept_id = 8;`,
         "\"At most one thesis per student\" means student_id is UNIQUE.",
         "\"Delete the thesis too\" is ON DELETE CASCADE.",
         "\"Keep it with no supervisor\" is ON DELETE SET NULL."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Each sentence of the description becomes a constraint, including what happens on delete.</p><p><b>How it works:</b> <code>student_id</code> is <code>NOT NULL</code> (required) and <code>UNIQUE</code> (one thesis per student). <code>ON DELETE CASCADE</code> deletes the thesis when its student is deleted. <code>supervisor_id</code> may be NULL. <code>ON DELETE SET NULL</code> keeps the thesis but clears the supervisor if the instructor is deleted.</p><p><b>Common mistake:</b> Forgetting <code>UNIQUE</code> on student_id. Then a student could have two theses.</p>"
     }
   ],
   quiz: [

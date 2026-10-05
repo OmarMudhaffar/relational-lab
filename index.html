@@ -506,6 +506,29 @@ button.pill.link:hover { border-color: var(--accent); }
 .sp-legend { border-top: 1px solid var(--line); padding: 10px 16px; font-size: 13px; color: var(--muted); line-height: 2; }
 .sp-legend .pill { margin: 0 4px 0 0; }
 
+/* ---------- solution walkthrough ---------- */
+.sol { margin: 0 16px 16px; border: 1px solid var(--accent); border-radius: 10px; background: var(--surface); padding: 14px 16px 16px; }
+.sol-h { display: flex; gap: 4px 12px; flex-wrap: wrap; align-items: baseline; margin-bottom: 4px; }
+.sol-h > b { font-size: 16px; color: var(--accent); }
+.sol-h span { font-size: 13.5px; color: var(--muted); }
+.sol-sec { font: 700 12px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 16px 0 6px; }
+.sol .code { margin: 0; }
+.sol-why { background: var(--accent-soft); border-radius: 8px; padding: 12px 14px; font-size: 15px; }
+.sol-why p { margin: 0 0 8px; }
+.sol-why p:last-child { margin-bottom: 0; }
+.sol-why b { color: var(--accent); }
+.sol-lines { display: grid; gap: 6px; }
+.sl { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.sl .code { font-size: 13px; padding: 8px 10px; white-space: pre-wrap; }
+.sl p { margin: 0; font-size: 14.5px; padding-top: 6px; }
+.sol-x { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.sol-x .x2 { border-top: 0; }
+.sol-more { margin-top: 12px; }
+.sol-more summary { cursor: pointer; font-size: 13.5px; color: var(--muted); }
+.sol-more .code { margin-top: 6px; }
+.sol-act { margin-top: 16px; display: flex; justify-content: flex-end; }
+@media (max-width: 640px) { .sl { grid-template-columns: minmax(0, 1fr); gap: 2px; } .sl p { padding: 0 2px 6px; } .sol { margin: 0 10px 12px; padding: 12px; } }
+
 /* ---------- table viewer ---------- */
 .tv { position: fixed; z-index: 70; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(1100px, calc(100vw - 24px)); height: min(820px, calc(100vh - 32px)); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.35); display: flex; flex-direction: column; overflow: hidden; }
 body.modal-open { overflow: hidden; }
@@ -1179,7 +1202,8 @@ LIMIT 5 OFFSET 5;`,
       hints: [
         'You need only one table: departments.',
         'The pattern is: SELECT column1, column2 FROM table;'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> The answer lives in one table, <code>departments</code>. You only need to pick two of its columns.</p><p><b>How it works:</b> <code>FROM departments</code> takes every row of the table. <code>SELECT name, budget</code> keeps only those two columns, in that order.</p><p><b>Common mistake:</b> Writing <code>SELECT *</code> returns all four columns. The question asks for two, so the answer has the wrong shape.</p>"
     },
     {
       id: 'd1-2',
@@ -1190,14 +1214,16 @@ LIMIT 5 OFFSET 5;`,
       hints: [
         'Sort by two columns. The second column is used only when the first one is equal.',
         'ORDER BY credits DESC, title'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You need <code>ORDER BY</code> with two columns. The second column only breaks ties in the first one.</p><p><b>How it works:</b> <code>FROM courses</code> takes every course. <code>SELECT title, credits</code> keeps two columns. <code>ORDER BY credits DESC</code> puts the most credits first. Courses with the same credits are then sorted by <code>title ASC</code>, A to Z.</p><p><b>Common mistake:</b> Writing <code>ORDER BY title, credits DESC</code> sorts by title first. Then the credits order is lost.</p>"
     },
     {
       id: 'd1-3',
       level: 1,
       prompt: '<p>Which cities do our students come from? Show each city only once.</p><ul class="spec"><li><b>Columns:</b> <code>city</code></li><li><b>Note:</b> some students have no city (NULL). Keep that NULL row too.</li></ul>',
       solution: 'SELECT DISTINCT city FROM students;',
-      hints: ['One keyword removes repeated rows.', 'SELECT DISTINCT city FROM ...']
+      hints: ['One keyword removes repeated rows.', 'SELECT DISTINCT city FROM ...'],
+      explain: "<p><b>The idea:</b> One city can appear many times. <code>DISTINCT</code> keeps one copy of each different row.</p><p><b>How it works:</b> <code>FROM students</code> takes all 40 students. <code>SELECT DISTINCT city</code> keeps only the city column and removes repeated cities. The NULL city stays as one row.</p><p><b>Common mistake:</b> Writing <code>SELECT city FROM students</code> without <code>DISTINCT</code> returns 40 rows, with many repeats.</p>"
     },
     {
       id: 'd1-4',
@@ -1209,7 +1235,8 @@ LIMIT 5 OFFSET 5;`,
         'In SQLite, salary / 12 drops the decimals. Divide by 12.0 instead.',
         'ROUND(value, 2) keeps two decimals.',
         'Sort by salary (or by monthly) with DESC.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You can calculate in <code>SELECT</code>. Divide by <code>12.0</code>, not <code>12</code>, to keep the decimals.</p><p><b>How it works:</b> <code>FROM instructors</code> takes every instructor. <code>salary / 12.0</code> gives the monthly amount with decimals. <code>ROUND(..., 2)</code> keeps 2 decimal places, and <code>AS monthly</code> names the column. <code>ORDER BY salary DESC</code> puts the highest salary first.</p><p><b>Common mistake:</b> Writing <code>salary / 12</code> divides two whole numbers. SQLite then cuts off the decimals, so 98000 / 12 gives 8166, not 8166.67.</p>"
     },
     {
       id: 'd1-5',
@@ -1220,7 +1247,8 @@ LIMIT 5 OFFSET 5;`,
       hints: [
         'Dates are text like 2024-08-26. They sort correctly as text.',
         'ORDER BY ... DESC, then LIMIT 3.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> To get \"the newest 3\", sort from newest to oldest and keep the first 3 rows.</p><p><b>How it works:</b> <code>FROM instructors</code> takes all rows. <code>ORDER BY hire_date DESC</code> puts the latest date first. Dates are written as YYYY-MM-DD, so they sort correctly as text. <code>LIMIT 3</code> keeps only the first 3 rows.</p><p><b>Common mistake:</b> Writing <code>LIMIT 3</code> without <code>ORDER BY</code> gives any 3 rows, not the newest ones.</p>"
     },
     {
       id: 'd1-6',
@@ -1232,7 +1260,8 @@ LIMIT 5 OFFSET 5;`,
         'Read the lesson part "Joining text together with ||".',
         `The fixed pieces are ' <' (a space and <) and '>'. Put them in single quotes.`,
         `name || ' <' || email || '>' AS contact, then ORDER BY name`
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Use <code>||</code> to glue text pieces into one column. Fixed text goes in single quotes.</p><p><b>How it works:</b> <code>FROM students</code> takes every student. In <code>SELECT</code>, <code>name || ' &lt;' || email || '&gt;'</code> joins four pieces: the name, a space with &lt;, the email, and &gt;. <code>AS contact</code> names the column. <code>ORDER BY name</code> sorts A to Z.</p><p><b>Common mistake:</b> Writing <code>name, email</code> gives two columns, not one. Forgetting the space inside <code>' &lt;'</code> gives \"Ahmed Al-Sayed&lt;...\" with no space.</p>"
     },
     {
       id: 'd1-7',
@@ -1244,7 +1273,8 @@ LIMIT 5 OFFSET 5;`,
         'Read the lesson part "Pages of results with OFFSET".',
         'Page 2 means: skip the first 10 rows, then take 10.',
         'ORDER BY name LIMIT 10 OFFSET 10'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Page 2 with 10 rows per page means: skip 10 rows, then take 10. That is <code>LIMIT 10 OFFSET 10</code>.</p><p><b>How it works:</b> <code>FROM students</code> takes all students. <code>SELECT student_id, name</code> keeps two columns. <code>ORDER BY name</code> sorts A to Z. <code>OFFSET 10</code> skips rows 1 to 10, and <code>LIMIT 10</code> keeps rows 11 to 20.</p><p><b>Common mistake:</b> Writing <code>LIMIT 10 OFFSET 2</code> skips only 2 rows. OFFSET counts rows, not pages: (page − 1) × 10 = 10.</p>"
     }
   ],
   quiz: [
@@ -1485,7 +1515,8 @@ LIMIT 6;`
       level: 1,
       prompt: '<p>Find the instructors who earn more than 85000.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>salary</code></li></ul>',
       solution: 'SELECT name, salary FROM instructors WHERE salary > 85000;',
-      hints: ['Use WHERE to keep only some rows.', 'WHERE salary > 85000']
+      hints: ['Use WHERE to keep only some rows.', 'WHERE salary > 85000'],
+      explain: "<p><b>The idea:</b> <code>WHERE</code> keeps only the rows where the condition is true.</p><p><b>How it works:</b> <code>FROM instructors</code> takes all 16 instructors. <code>WHERE salary &gt; 85000</code> tests each row and keeps the ones above 85000. <code>SELECT name, salary</code> shows two columns.</p><p><b>Common mistake:</b> Writing <code>salary &gt;= 85000</code> also keeps an instructor who earns exactly 85000. \"More than\" means <code>&gt;</code>.</p>"
     },
     {
       id: 'd2-2',
@@ -1496,7 +1527,8 @@ LIMIT 6;`
         '"No major" means dept_id has no value.',
         'You cannot test for NULL with =.',
         'WHERE dept_id IS NULL'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A missing value is NULL. You can only find it with <code>IS NULL</code>.</p><p><b>How it works:</b> <code>FROM students</code> takes all students. <code>WHERE dept_id IS NULL</code> keeps the students with no major. <code>SELECT student_id, name</code> shows two columns.</p><p><b>Common mistake:</b> Writing <code>WHERE dept_id = NULL</code> returns no rows. NULL is never equal to anything, not even to NULL.</p>"
     },
     {
       id: 'd2-3',
@@ -1507,7 +1539,8 @@ LIMIT 6;`
         'Use a pattern with LIKE.',
         `LIKE 'MA%' finds codes that start with MA.`,
         'Join two LIKE conditions with OR.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>LIKE</code> matches a text pattern. <code>%</code> means \"any characters after this\".</p><p><b>How it works:</b> <code>FROM courses</code> takes all courses. <code>course_id LIKE 'MA%'</code> is true for codes that start with MA. <code>OR course_id LIKE 'PH%'</code> also keeps codes that start with PH.</p><p><b>Common mistake:</b> Writing <code>AND</code> instead of <code>OR</code> returns nothing. A code cannot start with MA and with PH at the same time.</p>"
     },
     {
       id: 'd2-4',
@@ -1518,7 +1551,8 @@ LIMIT 6;`
         'Both conditions must be true.',
         'IN (...) is a short way to write many ORs.',
         'If you use OR for the cities, put it in brackets ( ).'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>IN (...)</code> is a short way to write many <code>OR</code> tests. Two <code>IN</code> lists joined with <code>AND</code> must both be true.</p><p><b>How it works:</b> <code>FROM students</code> takes all students. <code>year IN (3, 4)</code> keeps years 3 and 4. <code>AND city IN ('Cairo', 'Baghdad', 'Riyadh')</code> also requires one of the three cities.</p><p><b>Common mistake:</b> Writing <code>year = 3 OR year = 4 AND city IN (...)</code> without brackets is wrong. AND runs before OR, so every year-3 student comes back, from any city.</p>"
     },
     {
       id: 'd2-5',
@@ -1529,14 +1563,16 @@ LIMIT 6;`
         'The table is sections.',
         'BETWEEN includes both end values.',
         'WHERE year = 2025 AND capacity BETWEEN ...'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>BETWEEN a AND b</code> includes both ends, so it fits \"25 to 40 seats\" exactly.</p><p><b>How it works:</b> <code>FROM sections</code> takes all sections. <code>WHERE year = 2025</code> keeps one year. <code>AND capacity BETWEEN 25 AND 40</code> keeps capacities from 25 to 40, including 25 and 40. <code>SELECT</code> shows four columns.</p><p><b>Common mistake:</b> Writing <code>capacity &gt; 25 AND capacity &lt; 40</code> leaves out sections with exactly 25 or 40 seats.</p>"
     },
     {
       id: 'd2-6',
       level: 2,
       prompt: '<p>Show every student with their city. If the city is missing, show the text <code>Not provided</code> instead.</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>city</code></li><li><b>Note:</b> the second column must be named <code>city</code>.</li></ul>',
       solution: `SELECT name, COALESCE(city, 'Not provided') AS city FROM students;`,
-      hints: ['One function returns the first value that is not NULL.', `COALESCE(city, '...') AS city`]
+      hints: ['One function returns the first value that is not NULL.', `COALESCE(city, '...') AS city`],
+      explain: "<p><b>The idea:</b> <code>COALESCE(a, b)</code> returns <code>a</code>, or <code>b</code> when <code>a</code> is NULL. It fills the gaps.</p><p><b>How it works:</b> <code>FROM students</code> takes every student. <code>COALESCE(city, 'Not provided')</code> keeps the real city, or puts the text when the city is NULL. <code>AS city</code> keeps the column name <code>city</code>.</p><p><b>Common mistake:</b> Writing <code>WHERE city IS NULL</code> returns only the students with no city. The question wants every student.</p>"
     },
     {
       id: 'd2-7',
@@ -1548,7 +1584,8 @@ LIMIT 6;`
         'Dates are text like 2026-01-15, so BETWEEN works on them.',
         'The method is bank or cash: use IN.',
         'ORDER BY paid_on, payment_id'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Two conditions must both be true: a date range and a payment method. Then sort by date.</p><p><b>How it works:</b> <code>FROM payments</code> takes all payments. <code>paid_on BETWEEN '2026-01-01' AND '2026-06-30'</code> keeps the first half of 2026, including both days. <code>AND method IN ('bank', 'cash')</code> keeps two methods. <code>ORDER BY paid_on, payment_id</code> sorts by date, then by id for payments on the same day.</p><p><b>Common mistake:</b> Writing <code>method = 'bank' OR method = 'cash' AND paid_on BETWEEN ...</code> without brackets keeps bank payments from any date, because AND runs before OR.</p>"
     },
     {
       id: 'd2-8',
@@ -1564,7 +1601,8 @@ FROM enrollments;`,
         'Use CASE WHEN ... THEN ... ELSE ... END.',
         'SQL uses the first WHEN that is true. So the order of the WHENs matters.',
         'Test IS NULL first. If you do not, NULL scores go to ELSE.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>CASE</code> is an if-then-else inside a query. It returns the result of the first <code>WHEN</code> that is true.</p><p><b>How it works:</b> <code>FROM enrollments</code> takes every enrollment. For each row, <code>CASE</code> tests in order: score IS NULL gives 'In progress', score &gt;= 90 gives 'Honours', score &gt;= 60 gives 'Pass'. Otherwise <code>ELSE 'Fail'</code>. <code>AS status</code> names the column.</p><p><b>Common mistake:</b> Putting <code>WHEN score &gt;= 60</code> before <code>WHEN score &gt;= 90</code> labels a 95 as Pass. The first true WHEN wins, so the order matters.</p>"
     },
     {
       id: 'd2-9',
@@ -1575,7 +1613,8 @@ FROM enrollments;`,
         `STRFTIME('%Y', date) gives the year as text. Compare it with '2004'.`,
         `INSTR(email, '@') gives the position of the @ sign.`,
         `The username length is INSTR(email, '@') - 1. You can also use LENGTH(SUBSTR(...)).`
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Build the username with text functions, then test it in <code>WHERE</code>.</p><p><b>How it works:</b> <code>FROM students</code> takes all students. <code>STRFTIME('%Y', birth_date) = '2004'</code> keeps students born in 2004. <code>INSTR(email, '@')</code> finds the position of @. <code>SUBSTR(email, 1, ... - 1)</code> takes the part before it, and <code>LENGTH(...) &gt; 12</code> tests its length.</p><p><b>Common mistake:</b> Writing <code>LENGTH(email) &gt; 12</code> measures the whole email, including \"@uni.edu\". Almost every student then matches.</p>"
     },
     {
       id: 'd2-10',
@@ -1586,7 +1625,8 @@ FROM enrollments;`,
         'JULIANDAY(a) - JULIANDAY(b) gives the number of days between two dates.',
         '"No mentor" means mentor_id IS NULL.',
         'You cannot use the name days_worked in WHERE. Write the full expression again.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Use <code>JULIANDAY</code> to count days between two dates, and <code>IS NULL</code> to find \"no mentor\".</p><p><b>How it works:</b> <code>FROM instructors</code> takes all instructors. In <code>WHERE</code>, <code>JULIANDAY('2026-10-05') - JULIANDAY(hire_date) &gt; 3652</code> keeps people hired more than 3652 days ago. <code>AND mentor_id IS NULL</code> keeps those with no mentor. In <code>SELECT</code>, <code>CAST(... AS INTEGER)</code> shows whole days.</p><p><b>Common mistake:</b> Writing the alias in WHERE, like <code>WHERE days_worked &gt; 3652</code>, fails in most databases. WHERE runs before SELECT, so the alias does not exist yet.</p>"
     }
   ],
   quiz: [
@@ -1837,21 +1877,24 @@ ORDER BY students DESC, city;`
       level: 1,
       prompt: '<p>Count all students. Also count the students who have a major.</p><ul class="spec"><li><b>Columns:</b> <code>total_students</code>, <code>with_major</code></li><li><b>Note:</b> return one row. A student has a major when <code>dept_id</code> is not NULL.</li></ul>',
       solution: 'SELECT COUNT(*) AS total_students, COUNT(dept_id) AS with_major FROM students;',
-      hints: ['One COUNT counts all rows. The other one skips NULLs.', 'COUNT(*) and COUNT(dept_id)']
+      hints: ['One COUNT counts all rows. The other one skips NULLs.', 'COUNT(*) and COUNT(dept_id)'],
+      explain: "<p><b>The idea:</b> <code>COUNT(*)</code> counts rows. <code>COUNT(column)</code> counts only the rows where that column is not NULL.</p><p><b>How it works:</b> <code>FROM students</code> takes all rows. There is no GROUP BY, so the whole table is one group and you get one row. <code>COUNT(*)</code> gives all 40 students. <code>COUNT(dept_id)</code> skips the NULL majors.</p><p><b>Common mistake:</b> Writing <code>COUNT(*)</code> twice gives 40 and 40. Only <code>COUNT(dept_id)</code> leaves out the students with no major.</p>"
     },
     {
       id: 'd3-2',
       level: 1,
       prompt: '<p>For each payment method, count the payments and add up the money.</p><ul class="spec"><li><b>Columns:</b> <code>method</code>, <code>payments</code>, <code>total</code></li><li><b>Note:</b> <code>payments</code> is the number of payments. <code>total</code> is the sum of <code>amount</code>.</li></ul>',
       solution: 'SELECT method, COUNT(*) AS payments, SUM(amount) AS total FROM payments GROUP BY method;',
-      hints: ['You need one row for each method.', 'GROUP BY method, then COUNT(*) and SUM(amount).']
+      hints: ['You need one row for each method.', 'GROUP BY method, then COUNT(*) and SUM(amount).'],
+      explain: "<p><b>The idea:</b> <code>GROUP BY method</code> makes one group per method. Aggregates then work inside each group.</p><p><b>How it works:</b> <code>FROM payments</code> takes all payments. <code>GROUP BY method</code> puts card, bank and cash rows into three groups. In <code>SELECT</code>, <code>COUNT(*)</code> counts each group and <code>SUM(amount)</code> adds its money.</p><p><b>Common mistake:</b> Forgetting <code>GROUP BY</code> gives one row for the whole table. Most databases also reject <code>method</code> in SELECT then.</p>"
     },
     {
       id: 'd3-3',
       level: 1,
       prompt: '<p>Find the lowest, the highest and the average score of all enrollments.</p><ul class="spec"><li><b>Columns:</b> <code>lowest</code>, <code>highest</code>, <code>average</code></li><li><b>Note:</b> return one row. Round <code>average</code> to 1 decimal place.</li></ul>',
       solution: 'SELECT MIN(score) AS lowest, MAX(score) AS highest, ROUND(AVG(score), 1) AS average FROM enrollments;',
-      hints: ['MIN, MAX and AVG skip NULL scores by themselves.', 'ROUND(AVG(score), 1)']
+      hints: ['MIN, MAX and AVG skip NULL scores by themselves.', 'ROUND(AVG(score), 1)'],
+      explain: "<p><b>The idea:</b> MIN, MAX and AVG summarize the whole column. With no GROUP BY, you get one row.</p><p><b>How it works:</b> <code>FROM enrollments</code> takes every enrollment. <code>MIN(score)</code> and <code>MAX(score)</code> find the extremes. <code>AVG(score)</code> finds the average, and <code>ROUND(..., 1)</code> keeps 1 decimal. All three skip the NULL scores.</p><p><b>Common mistake:</b> Writing <code>ROUND(AVG(score))</code> without the 1 rounds to a whole number. The question asks for 1 decimal place.</p>"
     },
     {
       id: 'd3-4',
@@ -1859,7 +1902,8 @@ ORDER BY students DESC, city;`
       prompt: '<p>How many students are in each year of study?</p><ul class="spec"><li><b>Columns:</b> <code>year</code>, <code>students</code></li><li><b>Order:</b> by <code>year</code>, smallest first</li></ul>',
       solution: 'SELECT year, COUNT(*) AS students FROM students GROUP BY year ORDER BY year;',
       ordered: true,
-      hints: ['Group by the year column.', 'GROUP BY year ORDER BY year']
+      hints: ['Group by the year column.', 'GROUP BY year ORDER BY year'],
+      explain: "<p><b>The idea:</b> Group the students by year, then count each group.</p><p><b>How it works:</b> <code>FROM students</code> takes all students. <code>GROUP BY year</code> makes one group per year. <code>COUNT(*) AS students</code> counts each group. <code>ORDER BY year</code> sorts from year 1 to year 4.</p><p><b>Common mistake:</b> Writing <code>SELECT year, COUNT(*) FROM students</code> without GROUP BY gives one row with a random year and 40.</p>"
     },
     {
       id: 'd3-5',
@@ -1870,7 +1914,8 @@ ORDER BY students DESC, city;`
         'One row per section: GROUP BY section_id.',
         '"5 or more" is a rule for a group, not for one row.',
         'HAVING COUNT(*) >= 5'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> WHERE filters rows. <code>HAVING</code> filters groups, after they are counted.</p><p><b>How it works:</b> <code>FROM enrollments</code> takes all rows. <code>GROUP BY section_id</code> makes one group per section. <code>HAVING COUNT(*) &gt;= 5</code> keeps sections with 5 or more students. <code>SELECT</code> shows the count and the rounded average.</p><p><b>Common mistake:</b> Writing <code>WHERE COUNT(*) &gt;= 5</code> gives an error. WHERE runs before grouping, so it cannot use COUNT.</p>"
     },
     {
       id: 'd3-6',
@@ -1882,7 +1927,8 @@ ORDER BY students DESC, city;`
         `STRFTIME('%Y-%m', paid_on) turns a date into YYYY-MM.`,
         'Group by that expression.',
         'HAVING SUM(amount) >= 5000, then ORDER BY income DESC, month'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Turn each date into a month with <code>STRFTIME('%Y-%m', ...)</code>, then group by that month.</p><p><b>How it works:</b> <code>FROM payments</code> takes all payments. <code>GROUP BY STRFTIME('%Y-%m', paid_on)</code> makes one group per month. <code>HAVING SUM(amount) &gt;= 5000</code> keeps big months. <code>ORDER BY income DESC, month</code> puts the highest income first.</p><p><b>Common mistake:</b> Writing <code>GROUP BY paid_on</code> makes one group per day, not per month. The totals become too small.</p>"
     },
     {
       id: 'd3-7',
@@ -1892,7 +1938,8 @@ ORDER BY students DESC, city;`
       hints: [
         'Remove the NULL department before you group.',
         'WHERE dept_id IS NOT NULL ... GROUP BY dept_id'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Remove the unwanted rows with WHERE first, then group what is left.</p><p><b>How it works:</b> <code>FROM instructors</code> takes all instructors. <code>WHERE dept_id IS NOT NULL</code> drops the one instructor with no department. <code>GROUP BY dept_id</code> makes one group per department. <code>COUNT(*)</code> and <code>SUM(salary)</code> summarize each group.</p><p><b>Common mistake:</b> Forgetting the WHERE gives an extra group with dept_id NULL. GROUP BY keeps NULL as its own group.</p>"
     },
     {
       id: 'd3-8',
@@ -1907,7 +1954,8 @@ FROM enrollments GROUP BY section_id;`,
         'One row per section, with three different counts.',
         'Put a CASE inside SUM: 1 when the row matches, 0 when it does not.',
         'Pending rows have grade IS NULL.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> To count only some rows inside a group, add 1 when the row matches and 0 when it does not.</p><p><b>How it works:</b> <code>FROM enrollments</code> takes all rows. <code>GROUP BY section_id</code> makes one group per section. <code>SUM(CASE WHEN grade IN ('A','B','C','D') THEN 1 ELSE 0 END)</code> counts passes. The same idea counts F grades and NULL grades.</p><p><b>Common mistake:</b> Writing <code>CASE WHEN grade = NULL</code> never matches, so pending is always 0. Use <code>grade IS NULL</code>.</p>"
     },
     {
       id: 'd3-9',
@@ -1919,7 +1967,8 @@ FROM enrollments GROUP BY section_id;`,
         'Both rules look at all the payments of one student. So both go in HAVING.',
         'Count the cash payments of each student with SUM(CASE ...).',
         'HAVING SUM(amount) >= 3000 AND (number of cash payments) = 0'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> HAVING can test two things about each group: the total, and how many cash payments it has.</p><p><b>How it works:</b> <code>FROM payments</code> takes all payments. <code>GROUP BY student_id</code> makes one group per student. <code>HAVING SUM(amount) &gt;= 3000</code> keeps big payers. <code>AND SUM(CASE WHEN method = 'cash' THEN 1 ELSE 0 END) = 0</code> keeps students with zero cash payments.</p><p><b>Common mistake:</b> Writing <code>WHERE method &lt;&gt; 'cash'</code> only removes the cash rows. A student who paid cash once would still appear, with a smaller total.</p>"
     },
     {
       id: 'd3-10',
@@ -1931,7 +1980,8 @@ FROM enrollments GROUP BY section_id;`,
         'A term is a pair (year, semester). Group by both.',
         'seats = SUM(capacity).',
         'HAVING SUM(capacity) > 300'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A term is two columns. So you group by both: <code>GROUP BY year, semester</code>.</p><p><b>How it works:</b> <code>FROM sections</code> takes all sections. <code>GROUP BY year, semester</code> makes one group per term. <code>HAVING SUM(capacity) &gt; 300</code> keeps big terms. <code>ORDER BY year, semester</code> sorts by year, then semester A to Z.</p><p><b>Common mistake:</b> Writing <code>GROUP BY year</code> only mixes Fall and Spring of the same year into one group.</p>"
     }
   ],
   quiz: [
@@ -2205,7 +2255,8 @@ ORDER BY students DESC, d.name;`
       hints: [
         'courses.dept_id points to departments.dept_id.',
         'JOIN departments d ON d.dept_id = c.dept_id'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> The department name is in another table. A <code>JOIN</code> brings it in by matching the keys.</p><p><b>How it works:</b> <code>FROM courses c</code> takes every course. <code>JOIN departments d ON d.dept_id = c.dept_id</code> attaches the matching department to each course. <code>SELECT</code> shows the course columns and <code>d.name AS department</code>.</p><p><b>Common mistake:</b> Forgetting the <code>ON</code> condition pairs every course with every department (23 × 8 = 184 rows).</p>"
     },
     {
       id: 'd4-2',
@@ -2215,7 +2266,8 @@ ORDER BY students DESC, d.name;`
       hints: [
         'An INNER JOIN drops sections without an instructor by itself.',
         'JOIN instructors i ON i.instructor_id = x.instructor_id'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> An INNER <code>JOIN</code> keeps only rows that have a match. That is exactly \"skip sections with no instructor\".</p><p><b>How it works:</b> <code>FROM sections x</code> takes every section. <code>JOIN instructors i ON i.instructor_id = x.instructor_id</code> attaches the teacher. The section with a NULL instructor has no match, so it drops out.</p><p><b>Common mistake:</b> Writing <code>LEFT JOIN</code> keeps that section with a NULL instructor. The question asks you to skip it.</p>"
     },
     {
       id: 'd4-3',
@@ -2226,7 +2278,8 @@ ORDER BY students DESC, d.name;`
         'You need students with no matching row in enrollments.',
         'Use LEFT JOIN. Then keep the rows where the right side is empty.',
         'WHERE e.student_id IS NULL'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> To find rows with no match, use a <code>LEFT JOIN</code> and keep the rows where the right side is NULL.</p><p><b>How it works:</b> <code>FROM students s LEFT JOIN enrollments e</code> keeps every student, even with no enrollment. For those students, the enrollment columns are NULL. <code>WHERE e.student_id IS NULL</code> keeps exactly them.</p><p><b>Common mistake:</b> Writing an INNER <code>JOIN</code> removes the students with no enrollment before WHERE runs, so the answer is empty.</p>"
     },
     {
       id: 'd4-4',
@@ -2238,7 +2291,8 @@ ORDER BY students DESC, d.name;`
         'Path: enrollments → sections → courses.',
         'Filter with WHERE e.student_id = 1010.',
         'ORDER BY x.year, x.semester, c.course_id'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> The data is spread over three tables. Follow the keys: enrollments → sections → courses.</p><p><b>How it works:</b> <code>FROM enrollments e</code> starts with the grades. <code>JOIN sections x</code> adds the semester and year. <code>JOIN courses c</code> adds the title. <code>WHERE e.student_id = 1010</code> keeps one student. <code>ORDER BY x.year, x.semester, c.course_id</code> sorts the transcript.</p><p><b>Common mistake:</b> Writing <code>course_id</code> without a table name gives \"ambiguous column name\". Both sections and courses have that column.</p>"
     },
     {
       id: 'd4-5',
@@ -2249,7 +2303,8 @@ ORDER BY students DESC, d.name;`
         'Departments with 0 instructors must stay. Which join keeps them?',
         'Group by the department.',
         'Use COUNT(i.instructor_id), not COUNT(*). Then empty departments get 0.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> To show groups with zero, start from the table that must keep all its rows and <code>LEFT JOIN</code>. Then count a column from the right side.</p><p><b>How it works:</b> <code>FROM departments d LEFT JOIN instructors i</code> keeps every department. <code>GROUP BY d.dept_id, d.name</code> makes one group per department. <code>COUNT(i.instructor_id)</code> skips NULLs, so Philosophy shows 0.</p><p><b>Common mistake:</b> Writing <code>COUNT(*)</code> gives 1 for Philosophy, because the LEFT JOIN row itself is counted.</p>"
     },
     {
       id: 'd4-6',
@@ -2260,7 +2315,8 @@ ORDER BY students DESC, d.name;`
         'Join instructors to itself. Use two aliases.',
         'Which join keeps instructors who have no mentor?',
         'ON m.instructor_id = i.mentor_id'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A table can join to itself. Give it two aliases: one for the instructor, one for the mentor.</p><p><b>How it works:</b> <code>FROM instructors i</code> is the instructor. <code>LEFT JOIN instructors m ON m.instructor_id = i.mentor_id</code> finds the mentor row. LEFT JOIN keeps instructors with no mentor, and their mentor is NULL.</p><p><b>Common mistake:</b> Writing an INNER <code>JOIN</code> drops the instructors who have no mentor.</p>"
     },
     {
       id: 'd4-7',
@@ -2271,7 +2327,8 @@ ORDER BY students DESC, d.name;`
         'prereqs stores only codes. You need courses twice: once for the course, once for the prerequisite.',
         'Use two aliases for courses, for example c and p.',
         'JOIN courses p ON p.course_id = r.prereq_id'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>prereqs</code> holds only codes. Join <code>courses</code> twice to get both titles.</p><p><b>How it works:</b> <code>FROM prereqs r</code> takes each pair. <code>JOIN courses c ON c.course_id = r.course_id</code> finds the course title. <code>JOIN courses p ON p.course_id = r.prereq_id</code> finds the prerequisite title. <code>SELECT</code> renames them course and requires.</p><p><b>Common mistake:</b> Joining <code>courses</code> only once can give only one of the two titles.</p>"
     },
     {
       id: 'd4-8',
@@ -2283,7 +2340,8 @@ ORDER BY students DESC, d.name;`
         'Path: instructors → sections → enrollments.',
         'Group by the instructor. Then filter the groups.',
         'HAVING COUNT(*) >= 10 ORDER BY enrollments DESC, instructor'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Join along the path, then group and filter the groups.</p><p><b>How it works:</b> <code>FROM instructors i</code> joins their sections, then the enrollments of those sections. Each row is now one enrollment. <code>GROUP BY i.instructor_id, i.name</code> makes one group per teacher. <code>HAVING COUNT(*) &gt;= 10</code> keeps busy teachers. <code>ORDER BY enrollments DESC, instructor</code> sorts.</p><p><b>Common mistake:</b> Writing <code>WHERE COUNT(*) &gt;= 10</code> gives an error. Filters on a count belong in HAVING.</p>"
     },
     {
       id: 'd4-9',
@@ -2295,7 +2353,8 @@ ORDER BY students DESC, d.name;`
         'Every department must appear. So start from departments and use LEFT JOIN.',
         'If you put year = 4 in WHERE, departments with 0 seniors disappear.',
         'Put s.year = 4 inside ON, and count s.student_id.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> With a LEFT JOIN, put the filter on the right table inside <code>ON</code>. That keeps the departments with zero.</p><p><b>How it works:</b> <code>FROM departments d LEFT JOIN students s ON s.dept_id = d.dept_id AND s.year = 4</code> attaches only year-4 students. Departments with none still stay. <code>COUNT(s.student_id)</code> counts them, giving 0 when there are none. Then sort by seniors and name.</p><p><b>Common mistake:</b> Writing <code>WHERE s.year = 4</code> removes the NULL rows, so departments with no seniors disappear. The LEFT JOIN quietly becomes an INNER JOIN.</p>"
     },
     {
       id: 'd4-10',
@@ -2306,7 +2365,8 @@ ORDER BY students DESC, d.name;`
         `Path: students → enrollments → sections. Compare the section's instructor with the student's advisor.`,
         `Join instructors on s.advisor_id to get the advisor's name.`,
         'A student can share several sections with the advisor. Use DISTINCT.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Join four tables, then compare two columns: the section teacher and the student's advisor.</p><p><b>How it works:</b> <code>FROM students s</code> joins their enrollments and sections. <code>JOIN instructors i ON i.instructor_id = s.advisor_id</code> gets the advisor's name. <code>WHERE x.instructor_id = s.advisor_id</code> keeps sections taught by the advisor. <code>DISTINCT</code> shows each student once.</p><p><b>Common mistake:</b> Forgetting <code>DISTINCT</code> repeats a student who took two sections with their advisor.</p>"
     }
   ],
   quiz: [
@@ -2573,7 +2633,8 @@ WHERE NOT EXISTS (
         'First write a query that returns only the average salary.',
         'Put that query in brackets on the right side of >.',
         'WHERE salary > (SELECT AVG(...) FROM ...)'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> First compute one number, the average. Then compare each row with it. A scalar subquery does this.</p><p><b>How it works:</b> The subquery <code>(SELECT AVG(salary) FROM instructors)</code> runs once and returns one number. <code>FROM instructors WHERE salary &gt; (...)</code> keeps instructors above it.</p><p><b>Common mistake:</b> Writing <code>WHERE salary &gt; AVG(salary)</code> gives an error. Aggregates cannot be used directly in WHERE.</p>"
     },
     {
       id: 'd5-2',
@@ -2584,7 +2645,8 @@ WHERE NOT EXISTS (
         'The building is in departments. The student is in students. dept_id links them.',
         'The inner query should return a list of dept_id values.',
         'WHERE dept_id IN (SELECT dept_id FROM departments WHERE building IN (...))'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>IN (subquery)</code> compares each value with a list that another query builds.</p><p><b>How it works:</b> The subquery returns the dept_id of departments in Turing Hall or Tesla Center. <code>FROM students WHERE dept_id IN (...)</code> keeps students whose major is in that list.</p><p><b>Common mistake:</b> Writing <code>dept_id = (SELECT dept_id ...)</code> fails when the subquery returns more than one value. Use IN for a list.</p>"
     },
     {
       id: 'd5-3',
@@ -2595,7 +2657,8 @@ WHERE NOT EXISTS (
         'Questions with "never" or "no" fit NOT EXISTS well.',
         'The inner query looks for a section of the current course.',
         'WHERE NOT EXISTS (SELECT 1 FROM sections s WHERE s.course_id = c.course_id)'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>NOT EXISTS</code> asks: \"is there no matching row?\". It fits \"never offered\".</p><p><b>How it works:</b> <code>FROM courses c</code> takes each course. For each one, the subquery looks for a section with the same course_id. <code>NOT EXISTS</code> keeps the course when no section is found.</p><p><b>Common mistake:</b> Writing <code>course_id NOT IN (SELECT course_id FROM sections)</code> works here. But it breaks if that list ever contains a NULL.</p>"
     },
     {
       id: 'd5-4',
@@ -2606,7 +2669,8 @@ WHERE NOT EXISTS (
         'Did you get 0 rows? Read the lesson part about the NOT IN trap.',
         'NOT EXISTS is safe with NULLs.',
         'Or keep NOT IN, but add WHERE instructor_id IS NOT NULL inside the subquery.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> This is the NOT IN trap. The list of section teachers contains a NULL, so use <code>NOT EXISTS</code>.</p><p><b>How it works:</b> <code>FROM instructors i</code> takes each teacher. The subquery looks for a section where <code>s.instructor_id = i.instructor_id</code>. <code>NOT EXISTS</code> keeps teachers with no such section. NULLs simply never match, so they cause no harm.</p><p><b>Common mistake:</b> Writing <code>instructor_id NOT IN (SELECT instructor_id FROM sections)</code> returns no rows at all, because the list contains NULL.</p>"
     },
     {
       id: 'd5-5',
@@ -2617,7 +2681,8 @@ WHERE NOT EXISTS (
         'A JOIN repeats a student who paid cash twice. EXISTS keeps each student once.',
         `The inner query needs two conditions: the same student, and method = 'cash'.`,
         'WHERE EXISTS (SELECT 1 FROM payments p WHERE p.student_id = st.student_id AND ...)'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> <code>EXISTS</code> checks \"is there at least one?\". Each student appears once, however many cash payments they made.</p><p><b>How it works:</b> <code>FROM students st</code> takes each student. The subquery looks for a payment by that student with <code>method = 'cash'</code>. <code>EXISTS</code> keeps the student if one is found.</p><p><b>Common mistake:</b> A <code>JOIN</code> with payments repeats a student once per cash payment, unless you add DISTINCT.</p>"
     },
     {
       id: 'd5-6',
@@ -2628,7 +2693,8 @@ WHERE NOT EXISTS (
         'The average is different for each department. So the subquery must know the department of the outer row.',
         'Use two aliases for the same table, for example i (outer) and i2 (inner).',
         'WHERE i.salary > (SELECT AVG(i2.salary) FROM instructors i2 WHERE i2.dept_id = i.dept_id)'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A correlated subquery runs again for each outer row, using that row's values.</p><p><b>How it works:</b> <code>FROM instructors i</code> takes each teacher. For that row, the subquery computes <code>AVG(i2.salary)</code> of the same department (<code>i2.dept_id = i.dept_id</code>). <code>WHERE i.salary &gt; (...)</code> keeps people above their own department's average.</p><p><b>Common mistake:</b> Leaving out <code>WHERE i2.dept_id = i.dept_id</code> compares everyone with the average of all instructors.</p>"
     },
     {
       id: 'd5-7',
@@ -2639,7 +2705,8 @@ WHERE NOT EXISTS (
         'You need two steps: count per student, then take the average of those counts.',
         'Put the count per student in a subquery inside FROM.',
         'SELECT ROUND(AVG(n), 2) FROM (SELECT student_id, COUNT(*) AS n FROM enrollments GROUP BY ...) AS t'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> This is an average of counts, so count first, then average. A subquery in FROM (a derived table) does the first step.</p><p><b>How it works:</b> The inner query <code>GROUP BY student_id</code> gives one row per student with <code>COUNT(*) AS n</code>. The outer query treats it as a table named <code>per_student</code>. <code>ROUND(AVG(n), 2)</code> averages those counts.</p><p><b>Common mistake:</b> Writing <code>AVG(COUNT(*))</code> gives an error. You cannot put one aggregate directly inside another.</p>"
     },
     {
       id: 'd5-8',
@@ -2650,7 +2717,8 @@ WHERE NOT EXISTS (
         'Make two lists: courses that are a prerequisite, and courses that have a prerequisite.',
         'You want the first list minus the second list.',
         'SELECT prereq_id FROM prereqs EXCEPT SELECT course_id FROM prereqs'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> \"In list A but not in list B\" is exactly <code>EXCEPT</code>.</p><p><b>How it works:</b> The first query lists every course that is a prerequisite (<code>prereq_id</code>). The second lists every course that has a prerequisite (<code>course_id</code>). <code>EXCEPT</code> keeps the rows of the first list that are not in the second.</p><p><b>Common mistake:</b> Writing <code>INTERSECT</code> keeps courses that are in both lists. That is the opposite of a root course.</p>"
     },
     {
       id: 'd5-9',
@@ -2661,7 +2729,8 @@ WHERE NOT EXISTS (
         'You need the name, so join enrollments to students.',
         'The section average changes for each row. Use a correlated subquery on enrollments with a second alias.',
         'AVG skips NULL scores, and NULL > anything is not TRUE. So rows with no score drop out by themselves.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Compare each score with the average of its own section. A correlated subquery does this.</p><p><b>How it works:</b> <code>FROM enrollments e JOIN students st</code> adds the student name. For each row, the subquery computes <code>AVG(e2.score)</code> where <code>e2.section_id = e.section_id</code>. <code>WHERE e.score &gt; (...)</code> keeps scores above that section's average.</p><p><b>Common mistake:</b> Using one average for all sections compares students with the wrong group.</p>"
     },
     {
       id: 'd5-10',
@@ -2672,7 +2741,8 @@ WHERE NOT EXISTS (
         'Change "took every course" into "there is no Biology course that they did not take".',
         'Use two NOT EXISTS, one inside the other. The outer one goes over the Biology courses. The inner one looks for an enrollment of this student in that course.',
         'Another way: GROUP BY student and compare COUNT(DISTINCT course_id) with (SELECT COUNT(*) FROM courses WHERE dept_id = 4).'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> \"Took every course\" is relational division. Say it as a double negative: there is no Biology course that the student did not take.</p><p><b>How it works:</b> The outer query takes each student. The middle <code>NOT EXISTS</code> looks for a Biology course (<code>c.dept_id = 4</code>). The inner <code>NOT EXISTS</code> checks that the student has no enrollment in a section of that course. If no such missing course exists, the student took them all.</p><p><b>Common mistake:</b> Writing <code>course_id IN (Biology courses)</code> finds students who took at least one Biology course, not all of them.</p>"
     }
   ],
   quiz: [
@@ -2960,7 +3030,8 @@ ORDER BY total_salary DESC;`
         "Step 1, inside WITH: group the instructors by dept_id and compute AVG(salary).",
         "Step 2: join the WITH result to departments to get the name.",
         "WITH dept_pay AS (SELECT dept_id, AVG(salary) AS avg_salary FROM instructors GROUP BY dept_id) SELECT ..."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> First compute one average per department. Then filter those averages. A CTE lets you do this in two clear, named steps.</p><p><b>How it works:</b> The step <code>dept_pay</code> groups instructors by <code>dept_id</code> and computes <code>AVG(salary)</code> for each group. The main query treats <code>dept_pay</code> like a small table. It joins it to <code>departments</code> to get the name. Then <code>WHERE dp.avg_salary &gt; 80000</code> keeps only the rich departments.</p><p><b>Common mistake:</b> Writing <code>WHERE AVG(salary) &gt; 80000</code> in one query. WHERE runs before grouping, so it cannot use AVG. Use a CTE (or HAVING) instead.</p>"
     },
     {
       id: 'd6-2', level: 1,
@@ -2970,7 +3041,8 @@ ORDER BY total_salary DESC;`
         "You want one row per instructor. So do not use GROUP BY.",
         "Use AVG(...) OVER (PARTITION BY ...).",
         "Remember WHERE dept_id IS NOT NULL."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You want a group average, but you also want to keep every instructor row. A window function does exactly this. GROUP BY would squash the rows together.</p><p><b>How it works:</b> <code>WHERE dept_id IS NOT NULL</code> removes the instructor without a department. Then <code>AVG(salary) OVER (PARTITION BY dept_id)</code> computes the average of each department. Every row gets the average of its own department, and no row disappears.</p><p><b>Common mistake:</b> Using <code>GROUP BY dept_id</code>. Then you get one row per department, and you lose the instructor names.</p>"
     },
     {
       id: 'd6-3', level: 1,
@@ -2980,7 +3052,8 @@ ORDER BY total_salary DESC;`
         "The numbering starts again in each department. That is PARTITION BY.",
         "Titles are unique, so ROW_NUMBER gives the same result every time.",
         "ROW_NUMBER() OVER (PARTITION BY dept_id ORDER BY title)"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You need numbers 1, 2, 3 that start again in each department. That is <code>ROW_NUMBER()</code> with a partition.</p><p><b>How it works:</b> <code>PARTITION BY dept_id</code> splits the courses into one group per department. <code>ORDER BY title</code> sorts each group A to Z. <code>ROW_NUMBER()</code> then gives 1 to the first title in each group, 2 to the next, and so on.</p><p><b>Common mistake:</b> Forgetting <code>PARTITION BY dept_id</code>. Then the numbers run from 1 to 23 across all courses and never start again.</p>"
     },
     {
       id: 'd6-4', level: 2,
@@ -2990,7 +3063,8 @@ ORDER BY total_salary DESC;`
         "\"Same rank, then skip the next number\" describes one of the three ranking functions.",
         "RANK() skips numbers after a tie. DENSE_RANK() does not.",
         "RANK() OVER (PARTITION BY dept_id ORDER BY credits DESC)"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You need a ranking where ties share a place and the next place is skipped (1, 1, 3). That is exactly how <code>RANK()</code> works.</p><p><b>How it works:</b> <code>PARTITION BY dept_id</code> makes a separate ranking for each department. <code>ORDER BY credits DESC</code> puts the course with the most credits first. Courses with the same credits get the same rank, and the next rank jumps.</p><p><b>Common mistake:</b> Using <code>DENSE_RANK()</code>, which gives 1, 1, 2 (no gap). Or using <code>ROW_NUMBER()</code>, which gives different numbers to equal credits.</p>"
     },
     {
       id: 'd6-5', level: 2,
@@ -3000,7 +3074,8 @@ ORDER BY total_salary DESC;`
         "Rank the students inside each section. Then keep rank 1.",
         "WHERE cannot use a window function. Put the ranking in a WITH step first.",
         "Use RANK, not ROW_NUMBER, so ties stay."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> This is the \"top N per group\" pattern. Rank the rows inside each group, then keep rank 1. You cannot filter on a window function in WHERE, so the ranking goes in a CTE first.</p><p><b>How it works:</b> The CTE <code>ranked</code> keeps only rows with a score. It gives each enrollment a <code>RANK()</code> inside its section, highest score first. The main query keeps <code>WHERE pos = 1</code>. RANK gives the same rank to equal scores, so a tie at the top shows both students.</p><p><b>Common mistake:</b> Using <code>MAX(score)</code> with <code>GROUP BY section_id</code> only. You get the best score, but not the student who made it.</p>"
     },
     {
       id: 'd6-6', level: 2,
@@ -3011,7 +3086,8 @@ ORDER BY total_salary DESC;`
         "A running total is SUM with an ORDER BY inside OVER.",
         "Start a new total for each student with PARTITION BY.",
         "SUM(amount) OVER (PARTITION BY student_id ORDER BY paid_on, payment_id)"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A running total is a SUM over \"all rows up to this one\". A window with ORDER BY gives exactly that.</p><p><b>How it works:</b> <code>PARTITION BY student_id</code> keeps each student's payments separate. <code>ORDER BY paid_on, payment_id</code> decides which payment counts as \"earlier\". With ORDER BY inside OVER, <code>SUM(amount)</code> adds the current payment to all earlier ones. The final <code>ORDER BY</code> sorts the output the same way, so you can read it.</p><p><b>Common mistake:</b> Leaving out <code>ORDER BY</code> inside OVER. Then every row shows the student's full total, not a running total.</p>"
     },
     {
       id: 'd6-7', level: 2,
@@ -3021,7 +3097,8 @@ ORDER BY total_salary DESC;`
         "LAG gives you the date of the previous payment.",
         "Inside OVER, use PARTITION BY student_id and ORDER BY paid_on.",
         "julianday(paid_on) - julianday(LAG(paid_on) OVER (...))"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You compare each payment with the one before it. <code>LAG()</code> reads a value from the previous row in the window.</p><p><b>How it works:</b> <code>LAG(paid_on) OVER (PARTITION BY student_id ORDER BY paid_on)</code> gives the date of the same student's previous payment. <code>julianday()</code> turns both dates into day numbers. Subtracting them gives the days in between. A student's first payment has no previous row, so LAG gives NULL, and the result is NULL too.</p><p><b>Common mistake:</b> Forgetting <code>PARTITION BY student_id</code>. Then LAG reads the previous payment of a different student.</p>"
     },
     {
       id: 'd6-8', level: 2,
@@ -3031,7 +3108,8 @@ ORDER BY total_salary DESC;`
         "A chain of unknown length needs a recursive CTE (WITH RECURSIVE).",
         "Start with the direct prerequisites of CS420. Then add the prerequisites of the courses you already found.",
         "WITH RECURSIVE chain(course_id) AS (SELECT prereq_id FROM prereqs WHERE course_id = 'CS420' UNION SELECT p.prereq_id FROM prereqs p JOIN chain ...)"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Prerequisites form a chain with no fixed length. A recursive CTE follows a chain step by step until there are no more steps.</p><p><b>How it works:</b> The first SELECT is the start: the direct prerequisites of CS420. The second SELECT runs again and again. Each time it joins <code>prereqs</code> to the courses already found in <code>chain</code>, and adds their prerequisites. It stops when no new courses appear. <code>UNION</code> (not UNION ALL) removes duplicates, so each course appears once.</p><p><b>Common mistake:</b> Writing a normal JOIN of prereqs to itself. That finds only two levels, not \"any level\".</p>"
     },
     {
       id: 'd6-9', level: 3,
@@ -3041,7 +3119,8 @@ ORDER BY total_salary DESC;`
         "Start with every instructor whose mentor_id IS NULL, with depth 0.",
         "Then add the instructors whose mentor is already in the tree, with depth + 1.",
         "JOIN tree t ON i.mentor_id = t.instructor_id"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Mentors form a tree. Start at the top (no mentor) and walk down one level at a time, counting the levels.</p><p><b>How it works:</b> The start rows are the instructors with <code>mentor_id IS NULL</code>, at depth 0. The recursive part joins <code>instructors</code> to the rows already in <code>tree</code>. It finds people whose <code>mentor_id</code> is someone in the tree, and gives them <code>t.depth + 1</code>. It stops when nobody new is found.</p><p><b>Common mistake:</b> Joining in the wrong direction, <code>i.instructor_id = t.mentor_id</code>. That walks up the tree instead of down.</p>"
     },
     {
       id: 'd6-10', level: 3,
@@ -3051,7 +3130,8 @@ ORDER BY total_salary DESC;`
         "First group by department to get each total.",
         "The grand total can come from a window over the grouped rows: SUM(SUM(salary)) OVER ().",
         "Multiply by 100.0 (not 100) so the division keeps decimals. Then ROUND(..., 1)."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You need each department's total and also the grand total of all departments. A window over the grouped result can see all groups at once.</p><p><b>How it works:</b> The JOIN keeps instructors that have a department. <code>GROUP BY d.name</code> makes one row per department with <code>SUM(i.salary)</code>. Then <code>SUM(SUM(i.salary)) OVER ()</code> adds up those group totals. <code>OVER ()</code> means \"over all rows\". Dividing gives the share. <code>100.0</code> keeps decimals, and <code>ROUND(..., 1)</code> rounds the result.</p><p><b>Common mistake:</b> Dividing by <code>SUM(i.salary)</code> without OVER. Inside a group that is the same number, so every department shows 100.</p>"
     }
   ],
   quiz: [
@@ -3284,7 +3364,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "\"Show every department\" means the departments table must keep all its rows.",
         "LEFT JOIN from departments to students. Then GROUP BY department.",
         "COUNT(*) gives 1 for an empty department. Count a column from students instead."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> \"Show every department, even with 0 students\" means you must keep departments that have no match. That calls for a LEFT JOIN.</p><p><b>How it works:</b> <code>departments LEFT JOIN students</code> keeps every department. A department without students gets one row with NULL student columns. <code>GROUP BY</code> makes one row per department. <code>COUNT(s.student_id)</code> counts only real students, so the empty departments show 0.</p><p><b>Common mistake:</b> Using <code>COUNT(*)</code>. It counts the NULL row too, so empty departments show 1 instead of 0.</p>"
     },
     {
       id: 'd7-2', level: 1,
@@ -3294,7 +3375,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "To search inside text, use LIKE.",
         "% matches any number of characters, before or after the word.",
         "WHERE title LIKE '%Systems%'"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You search for a word inside text. That is a job for <code>LIKE</code> with the <code>%</code> wildcard.</p><p><b>How it works:</b> <code>%</code> means \"any text, or nothing\". So <code>'%Systems%'</code> matches any title that has \"Systems\" anywhere: at the start, middle or end.</p><p><b>Common mistake:</b> Writing <code>title = 'Systems'</code>. That only matches a title that is exactly the word Systems, so it finds nothing.</p>"
     },
     {
       id: 'd7-3', level: 2,
@@ -3304,7 +3386,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "You need one row per enrollment plus one value per section. GROUP BY would merge the rows.",
         "A window function with PARTITION BY section_id keeps every row.",
         "Remove rows without a score first: WHERE score IS NOT NULL."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Each row needs the average of its section next to it. A window keeps the rows and adds the group average.</p><p><b>How it works:</b> <code>WHERE score IS NOT NULL</code> removes the courses still in progress. Then <code>AVG(score) OVER (PARTITION BY section_id)</code> computes each section's average and puts it on every row of that section. <code>ROUND(..., 2)</code> keeps two decimals.</p><p><b>Common mistake:</b> Using <code>GROUP BY section_id</code>. That returns one row per section, and you lose the student rows.</p>"
     },
     {
       id: 'd7-4', level: 1,
@@ -3314,7 +3397,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "\"No advisor\" means the advisor_id value is missing (NULL).",
         "You cannot test NULL with =.",
         "WHERE advisor_id IS NULL"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> \"Has no advisor\" means the advisor column is empty, which is NULL. NULL needs its own test.</p><p><b>How it works:</b> <code>WHERE advisor_id IS NULL</code> keeps the students whose advisor is unknown. The SELECT shows their name and city.</p><p><b>Common mistake:</b> Writing <code>advisor_id = NULL</code>. A comparison with NULL is never TRUE, so you get no rows at all.</p>"
     },
     {
       id: 'd7-5', level: 2,
@@ -3324,7 +3408,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "Count the sections of each instructor: join, then GROUP BY instructor.",
         "A condition on a count goes in HAVING, not in WHERE.",
         "Group by instructor_id and name, in case two instructors have the same name."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Count sections per instructor, then keep only the big counts. Filtering on a count needs HAVING.</p><p><b>How it works:</b> The JOIN pairs each instructor with each section they teach. <code>GROUP BY i.instructor_id, i.name</code> makes one row per instructor. <code>COUNT(*)</code> counts their sections. <code>HAVING COUNT(*) &gt;= 3</code> keeps only those with 3 or more.</p><p><b>Common mistake:</b> Putting <code>COUNT(*) &gt;= 3</code> in WHERE. WHERE runs before the rows are grouped, so the database gives an error.</p>"
     },
     {
       id: 'd7-6', level: 2,
@@ -3334,7 +3419,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "Both names are in the same table. So you need the table twice.",
         "Give the two copies different aliases, for example i and m.",
         "JOIN instructors m ON m.instructor_id = i.mentor_id"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> The mentor is also an instructor, in the same table. So you join the table to itself, with two different aliases.</p><p><b>How it works:</b> <code>i</code> is the instructor and <code>m</code> is the mentor. The condition <code>m.instructor_id = i.mentor_id</code> finds the mentor's row. An INNER JOIN drops instructors without a mentor, which is what the question asks.</p><p><b>Common mistake:</b> Writing <code>m.mentor_id = i.instructor_id</code>. That reverses the roles and shows who each person mentors.</p>"
     },
     {
       id: 'd7-7', level: 1,
@@ -3344,7 +3430,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "\"Never\" is a sign for NOT EXISTS (or LEFT JOIN ... IS NULL).",
         "Use NOT EXISTS with a subquery on enrollments that links to the outer student.",
         "WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.student_id = st.student_id)"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> \"Never enrolled\" means: no matching row exists in enrollments. <code>NOT EXISTS</code> says exactly that.</p><p><b>How it works:</b> For each student, the inner query looks for an enrollment with the same <code>student_id</code>. If it finds none, <code>NOT EXISTS</code> is TRUE and the student is kept.</p><p><b>Common mistake:</b> Using an INNER JOIN with enrollments. The join keeps only students who <em>have</em> enrollments, which is the opposite of the question.</p>"
     },
     {
       id: 'd7-8', level: 2,
@@ -3354,7 +3441,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "Make the label with a CASE expression.",
         "Then group by that label.",
         "CASE WHEN grade IS NULL THEN 'in progress' ELSE 'graded' END"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You make a new label for each row, then count rows per label. CASE builds the label, and GROUP BY counts.</p><p><b>How it works:</b> <code>CASE WHEN grade IS NULL THEN 'in progress' ELSE 'graded' END</code> gives every enrollment one of two labels. <code>GROUP BY status</code> puts rows with the same label together. <code>COUNT(*)</code> counts each group. SQLite lets GROUP BY use the alias <code>status</code>.</p><p><b>Common mistake:</b> Writing <code>WHEN grade = NULL</code>. That is never TRUE, so every row is labeled graded.</p>"
     },
     {
       id: 'd7-9', level: 2,
@@ -3364,7 +3452,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "Path: students → enrollments → sections → instructors.",
         "A student may have taken several of his sections. Remove the copies.",
         "Use DISTINCT, or an EXISTS subquery."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> The link from a student to a teacher passes through several tables. You follow the path: students → enrollments → sections → instructors.</p><p><b>How it works:</b> Each JOIN moves one step along the path using the foreign keys. <code>WHERE i.name = 'Marco Rossi'</code> keeps only his sections. A student can take several of his sections, so <code>DISTINCT</code> shows each name once.</p><p><b>Common mistake:</b> Forgetting <code>DISTINCT</code>. A student who took two of his sections then appears twice.</p>"
     },
     {
       id: 'd7-10', level: 2,
@@ -3374,7 +3463,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "You want the cities that are in both lists.",
         "INTERSECT keeps the values that are in both lists.",
         "INTERSECT treats NULLs as equal. So remove NULL cities in both halves."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You want cities that appear in two lists at the same time. That is what <code>INTERSECT</code> does.</p><p><b>How it works:</b> The first SELECT lists the cities of Computer Science students. The second lists the cities of Mathematics students. <code>INTERSECT</code> keeps only cities in both lists, and removes duplicates. <code>city IS NOT NULL</code> ignores unknown cities.</p><p><b>Common mistake:</b> Writing <code>WHERE dept_id = 1 AND dept_id = 2</code>. One student cannot be in two departments, so this returns nothing.</p>"
     },
     {
       id: 'd7-11', level: 3,
@@ -3384,7 +3474,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "Step 1: the average score of each student. Step 2: the highest of those averages.",
         "A WITH step lets you use the averages twice.",
         "WHERE avg_score = (SELECT MAX(avg_score) FROM avgs). ORDER BY ... LIMIT 1 would hide ties."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> First compute each student's average. Then find the largest average and keep the students who have it. A CTE lets you use the averages twice.</p><p><b>How it works:</b> The CTE <code>avgs</code> groups scored enrollments by student and computes <code>AVG(score)</code>. The main query joins <code>avgs</code> to <code>students</code> for the name. The subquery <code>(SELECT MAX(avg_score) FROM avgs)</code> finds the top average. Comparing with <code>=</code> keeps all students who share that top value.</p><p><b>Common mistake:</b> Using <code>ORDER BY avg_score DESC LIMIT 1</code>. If two students share the top average, LIMIT 1 shows only one of them.</p>"
     },
     {
       id: 'd7-12', level: 3,
@@ -3395,7 +3486,8 @@ CASE WHEN cond THEN a ELSE b END COALESCE(x, default)   x IS [NOT] NULL</pre>`
         "strftime('%Y-%m', paid_on) turns a date into its month.",
         "First compute the total of each month (GROUP BY in a WITH step). Then compare each month with the one before.",
         "total - LAG(total) OVER (ORDER BY month). Keep only 2026 before grouping."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> First turn payments into one total per month. Then compare each month with the month before. That is a CTE plus <code>LAG()</code>.</p><p><b>How it works:</b> The CTE <code>monthly</code> keeps payments from 2026. <code>strftime('%Y-%m', paid_on)</code> turns each date into a month like 2026-03. It groups by month and sums the amounts. The main query uses <code>LAG(total) OVER (ORDER BY month)</code> to read the previous month's total. Subtracting gives the change. The first month has no previous row, so its change is NULL.</p><p><b>Common mistake:</b> Putting LAG on the raw payments instead of the monthly totals. Then you compare single payments, not months.</p>"
     }
   ],
   quiz: [
@@ -3704,7 +3796,8 @@ SELECT dept_id, name, main_building, phone FROM departments;`
         "INSERT INTO table (columns) VALUES (values);",
         "Text values go in single quotes. Numbers do not.",
         "INSERT INTO departments (dept_id, name, building, budget) VALUES (9, 'Data Science', ...);"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Adding a new row is an INSERT. Naming the columns makes the statement clear and safe.</p><p><b>How it works:</b> <code>INSERT INTO departments (dept_id, name, building, budget)</code> lists the columns. <code>VALUES (9, 'Data Science', 'Turing Hall', 300000)</code> gives one value per column, in the same order. Text goes in single quotes, and numbers do not.</p><p><b>Common mistake:</b> Putting the values in a different order from the column list. Then the name could end up in the building column.</p>"
     },
     {
       id: 'd8-2', level: 1, kind: 'script',
@@ -3716,7 +3809,8 @@ WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History');`,
         "First write a SELECT that returns only the History instructors.",
         "The new value can use the old one: SET salary = salary + 4000",
         "WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History')"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Change many rows at once with UPDATE. A subquery finds the department id from its name, so you do not need to know the number.</p><p><b>How it works:</b> <code>SET salary = salary + 4000</code> adds 4000 to the current salary. The subquery <code>(SELECT dept_id FROM departments WHERE name = 'History')</code> returns the History id. <code>WHERE dept_id = (...)</code> limits the change to History instructors.</p><p><b>Common mistake:</b> Forgetting the WHERE. Then every instructor in the university gets the raise.</p>"
     },
     {
       id: 'd8-3', level: 1, kind: 'script',
@@ -3727,7 +3821,8 @@ WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History');`,
         "First preview the rows: SELECT * FROM payments WHERE ...",
         "Join the two conditions with AND. Dates in YYYY-MM-DD form compare correctly as text.",
         "DELETE FROM payments WHERE method = 'cash' AND paid_on < '2025-07-01';"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> DELETE removes the rows that match a condition. The condition must describe only the wrong rows.</p><p><b>How it works:</b> <code>method = 'cash'</code> picks cash payments. <code>paid_on &lt; '2025-07-01'</code> picks the ones before that date. Dates are stored as YYYY-MM-DD text, so text comparison works. Both conditions are joined with AND, so a row must match both.</p><p><b>Common mistake:</b> Using OR instead of AND. Then you delete all cash payments and all old payments.</p>"
     },
     {
       id: 'd8-4', level: 2, kind: 'script',
@@ -3744,7 +3839,8 @@ WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History');`,
         "Required means NOT NULL. \"No two the same\" means UNIQUE.",
         "A foreign key on one column: dept_id INTEGER REFERENCES departments(dept_id)",
         "The CHECK is not graded, but write it: CHECK (founded_year >= 1950)"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Each rule in the description becomes a constraint, so the database protects the data for you.</p><p><b>How it works:</b> <code>club_id INTEGER PRIMARY KEY</code> identifies each club. <code>NOT NULL UNIQUE</code> on name means every club has a name and no two names repeat. <code>CHECK (founded_year &gt;= 1950)</code> rejects old years. A NULL year still passes, so the column stays optional. <code>REFERENCES departments(dept_id)</code> makes dept_id a foreign key.</p><p><b>Common mistake:</b> Adding <code>NOT NULL</code> to founded_year or dept_id. The task says they are optional.</p>"
     },
     {
       id: 'd8-5', level: 2, kind: 'script',
@@ -3762,7 +3858,8 @@ WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History');`,
         "A primary key on two columns goes on its own line at the end: PRIMARY KEY (a, b)",
         "DEFAULT 'member' uses single quotes.",
         "Each id column needs its own REFERENCES."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Many students join many clubs. That is an M:N relationship, so it needs a link table with two foreign keys.</p><p><b>How it works:</b> <code>club_id</code> and <code>student_id</code> each reference their own table. <code>role TEXT NOT NULL DEFAULT 'member'</code> means a role is always stored. If you leave it out, it becomes member. <code>PRIMARY KEY (club_id, student_id)</code> is a composite key. A student can join a club only once.</p><p><b>Common mistake:</b> Making only <code>club_id</code> the primary key. Then each club could have only one member.</p>"
     },
     {
       id: 'd8-6', level: 2, kind: 'script',
@@ -3781,7 +3878,8 @@ HAVING AVG(score) >= 80;`,
         "First write the SELECT alone and check its rows.",
         "AVG already ignores NULL values.",
         "Keep the groups with HAVING AVG(score) >= 80. Then put INSERT INTO honor_roll (student_id, avg_score) in front."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You can fill a table from a query. <code>INSERT ... SELECT</code> inserts every row the SELECT returns.</p><p><b>How it works:</b> The SELECT groups enrollments by student and computes the average score. <code>AVG</code> ignores NULL scores, so courses in progress do not count. <code>HAVING AVG(score) &gt;= 80</code> keeps the good students. <code>ROUND(AVG(score), 1)</code> stores the rounded value. Each result row becomes a row of <code>honor_roll</code>.</p><p><b>Common mistake:</b> Writing <code>HAVING ROUND(AVG(score), 1) &gt;= 80</code>. Rounding first can let in a student with an average of 79.96.</p>"
     },
     {
       id: 'd8-7', level: 2, kind: 'script',
@@ -3794,7 +3892,8 @@ UPDATE students SET phone = '+20 100 100 1002' WHERE student_id = 1002;`,
         "ALTER TABLE students ADD COLUMN phone TEXT;",
         "Use one UPDATE per student, each with its own WHERE.",
         "Phone numbers are text, so use single quotes."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Changing a live table takes two steps. First change its structure with ALTER TABLE. Then fill the new column with UPDATE.</p><p><b>How it works:</b> <code>ALTER TABLE students ADD COLUMN phone TEXT</code> adds an empty column. Every student now has NULL there. Each <code>UPDATE ... WHERE student_id = ...</code> sets the phone of exactly one student.</p><p><b>Common mistake:</b> Using INSERT to add the phone numbers. INSERT creates new rows. Here the students already exist, so you UPDATE them.</p>"
     },
     {
       id: 'd8-8', level: 3, kind: 'script',
@@ -3813,7 +3912,8 @@ ON CONFLICT (course_id) DO UPDATE SET section_count = excluded.section_count;`,
         "Put INSERT INTO course_stats (course_id, section_count) in front of it.",
         "Add ON CONFLICT (course_id) DO UPDATE SET section_count = excluded.section_count",
         "If SQLite says \"near DO: syntax error\", the SELECT needs a GROUP BY (or WHERE true) before ON CONFLICT."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Some rows exist and some do not. An \"upsert\" inserts new rows and updates existing ones in one statement.</p><p><b>How it works:</b> The SELECT counts sections per course. <code>INSERT INTO course_stats</code> tries to insert each count. When a course already exists, the primary key conflicts. <code>ON CONFLICT (course_id) DO UPDATE</code> then updates that row instead. <code>excluded.section_count</code> means \"the value we tried to insert\".</p><p><b>Common mistake:</b> Writing a plain INSERT. It fails with a UNIQUE error on the three rows that already exist.</p>"
     },
     {
       id: 'd8-9', level: 3, kind: 'script',
@@ -3835,7 +3935,8 @@ DELETE FROM departments WHERE dept_id = 8;`,
         "Delete from the bottom of the chain up: children before parents.",
         "Use nested IN subqueries to find the sections of the Philosophy courses.",
         "Check prereqs too: does any prerequisite row use a Philosophy course?"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Foreign keys stop you from deleting a row that other rows still point to. So you delete from the bottom up: children first, parents last.</p><p><b>How it works:</b> Enrollments point to sections, so they go first. Sections point to courses, so they go next. Prereqs point to courses in two columns, so rows that mention a Philosophy course are removed. Then the courses go, and finally the department. Each step uses nested subqueries to find the Philosophy rows.</p><p><b>Common mistake:</b> Deleting the department first. The foreign key check fails, because its courses still point to it.</p>"
     },
     {
       id: 'd8-10', level: 3, kind: 'script',
@@ -3851,7 +3952,8 @@ DELETE FROM departments WHERE dept_id = 8;`,
         "\"At most one thesis per student\" means student_id is UNIQUE.",
         "\"Delete the thesis too\" is ON DELETE CASCADE.",
         "\"Keep it with no supervisor\" is ON DELETE SET NULL."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Each sentence of the description becomes a constraint, including what happens on delete.</p><p><b>How it works:</b> <code>student_id</code> is <code>NOT NULL</code> (required) and <code>UNIQUE</code> (one thesis per student). <code>ON DELETE CASCADE</code> deletes the thesis when its student is deleted. <code>supervisor_id</code> may be NULL. <code>ON DELETE SET NULL</code> keeps the thesis but clears the supervisor if the instructor is deleted.</p><p><b>Common mistake:</b> Forgetting <code>UNIQUE</code> on student_id. Then a student could have two theses.</p>"
     }
   ],
   quiz: [
@@ -4157,7 +4259,8 @@ LEFT JOIN ta_staff f ON f.person_id = p.person_id;`
       hints: [
         "Use the pragma function like a table: SELECT ... FROM pragma_foreign_key_list('enrollments')",
         "from and table are SQL keywords. So put them in double quotes: \"from\", \"table\"."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> The database stores its own design in a catalog, and you can query it like a table. <code>pragma_foreign_key_list</code> returns the foreign keys of one table.</p><p><b>How it works:</b> <code>pragma_foreign_key_list('enrollments')</code> returns one row per foreign key. The column <code>\"from\"</code> is the local column. The column <code>\"table\"</code> is the table it points to. They are in double quotes because from and table are SQL keywords.</p><p><b>Common mistake:</b> Writing <code>SELECT from, table</code> without quotes. The database reads them as keywords and gives a syntax error.</p>"
     },
     {
       id: 'd9-2', level: 1,
@@ -4167,7 +4270,8 @@ LEFT JOIN ta_staff f ON f.person_id = p.person_id;`
         "You need the departments with no matching instructor row.",
         "NOT EXISTS (SELECT 1 FROM instructors i WHERE i.dept_id = d.dept_id)",
         "A LEFT JOIN with WHERE i.instructor_id IS NULL also works."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> In the ER diagram, a department's link to instructors is optional. \"No instructors\" means no matching row exists, which is <code>NOT EXISTS</code>.</p><p><b>How it works:</b> For each department, the inner query looks for an instructor with the same <code>dept_id</code>. If none is found, NOT EXISTS is TRUE and the department is kept.</p><p><b>Common mistake:</b> Using an INNER JOIN. It keeps only departments that do have instructors.</p>"
     },
     {
       id: 'd9-3', level: 2,
@@ -4177,7 +4281,8 @@ LEFT JOIN ta_staff f ON f.person_id = p.person_id;`
         "Use the instructors table twice, with two aliases.",
         "Join the instructor's mentor_id to the mentor's instructor_id.",
         "An inner JOIN drops the instructors without a mentor. That is what you want."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> \"Mentors\" is a recursive relationship: it links the instructors table to itself. So you join the table to itself.</p><p><b>How it works:</b> Alias <code>i</code> is the instructor and alias <code>m</code> is the mentor. <code>m.instructor_id = i.mentor_id</code> follows the foreign key to the mentor's row. Instructors without a mentor have no match, so the INNER JOIN leaves them out.</p><p><b>Common mistake:</b> Using one alias for both roles. The database cannot tell the instructor from the mentor.</p>"
     },
     {
       id: 'd9-4', level: 2,
@@ -4190,7 +4295,8 @@ JOIN courses p ON p.course_id = r.prereq_id;`,
         "Start FROM prereqs. It holds the pairs.",
         "Join courses twice: once for course_id, once for prereq_id.",
         "Give the two copies aliases, for example c and p. Select c.title and p.title."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> prereqs is a junction table for an M:N relationship of courses with themselves. To read it, you join courses twice: once for each role.</p><p><b>How it works:</b> Alias <code>c</code> joins on <code>r.course_id</code> and gives the course title. Alias <code>p</code> joins on <code>r.prereq_id</code> and gives the title of the course it needs. Each prereqs row becomes one readable pair.</p><p><b>Common mistake:</b> Joining courses only once. Then both columns show the same title.</p>"
     },
     {
       id: 'd9-5', level: 2,
@@ -4204,7 +4310,8 @@ ORDER BY advisees DESC, i.name;`,
         "\"Every instructor, 0 if none\" means LEFT JOIN from instructors.",
         "COUNT(s.student_id) counts only matched students. COUNT(*) would give 1 to instructors with no students.",
         "ORDER BY advisees DESC, name"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> \"Advises\" is a 1:N relationship with optional participation: some instructors advise nobody. To keep them, use a LEFT JOIN.</p><p><b>How it works:</b> <code>instructors LEFT JOIN students</code> keeps every instructor. <code>GROUP BY</code> makes one row per instructor. <code>COUNT(s.student_id)</code> counts only real students, so instructors with nobody show 0. <code>ORDER BY advisees DESC, i.name</code> puts the busiest first and breaks ties by name.</p><p><b>Common mistake:</b> Using <code>COUNT(*)</code>. It counts the empty NULL row, so instructors with no advisees show 1.</p>"
     },
     {
       id: 'd9-6', level: 3,
@@ -4218,7 +4325,8 @@ GROUP BY m.name;`,
         "FROM sqlite_master m. Keep only type = 'table'.",
         "LEFT JOIN pragma_foreign_key_list(m.name) f. You need no ON clause: the argument links them.",
         "GROUP BY m.name and COUNT(f.\"from\"), so tables without foreign keys show 0."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Use the catalog to count foreign keys for every table. A LEFT JOIN keeps tables that have none.</p><p><b>How it works:</b> <code>sqlite_master</code> lists the tables, and <code>WHERE m.type = 'table'</code> keeps only real tables. <code>pragma_foreign_key_list(m.name)</code> runs once for each table name. The LEFT JOIN keeps a table even with no foreign keys. <code>COUNT(f.\"from\")</code> counts only real foreign keys, so those tables show 0.</p><p><b>Common mistake:</b> Using a plain JOIN. Tables with no foreign keys, like departments, disappear from the result.</p>"
     },
     {
       id: 'd9-7', level: 2, kind: 'script',
@@ -4245,7 +4353,8 @@ CREATE TABLE loans (
         "Create the parent tables (members, books) before the child table (loans).",
         "Required = NOT NULL. The foreign keys in loans are required too.",
         "member_id INTEGER NOT NULL REFERENCES members(member_id)"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Each entity becomes a table. A member borrows many books, and a book can be borrowed many times. Each loan is its own event, so loans gets its own id.</p><p><b>How it works:</b> <code>members</code> and <code>books</code> are strong entities with their own keys. <code>UNIQUE</code> on email stops two members from sharing one email. <code>loans</code> has two foreign keys, one to each side. Its key is <code>loan_id</code>, not the pair. So the same member can borrow the same book again later. <code>returned_on</code> stays NULL until the book comes back.</p><p><b>Common mistake:</b> Using <code>PRIMARY KEY (member_id, isbn)</code> for loans. Then a member could never borrow the same book twice.</p>"
     },
     {
       id: 'd9-8', level: 3, kind: 'script',
@@ -4272,7 +4381,8 @@ ORDER BY 1, 2, 3, 4;`,
         "M:N → a junction table with both foreign keys.",
         "The key on two columns goes on its own line: PRIMARY KEY (isbn, author_id)",
         "Insert into authors before book_authors. Otherwise the foreign keys fail."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Books and authors are M:N, so they need a junction table. Extra facts about the pair, like the author order, live in the junction table.</p><p><b>How it works:</b> <code>authors</code> is a simple entity table. <code>book_authors</code> has a foreign key to each side. Its key is the pair <code>(isbn, author_id)</code>. <code>author_order</code> belongs to the pair: the same author can be first on one book and third on another. The INSERTs add the authors first, then the links, because links must point to existing rows.</p><p><b>Common mistake:</b> Putting <code>author_order</code> in the authors table. An author would then have one order for every book.</p>"
     },
     {
       id: 'd9-9', level: 3, kind: 'script',
@@ -4292,7 +4402,8 @@ ORDER BY 1, 2, 3, 4;`,
         "Multivalued attribute → a table (owner key, value).",
         "PRIMARY KEY (student_id, phone) stops the same number being stored twice.",
         "REFERENCES students(student_id) ON DELETE CASCADE"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A column cannot hold a list. A multivalued attribute (several phones) gets its own table, with one row per value.</p><p><b>How it works:</b> <code>student_phones</code> stores one phone per row. Its key is the pair <code>(student_id, phone)</code>, so one student can have many different numbers. <code>ON DELETE CASCADE</code> removes the phones when the student is deleted. The INSERT adds three rows: two for 1001 and one for 1002.</p><p><b>Common mistake:</b> Making <code>student_id</code> alone the key. Then each student could store only one phone.</p>"
     },
     {
       id: 'd9-10', level: 3, kind: 'script',
@@ -4310,7 +4421,8 @@ CREATE TABLE visits (
         "A weak entity's key = owner key + partial key.",
         "PRIMARY KEY (patient_id, visit_no)",
         "\"Delete their visits too\" means ON DELETE CASCADE."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A weak entity has no full key of its own. Its key is the owner's key plus its own partial key.</p><p><b>How it works:</b> <code>patients</code> is the owner, with its own key. In <code>visits</code>, <code>visit_no</code> repeats for each patient (1, 2, 3 …). So the key is <code>(patient_id, visit_no)</code>. <code>ON DELETE CASCADE</code> removes the visits with their patient, because a visit cannot exist alone.</p><p><b>Common mistake:</b> Making <code>visit_no</code> alone the primary key. Two patients could not both have visit number 1.</p>"
     }
   ],
   quiz: [
@@ -4607,7 +4719,8 @@ HAVING COUNT(DISTINCT customer_city) > 1;`,
         "Make one group per customer: GROUP BY customer_id",
         "COUNT(DISTINCT customer_city) counts the different cities.",
         "Keep only the broken groups with HAVING ... > 1"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> In a correct table, customer_id → customer_city: one customer has one city. To find broken data, count the different cities per customer.</p><p><b>How it works:</b> <code>GROUP BY customer_id</code> makes one group per customer. <code>COUNT(DISTINCT customer_city)</code> counts the different cities in each group. <code>HAVING ... &gt; 1</code> keeps only customers with more than one city. These are the update anomalies.</p><p><b>Common mistake:</b> Using <code>COUNT(customer_city)</code> without DISTINCT. It counts rows, not different cities, so every repeat customer looks broken.</p>"
     },
     {
       id: 'd10-2', level: 1,
@@ -4621,7 +4734,8 @@ HAVING COUNT(DISTINCT dept_id) > 1;`,
         "Same pattern as the lesson: GROUP BY the left side. Then count the different values of the right side.",
         "Remove NULL cities with WHERE before grouping.",
         "COUNT(DISTINCT dept_id) already ignores NULL dept_id values."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A functional dependency X → Y holds if each X value has only one Y value. So group by X and count the different Y values.</p><p><b>How it works:</b> <code>WHERE city IS NOT NULL</code> ignores unknown cities. <code>GROUP BY city</code> makes one group per city. <code>COUNT(DISTINCT dept_id)</code> counts the different departments in that city. NULL departments are not counted. <code>HAVING ... &gt; 1</code> shows the cities where the rule breaks.</p><p><b>Common mistake:</b> Grouping by <code>dept_id</code> instead. That tests the opposite rule, dept_id → city.</p>"
     },
     {
       id: 'd10-3', level: 2,
@@ -4635,7 +4749,8 @@ HAVING COUNT(DISTINCT unit_price) > 1;`,
         "GROUP BY product_id",
         "Add MIN(unit_price) and MAX(unit_price) next to COUNT(DISTINCT ...).",
         "Keep the broken groups with HAVING COUNT(DISTINCT unit_price) > 1"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> product_id → unit_price should hold. Group by product and look for more than one price.</p><p><b>How it works:</b> <code>GROUP BY product_id</code> makes one group per product. <code>COUNT(DISTINCT unit_price)</code> counts its different prices. <code>MIN</code> and <code>MAX</code> show the lowest and highest price. <code>HAVING COUNT(DISTINCT unit_price) &gt; 1</code> keeps only the broken products.</p><p><b>Common mistake:</b> Putting the count in WHERE. WHERE runs before grouping, so it cannot use COUNT.</p>"
     },
     {
       id: 'd10-4', level: 2,
@@ -4648,7 +4763,8 @@ HAVING COUNT(*) > 1;`,
         "course_id is in sections, so join enrollments to sections.",
         "GROUP BY both columns of the possible key.",
         "A group with more than one row is a counterexample."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A set of columns is a key only if no value pair repeats. To prove it is not a key, find a pair that appears twice.</p><p><b>How it works:</b> The JOIN adds <code>course_id</code> to each enrollment. <code>GROUP BY e.student_id, s.course_id</code> groups by the pair. <code>COUNT(*)</code> counts how often each pair appears. <code>HAVING COUNT(*) &gt; 1</code> keeps the pairs that repeat. These are students who took the same course in two sections.</p><p><b>Common mistake:</b> Grouping by <code>section_id</code> instead of <code>course_id</code>. Each student takes a section only once, so you find nothing.</p>"
     },
     {
       id: 'd10-5', level: 2, kind: 'script',
@@ -4662,7 +4778,8 @@ SELECT DISTINCT customer_id, customer_name, customer_city FROM orders_flat;`,
         "First CREATE TABLE, then INSERT ... SELECT.",
         "SELECT DISTINCT customer_id, customer_name, customer_city FROM orders_flat",
         "The names are different: name in customers comes from customer_name in orders_flat."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Customer facts depend only on customer_id. So they move to their own table, stored once per customer.</p><p><b>How it works:</b> <code>CREATE TABLE customers</code> makes the new table with <code>customer_id</code> as the key. <code>INSERT ... SELECT DISTINCT</code> copies the customer columns from orders_flat. DISTINCT removes the repeats, so each customer appears once.</p><p><b>Common mistake:</b> Leaving out <code>DISTINCT</code>. A customer with several order lines is inserted many times, and the primary key rejects the duplicates.</p>"
     },
     {
       id: 'd10-6', level: 3, kind: 'script',
@@ -4698,7 +4815,8 @@ ORDER BY o.order_id, p.product_id;`,
         "Make one table per left side. Create the parents (customers, products) before the children (orders, order_items).",
         "Fill each table with INSERT ... SELECT DISTINCT from orders_flat, parents first.",
         "order_items does not need DISTINCT: (order_id, product_id) is already unique in orders_flat."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Give each group of facts its own table, keyed by the thing it depends on. Customers depend on customer_id, products on product_id, orders on order_id. Order lines depend on the pair.</p><p><b>How it works:</b> The four CREATE statements build the tables. Foreign keys link orders → customers and order_items → orders and products. The INSERTs fill the parents first, then the children. That way the foreign keys always find their target. <code>SELECT DISTINCT</code> removes repeats for customers, products and orders. Every flat row becomes one order_items row.</p><p><b>Common mistake:</b> Filling order_items before orders or products. The foreign keys then point to rows that do not exist yet.</p>"
     },
     {
       id: 'd10-7', level: 3, kind: 'script',
@@ -4727,7 +4845,8 @@ ORDER BY 1, 2, 3, 4;`,
         "PRIMARY KEY (student_id, skill) and student_id REFERENCES students(student_id)",
         "By hand: INSERT INTO student_skills VALUES (1001, 'SQL'), (1001, 'Python'), ...",
         "With a CTE: take the text before the first comma with substr and instr. Keep the rest for the next step."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> 1NF says one value per cell. A list of skills must become many rows: one row per student per skill.</p><p><b>How it works:</b> <code>student_skills</code> uses the pair <code>(student_id, skill)</code> as its key. The recursive CTE <code>split</code> cuts the text one skill at a time. Each step takes the text before the first comma as <code>skill</code>. It keeps the rest after the comma as <code>rest</code>. It stops when <code>rest</code> is empty. The final SELECT drops the empty start rows and inserts the real skills.</p><p><b>Common mistake:</b> Storing the whole list in one row of the new table. The cell still holds several values, so the table still breaks 1NF.</p>"
     },
     {
       id: 'd10-8', level: 3, kind: 'script',
@@ -4750,7 +4869,8 @@ ORDER BY 1, 2, 3, 4;`,
         "Split on the dependency that breaks BCNF: one table for tutor → course, one for the rest.",
         "The shared column (tutor) is the key of tutor_course. So no data is lost when you join them back.",
         "INSERT INTO tutor_course SELECT DISTINCT tutor, course FROM tutoring;"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> BCNF says every determinant must be a key. Here tutor → course, but tutor is not a key. So move that fact into its own table where tutor is the key.</p><p><b>How it works:</b> <code>tutor_course</code> stores each tutor's course once, with tutor as the primary key. <code>student_tutor</code> keeps who studies with which tutor. It points to tutor_course with a foreign key. <code>SELECT DISTINCT tutor, course</code> fills the first table without repeats. Then every tutoring row becomes a student–tutor pair.</p><p><b>Common mistake:</b> Splitting into (student, course) and (course, tutor). Then you lose which tutor each student has, because a course has several tutors.</p>"
     },
     {
       id: 'd10-9', level: 3,
@@ -4766,7 +4886,8 @@ SELECT (SELECT COUNT(*) FROM base) AS original_rows,
         "Use WITH to name each step: base, a, b, and the join j.",
         "a and b are SELECT DISTINCT from base.",
         "Subqueries inside SELECT let you return three counts in one row: SELECT (SELECT COUNT(*) FROM base) AS original_rows, ..."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A split is \"lossy\" if joining the parts back gives extra rows that were never true. This query measures how many fake rows appear.</p><p><b>How it works:</b> <code>base</code> keeps students with a department and a city. <code>a</code> stores (name, dept_id) and <code>b</code> stores (dept_id, city). <code>j</code> joins them back on dept_id. A name now matches every city of its department, not only its own. The final SELECT counts the original rows and the joined rows, and subtracts them.</p><p><b>Common mistake:</b> Thinking the join returns the original table. dept_id does not decide the city, so the join cannot know which city belongs to which student.</p>"
     }
   ],
   quiz: [
@@ -5015,7 +5136,8 @@ UPDATE accounts SET balance = balance - 200 WHERE id = 'A';
 UPDATE accounts SET balance = balance + 200 WHERE id = 'B';
 COMMIT;`,
       check: `SELECT id, balance FROM accounts ORDER BY id;`,
-      hints: ['You need two UPDATE statements between BEGIN and COMMIT.', 'Take money from A: SET balance = balance - 200 WHERE id = \'A\'.', 'BEGIN; UPDATE ... A; UPDATE ... B; COMMIT;']
+      hints: ['You need two UPDATE statements between BEGIN and COMMIT.', 'Take money from A: SET balance = balance - 200 WHERE id = \'A\'.', 'BEGIN; UPDATE ... A; UPDATE ... B; COMMIT;'],
+      explain: `<p><b>The idea:</b> A transfer is two changes: money leaves A and arrives in B. A transaction makes both changes happen together, or not at all.</p><p><b>How it works:</b> <code>BEGIN</code> starts the transaction. The first <code>UPDATE</code> takes 200 from A with <code>balance = balance - 200</code>. The second <code>UPDATE</code> adds 200 to B. <code>COMMIT</code> saves both changes at the same moment. If the system stops before <code>COMMIT</code>, the database undoes everything.</p><p><b>Common mistake:</b> Writing the two UPDATEs without <code>BEGIN</code> and <code>COMMIT</code>. Then a crash between them can lose 200: it leaves A but never arrives in B.</p>`
     },
     {
       id: 'd11-2', level: 1, kind: 'script',
@@ -5026,7 +5148,8 @@ INSERT INTO accounts VALUES ('A','Layla',500),('B','Omar',300),('C','Mei',0);`,
 UPDATE accounts SET balance = 0;
 ROLLBACK;`,
       check: `SELECT id, balance FROM accounts ORDER BY id;`,
-      hints: ['One keyword cancels a transaction. It undoes every change since BEGIN.', 'BEGIN; UPDATE accounts SET balance = 0; ROLLBACK;']
+      hints: ['One keyword cancels a transaction. It undoes every change since BEGIN.', 'BEGIN; UPDATE accounts SET balance = 0; ROLLBACK;'],
+      explain: `<p><b>The idea:</b> <code>ROLLBACK</code> cancels a transaction. Every change since <code>BEGIN</code> disappears, as if it never happened.</p><p><b>How it works:</b> <code>BEGIN</code> opens the transaction. <code>UPDATE accounts SET balance = 0</code> changes every row, but only inside the transaction. <code>ROLLBACK</code> throws these changes away. The balances are back to 500, 300 and 0, and no transaction is open.</p><p><b>Common mistake:</b> Writing <code>COMMIT</code> instead of <code>ROLLBACK</code>. COMMIT saves the zeros for ever. Another mistake is to forget ROLLBACK, so the transaction stays open.</p>`
     },
     {
       id: 'd11-3', level: 2, kind: 'script',
@@ -5042,7 +5165,8 @@ UPDATE accounts SET balance = balance + 300 WHERE id = 'C';
 ROLLBACK TO sp;
 COMMIT;`,
       check: `SELECT id, balance FROM accounts ORDER BY id;`,
-      hints: ['Each move of money is two UPDATE statements.', 'Write SAVEPOINT sp; between the first move and the second move.', 'After the second move, write ROLLBACK TO sp; and then COMMIT;']
+      hints: ['Each move of money is two UPDATE statements.', 'Write SAVEPOINT sp; between the first move and the second move.', 'After the second move, write ROLLBACK TO sp; and then COMMIT;'],
+      explain: `<p><b>The idea:</b> A savepoint is a mark inside a transaction. <code>ROLLBACK TO</code> a savepoint undoes only the work after the mark. The work before it stays.</p><p><b>How it works:</b> <code>BEGIN</code> starts. Two UPDATEs move 100 from A to C. <code>SAVEPOINT sp</code> puts a mark here. Two more UPDATEs move 300 from B to C. <code>ROLLBACK TO sp</code> undoes only this second move. <code>COMMIT</code> saves the first move, so A = 400, B = 300, C = 100.</p><p><b>Common mistake:</b> Writing <code>ROLLBACK</code> without <code>TO sp</code>. That cancels the whole transaction, including the first move, so nothing changes.</p>`
     },
     {
       id: 'd11-4', level: 2, kind: 'script',
@@ -5055,7 +5179,8 @@ INSERT INTO audit VALUES ('transfer C->A started');
 UPDATE accounts SET balance = balance + 50 WHERE id = 'A';
 ROLLBACK;`,
       check: `SELECT (SELECT group_concat(id || '=' || balance, ',') FROM (SELECT * FROM accounts ORDER BY id)) AS balances, (SELECT COUNT(*) FROM audit) AS audit_rows;`,
-      hints: ['Everything between BEGIN and ROLLBACK disappears. This includes the INSERT into audit.', 'BEGIN; ...your statements...; ROLLBACK;', 'Your script must end with ROLLBACK. Then the final state equals the start state.']
+      hints: ['Everything between BEGIN and ROLLBACK disappears. This includes the INSERT into audit.', 'BEGIN; ...your statements...; ROLLBACK;', 'Your script must end with ROLLBACK. Then the final state equals the start state.'],
+      explain: `<p><b>The idea:</b> When something goes wrong in the middle, you cancel the whole transaction. Even the rows you inserted into other tables disappear.</p><p><b>How it works:</b> <code>BEGIN</code> starts. The INSERT writes a message into <code>audit</code>. The UPDATE adds 50 to A. Then we see that C has no money to send. <code>ROLLBACK</code> undoes both the INSERT and the UPDATE. The balances are unchanged and <code>audit</code> is empty again.</p><p><b>Common mistake:</b> Thinking that ROLLBACK only undoes UPDATEs. It undoes every change since BEGIN, including INSERT and DELETE. Writing COMMIT here would keep a half-done transfer.</p>`
     },
     {
       id: 'd11-5', level: 2, kind: 'script',
@@ -5065,7 +5190,8 @@ UPDATE instructors SET salary = ROUND(salary * 1.10) WHERE dept_id = (SELECT dep
 UPDATE instructors SET salary = ROUND(salary * 1.05) WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History');
 COMMIT;`,
       check: `SELECT instructor_id, salary FROM instructors ORDER BY instructor_id;`,
-      hints: ['Use a subquery in WHERE. It finds the dept_id from the department name.', 'UPDATE instructors SET salary = ROUND(salary * 1.10) WHERE dept_id = (SELECT dept_id FROM departments WHERE name = \'Physics\');', 'Put both UPDATE statements between BEGIN and COMMIT.']
+      hints: ['Use a subquery in WHERE. It finds the dept_id from the department name.', 'UPDATE instructors SET salary = ROUND(salary * 1.10) WHERE dept_id = (SELECT dept_id FROM departments WHERE name = \'Physics\');', 'Put both UPDATE statements between BEGIN and COMMIT.'],
+      explain: `<p><b>The idea:</b> Two related changes go in one transaction, so the raises for Physics and History are saved together. A subquery finds each department id from its name.</p><p><b>How it works:</b> <code>(SELECT dept_id FROM departments WHERE name = 'Physics')</code> returns one number. The UPDATE changes only instructors with that <code>dept_id</code>. <code>ROUND(salary * 1.10)</code> adds 10% and rounds to a whole number. The second UPDATE does the same for History with 5%. <code>COMMIT</code> saves both.</p><p><b>Common mistake:</b> Typing the id numbers (3 and 6) instead of finding them by name. The query breaks if the ids change. Another mistake is <code>salary * 0.10</code>, which sets the salary to 10% instead of adding 10%.</p>`
     },
     {
       id: 'd11-6', level: 2, kind: 'script',
@@ -5075,7 +5201,8 @@ INSERT INTO counters VALUES ('home', 41);`,
       solution: `UPDATE counters SET value = value + 1 WHERE name = 'home';
 UPDATE counters SET value = value + 1 WHERE name = 'home';`,
       check: `SELECT name, value FROM counters ORDER BY name;`,
-      hints: ['Do not write a fixed number, like SET value = 42.', 'SET value = value + 1 reads and writes in one statement.']
+      hints: ['Do not write a fixed number, like SET value = 42.', 'SET value = value + 1 reads and writes in one statement.'],
+      explain: `<p><b>The idea:</b> To avoid a lost update, do the math inside the database. <code>value = value + 1</code> reads and writes the value in one step, so two users cannot overwrite each other.</p><p><b>How it works:</b> Each UPDATE takes the current value and adds 1 in the same statement. The first makes 41 into 42. The second makes 42 into 43. Even if two users run it at the same time, the database applies them one after the other.</p><p><b>Common mistake:</b> Reading the value first and then writing a fixed number, like <code>SET value = 42</code> twice. Both users read 41, both write 42, and one update is lost.</p>`
     },
     {
       id: 'd11-7', level: 3, kind: 'script',
@@ -5091,14 +5218,16 @@ COMMIT;`,
       check: `SELECT 'acct' AS kind, id AS k, balance AS v, NULL AS extra FROM accounts
 UNION ALL SELECT 'xfer', from_id, amount, to_id FROM transfers
 ORDER BY kind, k;`,
-      hints: ['First write CREATE TABLE, then BEGIN.', 'Leave transfer_id out of the INSERT column list. SQLite fills it in.', 'Inside the transaction: two UPDATE statements and one INSERT.']
+      hints: ['First write CREATE TABLE, then BEGIN.', 'Leave transfer_id out of the INSERT column list. SQLite fills it in.', 'Inside the transaction: two UPDATE statements and one INSERT.'],
+      explain: `<p><b>The idea:</b> The transfer and its log row belong together. Put the two UPDATEs and the INSERT in one transaction, so you never have a transfer without a log, or a log without a transfer.</p><p><b>How it works:</b> <code>CREATE TABLE transfers</code> makes the log table. <code>transfer_id INTEGER PRIMARY KEY</code> gets a value by itself. <code>BEGIN</code> starts. Two UPDATEs move 120 from B to A. The INSERT lists only <code>from_id, to_id, amount</code>, so the database creates <code>transfer_id</code>. <code>COMMIT</code> saves all three changes.</p><p><b>Common mistake:</b> Writing the INSERT after COMMIT. Then a crash in between leaves money moved but not logged. Giving <code>transfer_id</code> a value by hand is also not needed.</p>`
     },
     {
       id: 'd11-8', level: 1,
       prompt: '<p>Many users change popular rows at the same time. Find the most popular sections: the ones with at least 6 enrollments.</p><ul class="spec"><li><b>Columns:</b> <code>section_id</code>, <code>enrolled</code> (the number of students in the section)</li><li><b>Order:</b> <code>enrolled</code> from high to low, then <code>section_id</code> from low to high</li></ul>',
       solution: `SELECT section_id, COUNT(*) AS enrolled FROM enrollments GROUP BY section_id HAVING COUNT(*) >= 6 ORDER BY enrolled DESC, section_id;`,
       ordered: true,
-      hints: ['Use GROUP BY section_id and COUNT(*).', 'Filter groups with HAVING, not WHERE.', 'ORDER BY enrolled DESC, section_id']
+      hints: ['Use GROUP BY section_id and COUNT(*).', 'Filter groups with HAVING, not WHERE.', 'ORDER BY enrolled DESC, section_id'],
+      explain: `<p><b>The idea:</b> Count enrollments per section with GROUP BY. Then keep only the big groups with HAVING.</p><p><b>How it works:</b> <code>GROUP BY section_id</code> makes one group per section. <code>COUNT(*) AS enrolled</code> counts the rows in each group. <code>HAVING COUNT(*) &gt;= 6</code> keeps groups with 6 or more students. <code>ORDER BY enrolled DESC, section_id</code> puts the biggest first and breaks ties by id.</p><p><b>Common mistake:</b> Writing <code>WHERE COUNT(*) &gt;= 6</code>. WHERE runs before grouping, so it cannot use COUNT. Use HAVING for conditions on groups.</p>`
     },
     {
       id: 'd11-9', level: 3,
@@ -5109,7 +5238,8 @@ ORDER BY kind, k;`,
   SELECT 'ALL', COUNT(*), SUM(amount), 1 FROM payments
 ) ORDER BY grp, method;`,
       ordered: true,
-      hints: ['Make the rows per method with GROUP BY. Make the ALL row with a second SELECT without GROUP BY.', 'Join the two results with UNION ALL.', 'To put ALL last, add a helper column: 0 for normal rows, 1 for the ALL row. Sort by it first.']
+      hints: ['Make the rows per method with GROUP BY. Make the ALL row with a second SELECT without GROUP BY.', 'Join the two results with UNION ALL.', 'To put ALL last, add a helper column: 0 for normal rows, 1 for the ALL row. Sort by it first.'],
+      explain: `<p><b>The idea:</b> Build two results, one row per method and one total row, and stack them with <code>UNION ALL</code>. An extra column <code>grp</code> puts the total row last.</p><p><b>How it works:</b> The first SELECT groups by <code>method</code> and counts and sums each group, with <code>grp = 0</code>. The second SELECT counts and sums all payments, labelled <code>'ALL'</code>, with <code>grp = 1</code>. <code>UNION ALL</code> joins the two results. The outer query sorts by <code>grp</code>, then <code>method</code>, and shows only the three columns.</p><p><b>Common mistake:</b> Sorting only by <code>method</code>. Then <code>'ALL'</code> comes first, because capital letters sort before small letters. It must be the last row.</p>`
     }
   ],
   quiz: [
@@ -5273,33 +5403,38 @@ FROM students;`
       prompt: '<p>This query is slow on a big table. It reads (scans) every row of <code>students</code>:</p><pre class="code">SELECT name, email FROM students WHERE city = \'Cairo\';</pre><ul class="spec"><li><b>Create:</b> an index that makes the plan a <code>SEARCH</code> on students.</li></ul>',
       solution: `CREATE INDEX idx_students_city ON students(city);`,
       plan: { query: `SELECT name, email FROM students WHERE city = 'Cairo'`, mustContain: 'SEARCH students USING' },
-      hints: ['Index the column that is in the WHERE clause.', 'CREATE INDEX some_name ON table(column);', 'CREATE INDEX idx_students_city ON students(city);']
+      hints: ['Index the column that is in the WHERE clause.', 'CREATE INDEX some_name ON table(column);', 'CREATE INDEX idx_students_city ON students(city);'],
+      explain: `<p><b>The idea:</b> The query filters on <code>city</code>. An index on <code>city</code> lets the database jump straight to the Cairo rows instead of reading every row.</p><p><b>How it works:</b> <code>CREATE INDEX idx_students_city ON students(city)</code> builds a sorted B+ tree of city values. Each entry points to its row. Now the plan changes from <code>SCAN students</code> (read all rows) to <code>SEARCH students USING INDEX idx_students_city (city=?)</code> (look up only the matching rows).</p><p><b>Common mistake:</b> Creating the index on <code>name</code> or <code>email</code>. Those are the columns you show, not the column you filter on. The index must match the WHERE.</p>`
     },
     {
       id: 'd12-2', level: 1, kind: 'script',
       prompt: '<p>Many queries look for the students of one section. They filter <code>enrollments</code> by <code>section_id</code>:</p><pre class="code">SELECT student_id, grade FROM enrollments WHERE section_id = 12;</pre><ul class="spec"><li><b>Create:</b> an index named <code>idx_enr_section</code> that this query uses.</li><li><b>Note:</b> the primary key is <code>(student_id, section_id)</code>. It starts with <code>student_id</code>, so it does not help here (leftmost-prefix rule).</li></ul>',
       solution: `CREATE INDEX idx_enr_section ON enrollments(section_id);`,
       plan: { query: `SELECT student_id, grade FROM enrollments WHERE section_id = 12`, mustContain: 'idx_enr_section' },
-      hints: ['The primary key index starts with student_id. It cannot search by section_id alone.', 'CREATE INDEX idx_enr_section ON enrollments(...);']
+      hints: ['The primary key index starts with student_id. It cannot search by section_id alone.', 'CREATE INDEX idx_enr_section ON enrollments(...);'],
+      explain: `<p><b>The idea:</b> The primary key index starts with <code>student_id</code>, so it cannot help a search on <code>section_id</code> alone. You need a new index that starts with <code>section_id</code>.</p><p><b>How it works:</b> <code>CREATE INDEX idx_enr_section ON enrollments(section_id)</code> sorts the rows by section. The query <code>WHERE section_id = 12</code> can now find section 12 directly. The plan changes from <code>SCAN</code> to <code>SEARCH enrollments USING INDEX idx_enr_section</code>.</p><p><b>Common mistake:</b> Creating <code>ON enrollments(student_id, section_id)</code>. That is the same order as the primary key, so the leftmost-prefix rule still blocks it. The first column must be the one in WHERE.</p>`
     },
     {
       id: 'd12-3', level: 1, kind: 'script',
       prompt: '<p>Make this range query use an index:</p><pre class="code">SELECT name FROM instructors WHERE salary BETWEEN 80000 AND 95000;</pre><ul class="spec"><li><b>Create:</b> an index so the plan shows <code>SEARCH instructors USING ...</code>.</li></ul>',
       solution: `CREATE INDEX idx_instr_salary ON instructors(salary);`,
       plan: { query: `SELECT name FROM instructors WHERE salary BETWEEN 80000 AND 95000`, mustContain: 'SEARCH instructors USING' },
-      hints: ['B+ tree indexes keep keys in order, so they can find ranges.', 'Index the salary column.']
+      hints: ['B+ tree indexes keep keys in order, so they can find ranges.', 'Index the salary column.'],
+      explain: `<p><b>The idea:</b> A B+ tree keeps values in sorted order. So an index on <code>salary</code> also helps range conditions like BETWEEN, not only <code>=</code>.</p><p><b>How it works:</b> <code>CREATE INDEX idx_instr_salary ON instructors(salary)</code> sorts the salaries. For <code>BETWEEN 80000 AND 95000</code>, the database finds 80000 in the tree. Then it reads forward until it passes 95000. The plan becomes <code>SEARCH instructors USING INDEX ... (salary&gt;? AND salary&lt;?)</code>.</p><p><b>Common mistake:</b> Thinking indexes only work with <code>=</code>. They also work with <code>&lt;</code>, <code>&gt;</code> and BETWEEN, because the values are sorted.</p>`
     },
     {
       id: 'd12-4', level: 2,
       prompt: '<p>There is an index on <code>instructors(hire_date)</code>. This query cannot use it, because it puts a function on the column:</p><pre class="code">SELECT name, hire_date FROM instructors WHERE substr(hire_date, 1, 4) = \'2017\';</pre><p>Rewrite it. It must return the same rows. Use a condition on <code>hire_date</code> with no function on it (a sargable condition).</p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>hire_date</code></li></ul>',
       solution: `SELECT name, hire_date FROM instructors WHERE hire_date >= '2017-01-01' AND hire_date < '2018-01-01';`,
-      hints: ['Do not put any function on hire_date.', 'Dates in YYYY-MM-DD text sort correctly as text, so a range works.', "hire_date >= '2017-01-01' AND hire_date < '2018-01-01'"]
+      hints: ['Do not put any function on hire_date.', 'Dates in YYYY-MM-DD text sort correctly as text, so a range works.', "hire_date >= '2017-01-01' AND hire_date < '2018-01-01'"],
+      explain: `<p><b>The idea:</b> A function on the column, like <code>substr(hire_date, 1, 4)</code>, hides the column from the index. Write the same filter as a range on the plain column instead.</p><p><b>How it works:</b> "Hired in 2017" means the date is on or after <code>'2017-01-01'</code> and before <code>'2018-01-01'</code>. Dates in YYYY-MM-DD format sort correctly as text. So <code>hire_date &gt;= '2017-01-01' AND hire_date &lt; '2018-01-01'</code> returns the same rows, and the index on <code>hire_date</code> can be used.</p><p><b>Common mistake:</b> Writing <code>hire_date &lt;= '2017-12-31'</code>. It misses a value like <code>'2017-12-31 14:00'</code> if a time is stored. Using <code>&lt; '2018-01-01'</code> is safer.</p>`
     },
     {
       id: 'd12-5', level: 2,
       prompt: '<p>Rewrite this query so <code>salary</code> stands alone on one side of the comparison. It must return the same rows:</p><pre class="code">SELECT name, salary FROM instructors WHERE salary * 12 &gt; 1000000;</pre><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>salary</code></li></ul>',
       solution: `SELECT name, salary FROM instructors WHERE salary > 1000000 / 12.0;`,
-      hints: ['Move the 12 to the other side: divide both sides by 12.', 'Write 12.0, so SQLite does not do whole-number division.', 'WHERE salary > 1000000 / 12.0']
+      hints: ['Move the 12 to the other side: divide both sides by 12.', 'Write 12.0, so SQLite does not do whole-number division.', 'WHERE salary > 1000000 / 12.0'],
+      explain: `<p><b>The idea:</b> Move the math to the other side of the comparison. Then <code>salary</code> stands alone, and an index on salary could be used.</p><p><b>How it works:</b> <code>salary * 12 &gt; 1000000</code> means the same as <code>salary &gt; 1000000 / 12.0</code>. We divide both sides by 12. Using <code>12.0</code> keeps the decimals: 1000000 / 12.0 is about 83333.33.</p><p><b>Common mistake:</b> Writing <code>1000000 / 12</code>. In SQLite this is integer division and gives 83333, not 83333.33. A salary of 83333.2 would then be kept by mistake, but 83333.2 × 12 is less than 1000000.</p>`
     },
     {
       id: 'd12-6', level: 2, kind: 'script',
@@ -5307,34 +5442,39 @@ FROM students;`
       setup: `CREATE INDEX idx_pay_date_student ON payments(paid_on, student_id);`,
       solution: `CREATE INDEX idx_pay_student_method ON payments(student_id, method);`,
       plan: { query: `SELECT * FROM payments WHERE student_id = 1010 AND method = 'card'`, mustContain: 'idx_pay_student_method' },
-      hints: ['The old index starts with paid_on. The query does not filter on paid_on (leftmost-prefix rule).', 'Both filtered columns use =, so both can go into the index.', 'CREATE INDEX idx_pay_student_method ON payments(student_id, method);']
+      hints: ['The old index starts with paid_on. The query does not filter on paid_on (leftmost-prefix rule).', 'Both filtered columns use =, so both can go into the index.', 'CREATE INDEX idx_pay_student_method ON payments(student_id, method);'],
+      explain: `<p><b>The idea:</b> The leftmost-prefix rule: an index helps only if the query filters on its first column. The old index starts with <code>paid_on</code>, but the query filters on <code>student_id</code> and <code>method</code>.</p><p><b>How it works:</b> <code>CREATE INDEX idx_pay_student_method ON payments(student_id, method)</code> starts with <code>student_id</code>. The database finds student 1010 in the index. Inside that part, the rows are sorted by <code>method</code>, so it finds <code>'card'</code> quickly too. The plan now uses this index for both conditions.</p><p><b>Common mistake:</b> Putting the columns in the wrong order, or adding <code>student_id</code> as the second column of an index that starts with <code>paid_on</code>. The first column must be one the WHERE uses with <code>=</code>.</p>`
     },
     {
       id: 'd12-7', level: 3, kind: 'script',
       prompt: '<p>Create one index that makes this query <strong>covering</strong>. Covering means the database reads only the index, not the table:</p><pre class="code">SELECT student_id, paid_on FROM payments\nWHERE student_id = 1005 AND paid_on &gt;= \'2026-01-01\';</pre><ul class="spec"><li><b>Create:</b> an index so the plan says <code>USING COVERING INDEX</code>.</li></ul>',
       solution: `CREATE INDEX idx_pay_student_date ON payments(student_id, paid_on);`,
       plan: { query: `SELECT student_id, paid_on FROM payments WHERE student_id = 1005 AND paid_on >= '2026-01-01'`, mustContain: 'USING COVERING INDEX' },
-      hints: ['The index must hold every column the query uses: student_id and paid_on.', 'Put the column with = first, and the range column last.', 'CREATE INDEX ... ON payments(student_id, paid_on);']
+      hints: ['The index must hold every column the query uses: student_id and paid_on.', 'Put the column with = first, and the range column last.', 'CREATE INDEX ... ON payments(student_id, paid_on);'],
+      explain: `<p><b>The idea:</b> A covering index holds every column the query needs. The database answers from the index alone and never opens the table.</p><p><b>How it works:</b> The query filters on <code>student_id</code> and <code>paid_on</code>, and returns only those two columns. <code>CREATE INDEX idx_pay_student_date ON payments(student_id, paid_on)</code> stores exactly these two. The database finds student 1005, reads the dates from 2026-01-01 onward, and returns them. The plan says <code>USING COVERING INDEX</code>.</p><p><b>Common mistake:</b> An index on <code>student_id</code> only. It finds the rows, but then it must read the table to get <code>paid_on</code>. So it is not covering.</p>`
     },
     {
       id: 'd12-8', level: 3, kind: 'script',
       prompt: '<p>The app searches cities without caring about capital letters:</p><pre class="code">SELECT name FROM students WHERE lower(city) = \'cairo\';</pre><p>A normal index on <code>city</code> does not help, because the query puts <code>lower()</code> on the column.</p><ul class="spec"><li><b>Create:</b> an <strong>expression index</strong> (an index on <code>lower(city)</code>) so the plan shows <code>SEARCH students USING ...</code>.</li></ul>',
       solution: `CREATE INDEX idx_students_lower_city ON students(lower(city));`,
       plan: { query: `SELECT name FROM students WHERE lower(city) = 'cairo'`, mustContain: 'SEARCH students USING' },
-      hints: ['You can index an expression, not only a column.', 'The expression in the index must be exactly the same as in the query.', 'CREATE INDEX idx_students_lower_city ON students(lower(city));']
+      hints: ['You can index an expression, not only a column.', 'The expression in the index must be exactly the same as in the query.', 'CREATE INDEX idx_students_lower_city ON students(lower(city));'],
+      explain: `<p><b>The idea:</b> The query searches on <code>lower(city)</code>, not on <code>city</code>. So index the expression itself. Then the database can look up the lower-case value directly.</p><p><b>How it works:</b> <code>CREATE INDEX idx_students_lower_city ON students(lower(city))</code> stores the lower-case version of every city. When the query asks for <code>lower(city) = 'cairo'</code>, the expression matches the index exactly. The plan becomes <code>SEARCH students USING INDEX idx_students_lower_city</code>.</p><p><b>Common mistake:</b> Creating a plain index <code>ON students(city)</code>. The query does not filter on <code>city</code> but on <code>lower(city)</code>, so the plain index is not used.</p>`
     },
     {
       id: 'd12-9', level: 3, kind: 'script',
       prompt: '<p>Teachers often list the students who have no grade yet (grade is NULL) in one section:</p><pre class="code">SELECT student_id FROM enrollments WHERE grade IS NULL AND section_id = 30;</pre><ul class="spec"><li><b>Create:</b> a <strong>partial index</strong> named <code>idx_in_progress</code> on <code>section_id</code>. It must only include rows where <code>grade IS NULL</code>. The plan must use it.</li><li><b>Note:</b> a partial index stores only the rows that match its own WHERE.</li></ul>',
       solution: `CREATE INDEX idx_in_progress ON enrollments(section_id) WHERE grade IS NULL;`,
       plan: { query: `SELECT student_id FROM enrollments WHERE grade IS NULL AND section_id = 30`, mustContain: 'idx_in_progress' },
-      hints: ['A partial index has its own WHERE at the end of CREATE INDEX.', 'CREATE INDEX idx_in_progress ON enrollments(section_id) WHERE ...;']
+      hints: ['A partial index has its own WHERE at the end of CREATE INDEX.', 'CREATE INDEX idx_in_progress ON enrollments(section_id) WHERE ...;'],
+      explain: `<p><b>The idea:</b> A partial index stores only some rows: the ones that match its own WHERE. It is smaller and faster when the query always asks for the same kind of rows.</p><p><b>How it works:</b> <code>CREATE INDEX idx_in_progress ON enrollments(section_id) WHERE grade IS NULL</code> indexes only rows with no grade yet. The query also says <code>grade IS NULL</code>, so the database knows the index has every row it needs. It finds section 30 in this small index.</p><p><b>Common mistake:</b> Forgetting the <code>WHERE grade IS NULL</code> part. Then it is a normal index, not a partial one. Another mistake: <code>WHERE grade = NULL</code>, which never matches anything.</p>`
     },
     {
       id: 'd12-10', level: 2,
       prompt: '<p>Before you choose indexes, measure how many different values a column has (its selectivity). Return one row about the <code>payments</code> table.</p><ul class="spec"><li><b>Columns:</b> <code>total_rows</code>, <code>distinct_students</code> (different <code>student_id</code> values), <code>distinct_methods</code> (different methods), <code>method_selectivity</code></li><li><b>Note:</b> <code>method_selectivity</code> = 1.0 divided by the number of different methods, rounded to 3 decimals.</li></ul>',
       solution: `SELECT COUNT(*) AS total_rows, COUNT(DISTINCT student_id) AS distinct_students, COUNT(DISTINCT method) AS distinct_methods, ROUND(1.0 / COUNT(DISTINCT method), 3) AS method_selectivity FROM payments;`,
-      hints: ['COUNT(DISTINCT column) counts the different values.', 'Use 1.0, so the division keeps decimals.', 'ROUND(1.0 / COUNT(DISTINCT method), 3)']
+      hints: ['COUNT(DISTINCT column) counts the different values.', 'Use 1.0, so the division keeps decimals.', 'ROUND(1.0 / COUNT(DISTINCT method), 3)'],
+      explain: `<p><b>The idea:</b> Selectivity tells you if an index is useful. A column with few different values, like <code>method</code>, matches many rows per value. So an index on it helps little.</p><p><b>How it works:</b> <code>COUNT(*)</code> counts all payments. <code>COUNT(DISTINCT student_id)</code> and <code>COUNT(DISTINCT method)</code> count the different values. <code>ROUND(1.0 / COUNT(DISTINCT method), 3)</code> gives the share of rows each method matches: with 3 methods, about 0.333.</p><p><b>Common mistake:</b> Writing <code>1 / COUNT(DISTINCT method)</code>. With whole numbers, SQLite gives 0. Use <code>1.0</code> to get a decimal answer.</p>`
     }
   ],
   quiz: [
@@ -5570,7 +5710,8 @@ SELECT student_id FROM payments;`,
 SELECT s.student_id, s.name, s.email, d.name AS dept_name
 FROM students s LEFT JOIN departments d ON d.dept_id = s.dept_id;`,
       check: `SELECT student_id, name, email, dept_name FROM student_directory ORDER BY student_id;`,
-      hints: ['CREATE VIEW name AS SELECT ...', 'To keep students with no department, use a LEFT JOIN.', 'Rename departments.name with AS dept_name.']
+      hints: ['CREATE VIEW name AS SELECT ...', 'To keep students with no department, use a LEFT JOIN.', 'Rename departments.name with AS dept_name.'],
+      explain: `<p><b>The idea:</b> A view saves a query under a name. Later, anyone can use <code>student_directory</code> like a table, without writing the join again.</p><p><b>How it works:</b> <code>CREATE VIEW student_directory AS</code> is followed by a normal SELECT. It joins <code>students s</code> to <code>departments d</code> on <code>dept_id</code>. <code>d.name AS dept_name</code> gives the column its name. <code>LEFT JOIN</code> keeps students with no department, with <code>dept_name</code> NULL. The view stores no data. It runs its query each time someone reads it.</p><p><b>Common mistake:</b> Using an inner <code>JOIN</code>. Then students with no department disappear from the view.</p>`
     },
     {
       id: 'd13-2', level: 1, kind: 'script',
@@ -5580,7 +5721,8 @@ SELECT c.course_id, c.title, COUNT(s.section_id) AS n_sections
 FROM courses c LEFT JOIN sections s ON s.course_id = c.course_id
 GROUP BY c.course_id, c.title;`,
       check: `SELECT course_id, title, n_sections FROM course_offerings ORDER BY course_id;`,
-      hints: ['LEFT JOIN courses to sections, so courses with no sections stay.', 'COUNT(s.section_id) counts only matched rows, so it gives 0. COUNT(*) would give 1.', 'GROUP BY c.course_id, c.title']
+      hints: ['LEFT JOIN courses to sections, so courses with no sections stay.', 'COUNT(s.section_id) counts only matched rows, so it gives 0. COUNT(*) would give 1.', 'GROUP BY c.course_id, c.title'],
+      explain: `<p><b>The idea:</b> A view can hold a grouped query too. Count sections per course, and use a LEFT JOIN so courses with no sections still appear with 0.</p><p><b>How it works:</b> <code>courses c LEFT JOIN sections s</code> keeps every course. <code>GROUP BY c.course_id, c.title</code> makes one row per course. <code>COUNT(s.section_id)</code> counts only real sections. For a course with no sections, <code>s.section_id</code> is NULL, so the count is 0.</p><p><b>Common mistake:</b> Writing <code>COUNT(*)</code>. It counts the one row that the LEFT JOIN keeps for a course without sections, so it shows 1 instead of 0.</p>`
     },
     {
       id: 'd13-3', level: 2,
@@ -5592,7 +5734,8 @@ JOIN sections sec ON sec.section_id = e.section_id
 JOIN courses c ON c.course_id = sec.course_id;`,
       solution: `SELECT student, ROUND(AVG(score), 1) AS avg_score FROM transcript WHERE score IS NOT NULL GROUP BY student_id, student HAVING COUNT(score) >= 3 ORDER BY avg_score DESC, student;`,
       ordered: true,
-      hints: ['Use the view like a table: FROM transcript.', 'Graded means score is not NULL. COUNT(score) skips NULLs.', 'GROUP BY the student, HAVING COUNT(score) >= 3, then ORDER BY.']
+      hints: ['Use the view like a table: FROM transcript.', 'Graded means score is not NULL. COUNT(score) skips NULLs.', 'GROUP BY the student, HAVING COUNT(score) >= 3, then ORDER BY.'],
+      explain: `<p><b>The idea:</b> Use the view like a table. All the joins are hidden inside <code>transcript</code>, so your query only needs to filter, group and sort.</p><p><b>How it works:</b> <code>WHERE score IS NOT NULL</code> keeps graded courses only. <code>GROUP BY student_id, student</code> makes one group per student. <code>HAVING COUNT(score) &gt;= 3</code> keeps students with 3 or more graded courses. <code>ROUND(AVG(score), 1)</code> gives the average. <code>ORDER BY avg_score DESC, student</code> sorts the result.</p><p><b>Common mistake:</b> Grouping by <code>student</code> only. Two students with the same name would be mixed into one group. Grouping by <code>student_id</code> keeps them apart.</p>`
     },
     {
       id: 'd13-4', level: 2, kind: 'script',
@@ -5607,7 +5750,8 @@ END;
 UPDATE enrollments SET grade = 'B' WHERE student_id = 1001 AND section_id = 18;
 UPDATE enrollments SET grade = 'C' WHERE student_id = 1003 AND section_id = 8;`,
       check: `SELECT student_id, section_id, old_grade, new_grade FROM grade_log ORDER BY student_id, section_id;`,
-      hints: ['CREATE TRIGGER name AFTER UPDATE OF grade ON enrollments BEGIN ... END;', 'Inside: INSERT INTO grade_log (...) VALUES (OLD.student_id, OLD.section_id, OLD.grade, NEW.grade);', 'Put a semicolon after the INSERT and after END. Then run the two UPDATEs.']
+      hints: ['CREATE TRIGGER name AFTER UPDATE OF grade ON enrollments BEGIN ... END;', 'Inside: INSERT INTO grade_log (...) VALUES (OLD.student_id, OLD.section_id, OLD.grade, NEW.grade);', 'Put a semicolon after the INSERT and after END. Then run the two UPDATEs.'],
+      explain: `<p><b>The idea:</b> A trigger is code the database runs by itself after a change. Here, every grade change writes one row into a log table.</p><p><b>How it works:</b> <code>AFTER UPDATE OF grade ON enrollments</code> means: run after any UPDATE that changes <code>grade</code>. Inside, <code>OLD</code> is the row before the change and <code>NEW</code> is the row after. The INSERT copies the student, the section, <code>OLD.grade</code> and <code>NEW.grade</code> into <code>grade_log</code>. The two UPDATEs at the end make the trigger run twice, so the log gets two rows.</p><p><b>Common mistake:</b> Writing <code>NEW.grade</code> for both columns. Then the log loses the old grade. Another mistake is to forget the two UPDATEs, so the trigger never runs.</p>`
     },
     {
       id: 'd13-5', level: 2, kind: 'script',
@@ -5624,7 +5768,8 @@ INSERT INTO payments VALUES (500, 1001, 300, '2026-09-15', 'card');`,
   instr(upper(sql), 'RAISE') > 0 AS raises,
   (SELECT COUNT(*) FROM payments WHERE payment_id = 500 AND amount = 300) AS valid_row
 FROM sqlite_master WHERE type = 'trigger' ORDER BY name;`,
-      hints: ['Use WHEN, so the trigger runs only for bad rows.', "The body is SELECT RAISE(ABORT, 'Amount must be positive');", 'End with the INSERT of the good payment. It must pass the trigger.']
+      hints: ['Use WHEN, so the trigger runs only for bad rows.', "The body is SELECT RAISE(ABORT, 'Amount must be positive');", 'End with the INSERT of the good payment. It must pass the trigger.'],
+      explain: `<p><b>The idea:</b> A <code>BEFORE INSERT</code> trigger checks a row before it is saved. <code>RAISE(ABORT, ...)</code> stops the insert with your message.</p><p><b>How it works:</b> <code>BEFORE INSERT ON payments</code> runs before each new payment. <code>WHEN NEW.amount &lt;= 0</code> makes it act only for bad amounts. Then <code>SELECT RAISE(ABORT, 'Amount must be positive')</code> cancels the INSERT. The good payment of 300 passes the check and is saved.</p><p><b>Common mistake:</b> Using <code>AFTER INSERT</code>. Then the bad row is already saved when the trigger runs. Another mistake is to forget the <code>WHEN</code> part, so every payment is blocked, even good ones.</p>`
     },
     {
       id: 'd13-6', level: 3, kind: 'script',
@@ -5645,31 +5790,36 @@ END;
 UPDATE enrollments SET score = 91 WHERE student_id = 1002 AND section_id = 21;
 UPDATE enrollments SET score = 58 WHERE student_id = 1002 AND section_id = 33;`,
       check: `SELECT student_id, section_id, grade, score FROM enrollments WHERE student_id = 1002 ORDER BY section_id;`,
-      hints: ['The trigger body updates the same row: WHERE student_id = NEW.student_id AND section_id = NEW.section_id.', 'Find the letter with CASE WHEN NEW.score >= 90 THEN \'A\' ... END.', 'The trigger runs only when score changes. So changing grade inside it does not run it again.']
+      hints: ['The trigger body updates the same row: WHERE student_id = NEW.student_id AND section_id = NEW.section_id.', 'Find the letter with CASE WHEN NEW.score >= 90 THEN \'A\' ... END.', 'The trigger runs only when score changes. So changing grade inside it does not run it again.'],
+      explain: `<p><b>The idea:</b> When the score changes, a trigger computes the matching letter grade with CASE. The two columns can never disagree.</p><p><b>How it works:</b> <code>AFTER UPDATE OF score ON enrollments</code> runs after a score change. The inner UPDATE sets <code>grade</code> with a CASE. It checks NULL first, then <code>&gt;= 90</code>, <code>&gt;= 80</code> and so on, from high to low. <code>WHERE student_id = NEW.student_id AND section_id = NEW.section_id</code> changes only the row that changed. The two UPDATEs at the end give scores 91 (grade A) and 58 (grade F).</p><p><b>Common mistake:</b> Writing the CASE tests from low to high, like <code>WHEN NEW.score &gt;= 60 THEN 'D'</code> first. CASE stops at the first true test, so 91 would get a D. Forgetting the WHERE updates every row in the table.</p>`
     },
     {
       id: 'd13-7', level: 1,
       prompt: '<p>Write this relational algebra expression in SQL: <code>π<sub>name, email</sub> ( σ<sub>year = 4</sub> ( students ) )</code></p><ul class="spec"><li><b>Columns:</b> <code>name</code>, <code>email</code></li><li><b>Note:</b> relational algebra works with sets, so there are no duplicate rows.</li></ul>',
       solution: `SELECT DISTINCT name, email FROM students WHERE year = 4;`,
-      hints: ['σ (selection) is WHERE. π (projection) is the SELECT list.', 'π removes duplicates: use SELECT DISTINCT.']
+      hints: ['σ (selection) is WHERE. π (projection) is the SELECT list.', 'π removes duplicates: use SELECT DISTINCT.'],
+      explain: `<p><b>The idea:</b> σ (selection) is WHERE. π (projection) is the column list in SELECT. Relational algebra works with sets, so add DISTINCT.</p><p><b>How it works:</b> Read the expression from the inside out. <code>σ year = 4 (students)</code> keeps fourth-year students: <code>WHERE year = 4</code>. <code>π name, email</code> keeps two columns: <code>SELECT DISTINCT name, email</code>.</p><p><b>Common mistake:</b> Mixing up σ and π. σ chooses rows, π chooses columns. Writing <code>SELECT *</code> ignores the π part.</p>`
     },
     {
       id: 'd13-8', level: 2,
       prompt: '<p>Write this expression in SQL. It gives the names of students who got at least one A: <code>π<sub>name</sub> ( students ⋈<sub>students.student_id = enrollments.student_id</sub> σ<sub>grade = \'A\'</sub> ( enrollments ) )</code></p><ul class="spec"><li><b>Columns:</b> <code>name</code></li><li><b>Note:</b> each name appears once.</li></ul>',
       solution: `SELECT DISTINCT s.name FROM students s JOIN enrollments e ON s.student_id = e.student_id WHERE e.grade = 'A';`,
-      hints: ['⋈ with a condition is JOIN ... ON.', 'The σ on enrollments becomes a WHERE condition.', 'A student with two A grades must appear once: use DISTINCT.']
+      hints: ['⋈ with a condition is JOIN ... ON.', 'The σ on enrollments becomes a WHERE condition.', 'A student with two A grades must appear once: use DISTINCT.'],
+      explain: `<p><b>The idea:</b> ⋈ is a JOIN with the condition under it. σ on the inside is a WHERE. π on the outside is the SELECT list.</p><p><b>How it works:</b> <code>σ grade = 'A' (enrollments)</code> keeps enrollments with an A. <code>students ⋈ ...</code> joins them to students on <code>student_id</code>. <code>π name</code> keeps only the name. In SQL: <code>JOIN ... ON s.student_id = e.student_id WHERE e.grade = 'A'</code>, and <code>SELECT DISTINCT s.name</code>. DISTINCT matters because a student with two A grades would appear twice.</p><p><b>Common mistake:</b> Forgetting DISTINCT. Relational algebra returns a set, so each name appears once.</p>`
     },
     {
       id: 'd13-9', level: 2,
       prompt: '<p>Write this expression in SQL. It gives the courses that never had a section: <code>π<sub>course_id</sub> ( courses ) − π<sub>course_id</sub> ( sections )</code></p><ul class="spec"><li><b>Columns:</b> <code>course_id</code></li></ul>',
       solution: `SELECT course_id FROM courses EXCEPT SELECT course_id FROM sections;`,
-      hints: ['− is set difference: rows in the first result but not in the second.', 'In SQL it is EXCEPT (MINUS in Oracle).']
+      hints: ['− is set difference: rows in the first result but not in the second.', 'In SQL it is EXCEPT (MINUS in Oracle).'],
+      explain: `<p><b>The idea:</b> The minus sign − in relational algebra is set difference. In SQL, set difference is <code>EXCEPT</code>.</p><p><b>How it works:</b> <code>π course_id (courses)</code> is every course: <code>SELECT course_id FROM courses</code>. <code>π course_id (sections)</code> is every course that has a section. <code>EXCEPT</code> keeps rows of the first list that are not in the second. The result is the courses that never had a section.</p><p><b>Common mistake:</b> Swapping the two sides. <code>sections EXCEPT courses</code> asks for sections with no course, which returns nothing. In Oracle, the keyword is <code>MINUS</code>.</p>`
     },
     {
       id: 'd13-10', level: 3,
       prompt: '<p>Write this expression in SQL. It pairs each instructor with their mentor: <code>π<sub>i.name, m.name</sub> ( σ<sub>i.mentor_id = m.instructor_id</sub> ( ρ<sub>i</sub>(instructors) × ρ<sub>m</sub>(instructors) ) )</code></p><ul class="spec"><li><b>Columns:</b> <code>mentee</code> (the instructor name), <code>mentor</code> (the mentor name)</li></ul>',
       solution: `SELECT DISTINCT i.name AS mentee, m.name AS mentor FROM instructors i, instructors m WHERE i.mentor_id = m.instructor_id;`,
-      hints: ['ρ gives the same table two names: the aliases i and m.', '× and then σ is a join: FROM i, m WHERE ..., or JOIN ... ON.', 'SELECT DISTINCT i.name AS mentee, m.name AS mentor ...']
+      hints: ['ρ gives the same table two names: the aliases i and m.', '× and then σ is a join: FROM i, m WHERE ..., or JOIN ... ON.', 'SELECT DISTINCT i.name AS mentee, m.name AS mentor ...'],
+      explain: `<p><b>The idea:</b> ρ renames a table, so you can use instructors twice: once as <code>i</code> (the mentee) and once as <code>m</code> (the mentor). × with σ is the old way to write a join.</p><p><b>How it works:</b> <code>ρ i (instructors) × ρ m (instructors)</code> pairs every instructor with every instructor: <code>FROM instructors i, instructors m</code>. <code>σ i.mentor_id = m.instructor_id</code> keeps the real pairs: the WHERE. <code>π i.name, m.name</code> is the SELECT, with aliases <code>mentee</code> and <code>mentor</code>.</p><p><b>Common mistake:</b> Writing <code>m.mentor_id = i.instructor_id</code>. That turns the pairs around, so the mentor appears in the mentee column.</p>`
     }
   ],
   quiz: [
@@ -5846,7 +5996,8 @@ ORDER BY avg_score DESC;`,
 FROM sqlite_master m, pragma_table_info(m.name) p
 WHERE m.type = 'table' AND m.name IN ('doctors', 'patients')
 ORDER BY tbl, col;`,
-        hints: ['Write two CREATE TABLE statements.', 'Required means NOT NULL. Optional but unique means UNIQUE without NOT NULL.', 'doctor_id INTEGER PRIMARY KEY, name TEXT NOT NULL, specialty TEXT NOT NULL ...']
+        hints: ['Write two CREATE TABLE statements.', 'Required means NOT NULL. Optional but unique means UNIQUE without NOT NULL.', 'doctor_id INTEGER PRIMARY KEY, name TEXT NOT NULL, specialty TEXT NOT NULL ...'],
+      explain: `<p><b>The idea:</b> Each table gets a primary key. Rules from the description become constraints: required means <code>NOT NULL</code>, and "no two the same" means <code>UNIQUE</code>.</p><p><b>How it works:</b> <code>doctor_id INTEGER PRIMARY KEY</code> identifies each doctor. <code>name</code> and <code>specialty</code> get <code>NOT NULL</code> because they are required. In <code>patients</code>, <code>phone TEXT UNIQUE</code> blocks two patients with one phone, but still allows NULL. <code>birth_date</code> has no constraint because it is optional.</p><p><b>Common mistake:</b> Writing <code>phone TEXT NOT NULL UNIQUE</code>. The description says the phone is optional, so NOT NULL is wrong here.</p>`
       },
       {
         id: 'd14-2', level: 2, kind: 'script',
@@ -5864,7 +6015,8 @@ SELECT 'uniq', group_concat(name, ','), NULL, NULL FROM (
 UNION ALL
 SELECT 'check', (SELECT instr(sql, 'cancelled') > 0 AND instr(sql, 'done') > 0 FROM sqlite_master WHERE name = 'appointments'), NULL, NULL
 ORDER BY what, a;`,
-        hints: ['A foreign key: doctor_id INTEGER NOT NULL REFERENCES doctors(doctor_id).', "status TEXT NOT NULL DEFAULT 'booked' CHECK (status IN ('booked','done','cancelled'))", 'No double booking: add UNIQUE (doctor_id, starts_at) at the end of the column list.']
+        hints: ['A foreign key: doctor_id INTEGER NOT NULL REFERENCES doctors(doctor_id).', "status TEXT NOT NULL DEFAULT 'booked' CHECK (status IN ('booked','done','cancelled'))", 'No double booking: add UNIQUE (doctor_id, starts_at) at the end of the column list.'],
+      explain: `<p><b>The idea:</b> Appointments link a patient to a doctor. This is a 1:N relationship from each side, so the foreign keys go in <code>appointments</code>.</p><p><b>How it works:</b> <code>patient_id INTEGER NOT NULL REFERENCES patients(patient_id)</code> is a required foreign key. <code>doctor_id</code> works the same way. <code>status ... DEFAULT 'booked' CHECK (status IN ('booked','done','cancelled'))</code> fills a value when none is given and allows only three words. <code>UNIQUE (doctor_id, starts_at)</code> stops one doctor from having two appointments at the same time.</p><p><b>Common mistake:</b> Forgetting <code>NOT NULL</code> on the foreign keys. A foreign key alone still allows NULL, so you could save an appointment with no patient.</p>`
       },
       {
         id: 'd14-3', level: 2, kind: 'script',
@@ -5875,7 +6027,8 @@ ORDER BY what, a;`,
 UNION ALL
 SELECT 'fk', f."from", f."table", coalesce(f."to", f."from") FROM pragma_foreign_key_list('prescriptions') f
 ORDER BY what, a;`,
-        hints: ['A primary key on two columns is written at the end: PRIMARY KEY (appt_id, drug).', 'appt_id INTEGER NOT NULL REFERENCES appointments(appt_id)']
+        hints: ['A primary key on two columns is written at the end: PRIMARY KEY (appt_id, drug).', 'appt_id INTEGER NOT NULL REFERENCES appointments(appt_id)'],
+      explain: `<p><b>The idea:</b> A prescription belongs to one appointment, and one drug appears only once per appointment. So the pair <code>(appt_id, drug)</code> is the primary key: a composite key.</p><p><b>How it works:</b> <code>appt_id ... REFERENCES appointments(appt_id)</code> links each prescription to its appointment. <code>drug</code> and <code>dose</code> are <code>NOT NULL</code>. <code>PRIMARY KEY (appt_id, drug)</code> at the end makes the pair unique. The same drug can still appear in other appointments.</p><p><b>Common mistake:</b> Writing <code>drug TEXT PRIMARY KEY</code>. Then each drug could appear only once in the whole clinic, not once per appointment.</p>`
       },
       {
         id: 'd14-4', level: 2, kind: 'script',
@@ -5887,7 +6040,8 @@ UPDATE appointments SET status = 'cancelled' WHERE appt_id = 9;
 INSERT INTO appointments (appt_id, patient_id, doctor_id, starts_at) VALUES (12, 2, 4, '2026-10-14 09:30');
 COMMIT;`,
         check: `SELECT appt_id, patient_id, doctor_id, starts_at, status FROM appointments ORDER BY appt_id;`,
-        hints: ['Dates in YYYY-MM-DD HH:MM text compare correctly with <.', 'Only booked appointments become done. Appointment 4 is cancelled and must stay cancelled.', 'Leave status out of the INSERT column list, so the DEFAULT is used.']
+        hints: ['Dates in YYYY-MM-DD HH:MM text compare correctly with <.', 'Only booked appointments become done. Appointment 4 is cancelled and must stay cancelled.', 'Leave status out of the INSERT column list, so the DEFAULT is used.'],
+      explain: `<p><b>The idea:</b> Three changes that belong together go in one transaction. If any step fails, none of them is saved.</p><p><b>How it works:</b> <code>BEGIN</code> starts. The first UPDATE changes old booked appointments to done: <code>WHERE status = 'booked' AND starts_at &lt; '2026-10-01'</code>. The second UPDATE cancels appointment 9. The INSERT lists only four columns, so <code>status</code> gets its default, <code>'booked'</code>. <code>COMMIT</code> saves all three.</p><p><b>Common mistake:</b> Forgetting <code>status = 'booked'</code> in the first WHERE. Then cancelled appointments in the past become done too, which is wrong.</p>`
       },
       {
         id: 'd14-5', level: 3, kind: 'script',
@@ -5895,7 +6049,8 @@ COMMIT;`,
         setup: FULL,
         solution: `CREATE INDEX idx_appt_patient ON appointments(patient_id, starts_at);`,
         plan: { query: `SELECT starts_at, status FROM appointments WHERE patient_id = 3 ORDER BY starts_at`, mustContain: 'SEARCH appointments USING' },
-        hints: ['patient_id is a foreign key with no index yet.', 'Add starts_at as the second column. Then the index also gives the ORDER BY for free.']
+        hints: ['patient_id is a foreign key with no index yet.', 'Add starts_at as the second column. Then the index also gives the ORDER BY for free.'],
+      explain: `<p><b>The idea:</b> The query filters on <code>patient_id</code> and sorts by <code>starts_at</code>. One index on both columns, in this order, helps with the filter and the sort.</p><p><b>How it works:</b> <code>CREATE INDEX idx_appt_patient ON appointments(patient_id, starts_at)</code> sorts rows by patient, then by time. The database finds patient 3 in the index. Its rows are already in time order, so no extra sort step is needed. The plan changes from <code>SCAN</code> to <code>SEARCH appointments USING INDEX</code>.</p><p><b>Common mistake:</b> Putting <code>starts_at</code> first: <code>(starts_at, patient_id)</code>. The WHERE uses <code>patient_id</code>, so by the leftmost-prefix rule this index cannot be used for the search.</p>`
       },
       {
         id: 'd14-6', level: 1,
@@ -5905,7 +6060,8 @@ COMMIT;`,
 FROM appointments a JOIN patients p ON p.patient_id = a.patient_id JOIN doctors d ON d.doctor_id = a.doctor_id
 WHERE a.status = 'booked' AND a.starts_at >= '2026-10-01' ORDER BY a.starts_at;`,
         ordered: true,
-        hints: ['Join appointments to patients and to doctors.', "WHERE a.status = 'booked' AND a.starts_at >= '2026-10-01'", 'ORDER BY a.starts_at']
+        hints: ['Join appointments to patients and to doctors.', "WHERE a.status = 'booked' AND a.starts_at >= '2026-10-01'", 'ORDER BY a.starts_at'],
+      explain: `<p><b>The idea:</b> The appointment table holds only ids. Join it to <code>patients</code> and <code>doctors</code> to get the names, then filter and sort.</p><p><b>How it works:</b> <code>appointments a JOIN patients p ON p.patient_id = a.patient_id</code> adds the patient name. The second JOIN adds the doctor name. <code>WHERE a.status = 'booked' AND a.starts_at &gt;= '2026-10-01'</code> keeps future booked visits. <code>ORDER BY a.starts_at</code> lists them from early to late. Aliases <code>patient</code> and <code>doctor</code> name the columns.</p><p><b>Common mistake:</b> Forgetting <code>a.status = 'booked'</code>. Then cancelled and done appointments appear in the list too.</p>`
       },
       {
         id: 'd14-7', level: 2,
@@ -5914,7 +6070,8 @@ WHERE a.status = 'booked' AND a.starts_at >= '2026-10-01' ORDER BY a.starts_at;`
         solution: `SELECT d.name AS doctor, COUNT(a.appt_id) AS active_appts
 FROM doctors d LEFT JOIN appointments a ON a.doctor_id = d.doctor_id AND a.status <> 'cancelled'
 GROUP BY d.doctor_id, d.name;`,
-        hints: ['LEFT JOIN keeps doctors with no appointments.', 'Put the status filter in the ON clause. In WHERE it would remove the doctors with no rows.', 'Use COUNT(a.appt_id), not COUNT(*).']
+        hints: ['LEFT JOIN keeps doctors with no appointments.', 'Put the status filter in the ON clause. In WHERE it would remove the doctors with no rows.', 'Use COUNT(a.appt_id), not COUNT(*).'],
+      explain: `<p><b>The idea:</b> To keep doctors with 0 appointments, use a LEFT JOIN. Put the "not cancelled" filter in the ON clause, not in WHERE.</p><p><b>How it works:</b> <code>doctors d LEFT JOIN appointments a ON a.doctor_id = d.doctor_id AND a.status &lt;&gt; 'cancelled'</code> attaches only active appointments. A doctor with none still gets one row with NULLs. <code>COUNT(a.appt_id)</code> counts only real appointments, so that doctor shows 0. <code>GROUP BY d.doctor_id, d.name</code> makes one row per doctor.</p><p><b>Common mistake:</b> Writing <code>WHERE a.status &lt;&gt; 'cancelled'</code>. For a doctor with no appointments, status is NULL, and the WHERE removes that row. The LEFT JOIN becomes an inner join, and the 0 disappears.</p>`
       },
       {
         id: 'd14-8', level: 3,
@@ -5924,7 +6081,8 @@ GROUP BY d.doctor_id, d.name;`,
 FROM patients p JOIN appointments a ON a.patient_id = p.patient_id
 WHERE a.status <> 'cancelled'
 GROUP BY p.patient_id, p.name HAVING COUNT(DISTINCT a.doctor_id) > 1;`,
-        hints: ['Group by patient.', 'COUNT(DISTINCT doctor_id) counts different doctors.', 'Keep only the groups you want with HAVING ... > 1.']
+        hints: ['Group by patient.', 'COUNT(DISTINCT doctor_id) counts different doctors.', 'Keep only the groups you want with HAVING ... > 1.'],
+      explain: `<p><b>The idea:</b> Count the <em>different</em> doctors per patient with <code>COUNT(DISTINCT ...)</code>. Then keep patients with more than one, using HAVING.</p><p><b>How it works:</b> The JOIN links each patient to their appointments. <code>WHERE a.status &lt;&gt; 'cancelled'</code> ignores cancelled visits. <code>GROUP BY p.patient_id, p.name</code> makes one group per patient. <code>COUNT(DISTINCT a.doctor_id)</code> counts each doctor once, even with many visits. <code>HAVING ... &gt; 1</code> keeps patients who see 2 or more doctors.</p><p><b>Common mistake:</b> Writing <code>COUNT(a.doctor_id)</code> without DISTINCT. A patient with two visits to the same doctor would count as 2 and appear by mistake.</p>`
       },
       {
         id: 'd14-9', level: 2,
@@ -5934,19 +6092,22 @@ FROM departments d JOIN instructors i ON i.dept_id = d.dept_id
 GROUP BY d.dept_id, d.name HAVING COUNT(*) >= 2
 ORDER BY avg_salary DESC, department;`,
         ordered: true,
-        hints: ['Join departments and instructors.', 'GROUP BY the department, HAVING COUNT(*) >= 2.', 'ROUND(AVG(i.salary)), then ORDER BY avg_salary DESC, department.']
+        hints: ['Join departments and instructors.', 'GROUP BY the department, HAVING COUNT(*) >= 2.', 'ROUND(AVG(i.salary)), then ORDER BY avg_salary DESC, department.'],
+      explain: `<p><b>The idea:</b> Join departments to instructors, make one group per department, and keep groups with 2 or more people.</p><p><b>How it works:</b> <code>JOIN instructors i ON i.dept_id = d.dept_id</code> pairs each instructor with their department. <code>GROUP BY d.dept_id, d.name</code> makes one group per department. <code>COUNT(*)</code> counts instructors and <code>ROUND(AVG(i.salary))</code> gives the average, rounded. <code>HAVING COUNT(*) &gt;= 2</code> drops small departments. <code>ORDER BY avg_salary DESC, department</code> sorts the result.</p><p><b>Common mistake:</b> Using <code>WHERE COUNT(*) &gt;= 2</code>. WHERE cannot use aggregates. The filter on groups must go in HAVING.</p>`
       },
       {
         id: 'd14-10', level: 2,
         prompt: '<p><strong>Final exam.</strong> Find the students who have <strong>never</strong> enrolled in any section.</p><ul class="spec"><li><b>Columns:</b> <code>student_id</code>, <code>name</code></li></ul>',
         solution: `SELECT s.student_id, s.name FROM students s WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.student_id = s.student_id);`,
-        hints: ['For "never" questions use NOT EXISTS, NOT IN, or LEFT JOIN ... IS NULL.', 'SELECT ... FROM students s WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.student_id = s.student_id)']
+        hints: ['For "never" questions use NOT EXISTS, NOT IN, or LEFT JOIN ... IS NULL.', 'SELECT ... FROM students s WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.student_id = s.student_id)'],
+      explain: `<p><b>The idea:</b> "Never enrolled" means there is no matching row in <code>enrollments</code>. <code>NOT EXISTS</code> tests exactly this, row by row.</p><p><b>How it works:</b> For each student <code>s</code>, the subquery looks for an enrollment with the same <code>student_id</code>. <code>SELECT 1</code> is enough, because only the existence of a row matters. If the subquery finds nothing, <code>NOT EXISTS</code> is true, and the student is kept.</p><p><b>Common mistake:</b> Using <code>NOT IN (SELECT student_id FROM enrollments)</code> on a column that can be NULL. One NULL in the list makes NOT IN return no rows. NOT EXISTS has no such problem. A LEFT JOIN with <code>IS NULL</code> also works.</p>`
       },
       {
         id: 'd14-11', level: 2,
         prompt: '<p><strong>Final exam.</strong> List every course that has prerequisites, with the title of each required course. Show one row for each pair.</p><ul class="spec"><li><b>Columns:</b> <code>course</code> (the course title), <code>prerequisite</code> (the title of the required course)</li></ul>',
         solution: `SELECT c.title AS course, pc.title AS prerequisite FROM prereqs p JOIN courses c ON c.course_id = p.course_id JOIN courses pc ON pc.course_id = p.prereq_id;`,
-        hints: ['You need courses twice: once for the course, once for the prerequisite. Use two aliases.', 'prereqs links them: p.course_id and p.prereq_id.']
+        hints: ['You need courses twice: once for the course, once for the prerequisite. Use two aliases.', 'prereqs links them: p.course_id and p.prereq_id.'],
+      explain: `<p><b>The idea:</b> <code>prereqs</code> holds two course ids per row. To show two titles, join <code>courses</code> twice, with a different alias each time: a self join.</p><p><b>How it works:</b> <code>JOIN courses c ON c.course_id = p.course_id</code> finds the title of the course. <code>JOIN courses pc ON pc.course_id = p.prereq_id</code> finds the title of the required course. The SELECT names them <code>course</code> and <code>prerequisite</code>. Each row of <code>prereqs</code> becomes one row of the result.</p><p><b>Common mistake:</b> Joining <code>courses</code> only once. Then you cannot show two different titles in the same row.</p>`
       },
       {
         id: 'd14-12', level: 3,
@@ -5958,13 +6119,15 @@ ORDER BY avg_salary DESC, department;`,
   WHERE e.score IS NOT NULL
 )
 SELECT course_id, name, score FROM ranked WHERE rnk = 1;`,
-        hints: ['You need the course of each enrollment: join enrollments to sections.', 'RANK() OVER (PARTITION BY course_id ORDER BY score DESC) gives 1 to the top score of each course. Ties share the same rank.', 'You cannot use a window function in WHERE. Compute it in a CTE or subquery first, then keep rnk = 1.']
+        hints: ['You need the course of each enrollment: join enrollments to sections.', 'RANK() OVER (PARTITION BY course_id ORDER BY score DESC) gives 1 to the top score of each course. Ties share the same rank.', 'You cannot use a window function in WHERE. Compute it in a CTE or subquery first, then keep rnk = 1.'],
+      explain: `<p><b>The idea:</b> "The best per group, including ties" is a job for <code>RANK()</code> with <code>PARTITION BY</code>. Then keep the rows with rank 1.</p><p><b>How it works:</b> The CTE <code>ranked</code> joins enrollments to sections (for <code>course_id</code>) and to students (for the name). <code>RANK() OVER (PARTITION BY s.course_id ORDER BY e.score DESC)</code> numbers the scores inside each course, the highest first. Students who tie get the same rank. The outer query keeps <code>rnk = 1</code>, so all top students are shown.</p><p><b>Common mistake:</b> Using <code>ROW_NUMBER()</code>. It gives different numbers to a tie, so only one of the top students appears. Filtering <code>WHERE rnk = 1</code> inside the CTE is also not allowed, because window functions run after WHERE.</p>`
       },
       {
         id: 'd14-13', level: 3,
         prompt: '<p><strong>Final exam.</strong> For every payment, show a running total for that student.</p><ul class="spec"><li><b>Columns:</b> <code>student_id</code>, <code>paid_on</code>, <code>amount</code>, <code>running_total</code></li><li><b>Note:</b> <code>running_total</code> is the sum of this student\'s payments up to this one, including it, in date order.</li></ul>',
         solution: `SELECT student_id, paid_on, amount, SUM(amount) OVER (PARTITION BY student_id ORDER BY paid_on) AS running_total FROM payments;`,
-        hints: ['A running total is a window SUM with ORDER BY inside OVER.', 'Start again for each student with PARTITION BY student_id.']
+        hints: ['A running total is a window SUM with ORDER BY inside OVER.', 'Start again for each student with PARTITION BY student_id.'],
+      explain: `<p><b>The idea:</b> A running total is <code>SUM() OVER</code> with an ORDER BY. Each row adds its amount to the rows before it, and every row stays in the result.</p><p><b>How it works:</b> <code>PARTITION BY student_id</code> starts a new total for each student. <code>ORDER BY paid_on</code> adds the payments in date order. For each row, the window sums this payment and all earlier payments of the same student. Unlike GROUP BY, no rows are merged.</p><p><b>Common mistake:</b> Writing <code>SUM(amount) OVER (PARTITION BY student_id)</code> without ORDER BY. Then every row shows the student's full total, not a running total.</p>`
       },
       {
         id: 'd14-14', level: 3,
@@ -5976,7 +6139,8 @@ GROUP BY s.student_id, s.name
 HAVING AVG(e.score) > (SELECT AVG(score) FROM enrollments)
 ORDER BY avg_score DESC, s.name;`,
         ordered: true,
-        hints: ['Find each student\'s average with GROUP BY.', 'Compare it to one value from a subquery: (SELECT AVG(score) FROM enrollments). AVG skips NULLs.', 'A condition on an aggregate goes in HAVING. Compare the average before rounding.']
+        hints: ['Find each student\'s average with GROUP BY.', 'Compare it to one value from a subquery: (SELECT AVG(score) FROM enrollments). AVG skips NULLs.', 'A condition on an aggregate goes in HAVING. Compare the average before rounding.'],
+      explain: `<p><b>The idea:</b> Compare each student's average with one number: the average of all graded enrollments. A scalar subquery in HAVING gives that number.</p><p><b>How it works:</b> The JOIN and <code>WHERE e.score IS NOT NULL</code> keep graded enrollments. <code>GROUP BY s.student_id, s.name</code> makes one group per student. <code>(SELECT AVG(score) FROM enrollments)</code> returns one number for the whole table. AVG ignores NULL scores, so it uses graded enrollments only. <code>HAVING AVG(e.score) &gt; (...)</code> keeps students above it.</p><p><b>Common mistake:</b> Comparing the rounded value: <code>HAVING ROUND(AVG(e.score), 1) &gt; ...</code>. Rounding can push a student over or under the line. Compare the exact average and round only in the SELECT.</p>`
       }
     ],
     quiz: [
@@ -6451,7 +6615,7 @@ function exHTML(ex, idx) {
   h += '<div class="console">' + editorHTML('ex:' + ex.id, draft, 4) + '<div class="toolbar ex-tb"><div class="tb-main"><button class="btn small" data-exrun="' + ex.id + '">Run</button><button class="btn primary small" data-excheck="' + ex.id + '">Check answer</button></div><div class="tb-side"><button class="btn small tb-hint" data-exhint="' + ex.id + '"' + (hintsShown >= ex.hints.length ? ' disabled' : '') + '>' + (hintsShown >= ex.hints.length ? 'All hints shown' : 'Hint ' + (hintsShown + 1) + ' of ' + ex.hints.length) + '</button>' + (ex.kind !== 'script' ? '<button class="btn ghost small" data-exexp="' + ex.id + '">' + (s.showExp ? 'Hide expected' : 'Expected result') + '</button>' : '') + '<button class="btn ghost small" data-exsol="' + ex.id + '"' + (canSolve ? '' : ' disabled title="Unlocks after 2 checks or after all hints"') + '>' + (s.showSol ? 'Hide solution' : canSolve ? 'Solution' : 'Solution (locked)') + '</button><button class="btn ghost small tutor-only" data-exask="' + ex.id + '" hidden>Ask the professor</button></div></div>' +
     fbBlock + '<div class="out"' + (s.run && !(s.fb && s.fb.kind === 'error') ? '' : ' hidden') + '>' + (s.run ? (s.fb ? '<div class="out-lab">Your result</div>' : '') + runResultHTML(s.run) + (s.run.ok ? xrayWidget('ex:' + ex.id) : '') : '') + (s.plan ? '<div class="meta"><span>Plan: ' + esc(s.plan) + '</span></div>' : '') + '</div></div>';
   if (s.showExp && ex.kind !== 'script') { let set = null; try { set = expectedFor(ex); } catch (e) {} h += '<div class="exp"><div class="lab">Expected result (your target)</div>' + gridHTML(set) + '</div>'; }
-  if (s.showSol) h += '<div class="sol"><div class="lab">Model solution</div><pre class="code">' + hl(ex.solution) + '</pre>' + (ex.check ? '<div class="lab">How it is checked</div><pre class="code">' + hl(ex.check) + '</pre>' : '') + (ex.plan ? '<div class="lab">Query whose plan is checked</div><pre class="code">' + hl(ex.plan.query) + '</pre><p class="note">The plan must contain: ' + esc(ex.plan.mustContain) + '</p>' : '') + '</div>';
+  if (s.showSol) h += solutionHTML(ex);
   return h + '</article>';
 }
 function miniRows(rows, cols, cls) {
@@ -6459,9 +6623,143 @@ function miniRows(rows, cols, cls) {
   return '<div class="grid-wrap mini-diff ' + cls + '"><table class="grid"><thead><tr>' + cols.slice(0, max).map(c => '<th>' + esc(c) + '</th>').join('') + (cols.length > max ? '<th>…</th>' : '') + '</tr></thead><tbody>' +
     rows.map(r => '<tr>' + r.slice(0, max).map(v => v === '∅' ? '<td class="null">NULL</td>' : '<td>' + esc(v) + '</td>').join('') + (cols.length > max ? '<td>…</td>' : '') + '</tr>').join('') + '</tbody></table></div>';
 }
+function splitStatements(sql) {
+  const cuts = [0];
+  scanSQL(sql, (i, kind) => { if (kind === 'semi') cuts.push(i + 1); return 0; });
+  const parts = cuts.map((a, k) => sql.slice(a, k + 1 < cuts.length ? cuts[k + 1] : sql.length)).map(x => x.trim()).filter(x => x && !/^(--[^\n]*\s*)+$/.test(x));
+  const out = [];
+  for (let i = 0; i < parts.length; i++) {
+    let st = parts[i];
+    if (/^\s*(--[^\n]*\n\s*)*create\s+trigger/i.test(st)) { while (!/\bend\s*;?\s*$/i.test(st) && i + 1 < parts.length) st += '\n' + parts[++i]; }
+    out.push(st);
+  }
+  return out;
+}
+function nameAfter(re, st) { const m = re.exec(st); return m ? m[1] : ''; }
+function clauseSay(kw, txt) {
+  const t = txt.replace(/^\s*(from|where|having|limit|select(\s+distinct)?|group\s+by|order\s+by)\s+/i, '');
+  const first = (firstWord(t) || '').replace(/[^\w]/g, '');
+  const alias = /^\s*"?\w+"?\s+(?:as\s+)?([a-z]\w*)\b/i.exec(t);
+  const al = alias && !/^(on|using|where|join|left|inner|group|order|limit|natural|cross)$/i.test(alias[1]) ? ' <code>' + esc(alias[1]) + '</code> is a short name (alias) for it.' : '';
+  switch (kw) {
+    case 'WITH': return 'First build a named temporary result (a CTE). The main query below can use it like a table.';
+    case 'SELECT': return /^\s*select\s+distinct/i.test(txt) ? 'Choose the columns to show, then remove duplicate rows.' : /\b(count|sum|avg|min|max|group_concat)\s*\(/i.test(txt) ? 'Choose what to show. COUNT, SUM, AVG, MIN and MAX give one value per group.' + (/\bover\s*\(/i.test(txt) ? ' OVER (…) computes a window value for every row.' : '') : /\bover\s*\(/i.test(txt) ? 'Choose what to show. OVER (…) computes a value for every row, without grouping.' : 'Choose the columns to show.' + (/\bas\b/i.test(txt) ? ' <code>AS</code> gives a column a new name.' : '');
+    case 'FROM': return /,/.test(t.split(/\bwhere\b/i)[0]) ? 'Take every combination of rows from these tables.' : 'Start from the <b>' + esc(first) + '</b> table.' + al;
+    case 'JOIN': {
+      const kind = txt.trim().split(/\s+join/i)[0].toUpperCase();
+      const tbl = (firstWord(txt.replace(/^[\s\S]*?\bjoin\b\s*/i, '')) || '').replace(/[^\w]/g, '');
+      if (/LEFT/.test(kind)) return 'Attach the matching rows of <b>' + esc(tbl) + '</b>. Rows with no match are kept, with NULL in its columns.';
+      if (/CROSS/.test(kind)) return 'Pair every row with every row of <b>' + esc(tbl) + '</b>.';
+      return 'Attach the matching rows of <b>' + esc(tbl) + '</b>: keep pairs where the <code>ON</code> condition is true.';
+    }
+    case 'WHERE': return 'Keep only the rows where this condition is true.';
+    case 'GROUP BY': return 'Make one group for each different value. Each group becomes one row.';
+    case 'HAVING': return 'Keep only the groups where this condition is true.';
+    case 'ORDER BY': return 'Sort the result' + (/\bdesc\b/i.test(txt) ? ' (<code>DESC</code> = highest first)' : '') + '.' + (/,/.test(txt) ? ' The second column only breaks ties.' : '');
+    case 'LIMIT': return /\boffset\b/i.test(txt) ? 'Skip rows with <code>OFFSET</code>, then keep the next rows.' : 'Keep only the first rows.';
+    case 'UNION': return /union\s+all/i.test(txt) ? 'Add the rows of the next query (duplicates kept).' : 'Add the rows of the next query and remove duplicates.';
+    case 'INTERSECT': return 'Keep only rows that the next query also returns.';
+    case 'EXCEPT': return 'Remove rows that the next query returns.';
+    case 'WINDOW': return 'Define a named window used by OVER.';
+  }
+  return '';
+}
+function stmtSay(st) {
+  const s0 = st.replace(/^\s*(--[^\n]*\n\s*)*/, '');
+  let m;
+  if (/^create\s+table/i.test(s0)) return 'Create the table <b>' + esc(nameAfter(/create\s+table\s+(?:if\s+not\s+exists\s+)?"?(\w+)/i, s0)) + '</b> with its columns and rules (keys, NOT NULL, CHECK, links).';
+  if (/^create\s+(unique\s+)?index/i.test(s0)) return 'Create an index on <b>' + esc(nameAfter(/\bon\s+"?(\w+)/i, s0)) + '</b>, so the database can find rows by these columns without reading the whole table.';
+  if (/^create\s+view/i.test(s0)) return 'Save a query as the view <b>' + esc(nameAfter(/create\s+view\s+(?:if\s+not\s+exists\s+)?"?(\w+)/i, s0)) + '</b>. You can then SELECT from it like a table.';
+  if (/^create\s+trigger/i.test(s0)) return 'Create a trigger: code that runs automatically ' + esc((nameAfter(/\b(before|after|instead\s+of)\b/i, s0) || '').toUpperCase()) + ' a change on <b>' + esc(nameAfter(/\bon\s+"?(\w+)/i, s0)) + '</b>.';
+  if (/^insert/i.test(s0)) return 'Add rows to <b>' + esc(nameAfter(/insert\s+(?:or\s+\w+\s+)?into\s+"?(\w+)/i, s0)) + '</b>' + (/\bselect\b/i.test(s0) ? ', taken from a query.' : '.') + (/on\s+conflict/i.test(s0) ? ' If the key already exists, update it instead (upsert).' : '');
+  if (/^update/i.test(s0)) return 'Change existing rows in <b>' + esc(nameAfter(/update\s+"?(\w+)/i, s0)) + '</b>. Only rows that match WHERE are changed.';
+  if (/^delete/i.test(s0)) return 'Delete rows from <b>' + esc(nameAfter(/from\s+"?(\w+)/i, s0)) + '</b> that match WHERE.';
+  if (/^alter/i.test(s0)) return 'Change the structure of the table <b>' + esc(nameAfter(/alter\s+table\s+"?(\w+)/i, s0)) + '</b>.';
+  if (/^drop/i.test(s0)) return 'Remove it completely.';
+  if (/^begin/i.test(s0)) return 'Start a transaction: the next changes count as one unit.';
+  if (/^commit/i.test(s0)) return 'Save all changes of the transaction for good.';
+  if (/^rollback\s+to/i.test(s0)) return 'Undo the changes made after the savepoint, but stay in the transaction.';
+  if (/^rollback/i.test(s0)) return 'Undo every change since BEGIN.';
+  if (/^savepoint/i.test(s0)) return 'Mark a point you can go back to later.';
+  if (/^release/i.test(s0)) return 'Forget the savepoint (keep the changes).';
+  if (/^(select|with)\b/i.test(s0)) return 'Read data to check the result.';
+  return '';
+}
+function splitTop(body) {
+  const parts = []; let depth = 0, cur = '', q = null;
+  for (const ch of body) {
+    if (q) { cur += ch; if (ch === q) q = null; continue; }
+    if (ch === "'" || ch === '"') { q = ch; cur += ch; continue; }
+    if (ch === '(') depth++; else if (ch === ')') depth--;
+    if (ch === ',' && depth === 0) { parts.push(cur.trim()); cur = ''; } else cur += ch;
+  }
+  if (cur.trim()) parts.push(cur.trim());
+  return parts;
+}
+function colSay(def) {
+  const d = def.replace(/\s+/g, ' ').trim(); let m;
+  if (/^primary key/i.test(d)) return 'Table rule: these columns <b>together</b> are the primary key. The same combination cannot appear twice.';
+  if (/^foreign key/i.test(d)) { m = /references\s+"?(\w+)"?\s*\(([^)]*)\)/i.exec(d); return 'Table rule: a foreign key. The values must match <b>' + esc(m ? m[1] + '.' + m[2] : 'another table') + '</b>.' + (/on delete cascade/i.test(d) ? ' Deleting the parent row deletes these rows too.' : /on delete set null/i.test(d) ? ' Deleting the parent row sets this to NULL.' : ''); }
+  if (/^unique/i.test(d)) return 'Table rule: the combination of these columns must be unique.';
+  if (/^check/i.test(d)) return 'Table rule: every row must pass this check.';
+  if (/^constraint/i.test(d)) return 'A named rule for the table.';
+  const name = (/^"?(\w+)"?/.exec(d) || [])[1] || '';
+  const type = (/^"?\w+"?\s+([A-Za-z]+(?:\s*\([^)]*\))?)/.exec(d) || [])[1] || '';
+  const TY = { integer: 'a whole number', int: 'a whole number', text: 'text', real: 'a decimal number', numeric: 'a number', decimal: 'a decimal number', varchar: 'text', date: 'a date', boolean: 'true/false', blob: 'binary data' };
+  const bits = [];
+  const tkey = type.toLowerCase().replace(/\s*\(.*$/, '');
+  bits.push('<code>' + esc(name) + '</code> holds ' + (TY[tkey] || (type ? esc(type) : 'any value')));
+  if (/primary key/i.test(d)) bits.push('it is the <b>primary key</b>: it identifies each row' + (/autoincrement/i.test(d) ? ' and the number is created for you' : ''));
+  if (/not null/i.test(d)) bits.push('it is <b>required</b> (cannot be NULL)');
+  if (/\bunique\b/i.test(d)) bits.push('no two rows can have the same value');
+  if ((m = /check\s*\((.*)\)/i.exec(d))) bits.push('it must pass the rule <code>' + esc(m[1]) + '</code>');
+  if ((m = /default\s+('[^']*'|[\w.-]+)/i.exec(d))) bits.push('if you give no value, it becomes <code>' + esc(m[1]) + '</code>');
+  if ((m = /references\s+"?(\w+)"?\s*\(([^)]*)\)/i.exec(d))) bits.push('it must match a <b>' + esc(m[1] + '.' + m[2]) + '</b> (foreign key)' + (/on delete cascade/i.test(d) ? '; deleting that row deletes this one too' : /on delete set null/i.test(d) ? '; deleting that row sets this to NULL' : ''));
+  return bits.join(', ') + '.';
+}
+function stmtLines(st) {
+  const s0 = st.replace(/^\s*(--[^\n]*\n\s*)*/, '');
+  const ct = /^create\s+table\s+(?:if\s+not\s+exists\s+)?"?(\w+)"?\s*\(/i.exec(s0);
+  if (ct) {
+    const open = s0.indexOf('('), close = s0.lastIndexOf(')');
+    const defs = splitTop(s0.slice(open + 1, close));
+    return '<div class="sl"><pre class="code">' + hl('CREATE TABLE ' + ct[1] + ' (').replace(/\n$/, '') + '</pre><p>Create the table <b>' + esc(ct[1]) + '</b>. Each line inside the brackets is one column or one rule.</p></div>' +
+      defs.map(df => '<div class="sl"><pre class="code">' + hl('  ' + df).replace(/\n$/, '') + '</pre><p>' + colSay(df) + '</p></div>').join('') +
+      '<div class="sl"><pre class="code">' + hl(s0.slice(close).trim()).replace(/\n$/, '') + '</pre><p>End of the table definition.</p></div>';
+  }
+  if (/^(select|with)\b/i.test(s0)) return queryLines(s0);
+  return '<div class="sl"><pre class="code">' + hl(st).replace(/\n$/, '') + '</pre><p>' + stmtSay(st) + '</p></div>';
+}
+function solutionLines(ex) {
+  const stmts = splitStatements(ex.solution);
+  const isQuery = stmts.length === 1 && /^(\s|--[^\n]*\n)*(select|with)\b/i.test(stmts[0]);
+  if (!isQuery) return stmts.map(stmtLines).join('');
+  return queryLines(stmts[0]);
+}
+function queryLines(q0) {
+  const stmts = [q0];
+  const st = stmts[0].replace(/;\s*$/, '');
+  const toks = clauseTokens(st);
+  const si = toks.findIndex(t => t.kw === 'SELECT');
+  const pieces = [];
+  if (si > 0 || (si === 0 && toks[0].start > 0 && /^\s*with\b/i.test(st))) pieces.push({ kw: 'WITH', text: st.slice(0, toks[si].start) });
+  toks.slice(Math.max(si, 0)).forEach((t, i, a) => pieces.push({ kw: t.kw, text: st.slice(t.start, i + 1 < a.length ? a[i + 1].start : st.length) }));
+  return pieces.filter(p => p.text.trim()).map(p => '<div class="sl"><pre class="code">' + hl(p.text.trim()).replace(/\n$/, '') + '</pre><p>' + clauseSay(p.kw, p.text) + '</p></div>').join('');
+}
+function solutionHTML(ex) {
+  let h = '<div class="sol"><div class="sol-h"><b>Model solution</b><span>Read it line by line. Then press <b>Your turn</b> and type it yourself.</span></div>';
+  h += '<div class="sol-sec">The full answer</div><pre class="code">' + hl(ex.solution) + '</pre>';
+  if (ex.explain) h += '<div class="sol-sec">Why this works</div><div class="sol-why prose">' + ex.explain + '</div>';
+  h += '<div class="sol-sec">Line by line</div><div class="sol-lines">' + solutionLines(ex) + '</div>';
+  if (ex.kind !== 'script' && XREG['sol:' + ex.id] && XREG['sol:' + ex.id].stages) h += '<div class="sol-sec">Watch the solution run</div><div class="sol-x">' + xrayWidget('sol:' + ex.id) + '</div>';
+  if (ex.check) h += '<details class="sol-more"><summary>How your answer is checked</summary><pre class="code">' + hl(ex.check) + '</pre></details>';
+  if (ex.plan) h += '<details class="sol-more" open><summary>How your answer is checked</summary><p class="note">This query must use your index. Its plan must contain <code>' + esc(ex.plan.mustContain) + '</code>.</p><pre class="code">' + hl(ex.plan.query) + '</pre></details>';
+  h += '<div class="sol-act"><button class="btn primary" data-exretry="' + ex.id + '">Your turn: hide the solution and type it yourself</button></div>';
+  return h + '</div>';
+}
 function fbText(fb) { const strip = x => String(x || '').replace(/<[^>]+>/g, ''); return fb.kind === 'error' ? 'Error: ' + (fb.run && fb.run.error) : strip(fb.title) + '. ' + (fb.points || []).map(strip).join(' ') + (fb.tip ? ' Tip: ' + strip(fb.tip) : ''); }
 function fbHTML(fb, rec) {
-  if (fb.pass) return '<div class="fb pass"><div class="fb-title">✓ Correct, request delivered</div><p>' + (rec.usedSolution ? 'Next time, try it without the model solution.' : 'Now open the model solution and compare it with yours. There is often a shorter way.') + '</p></div>';
+  if (fb.pass) return '<div class="fb pass"><div class="fb-title">✓ Correct, request delivered</div><p>' + (rec.usedSolution ? 'Well done: you rebuilt it after studying the solution. Try this exercise again tomorrow without help, so it really sticks.' : 'Now open the model solution and compare it with yours. There is often a shorter way.') + '</p></div>';
   if (fb.kind === 'empty') return '<div class="fb fail"><div class="fb-title">Write a query first</div><p>Type your SQL in the editor above, then press <b>Check answer</b>.</p></div>';
   if (fb.kind === 'error') return '<div class="fb fail"><div class="fb-title">✕ ' + esc(fb.title) + '</div>' + errorHTML(fb.run) + '</div>';
   let h = '<div class="fb fail"><div class="fb-title">✕ ' + esc(fb.title) + '</div>';
@@ -6535,7 +6833,8 @@ function renderPractice(day, body) {
     else if (t.dataset.excheck) doCheck(exById(t.dataset.excheck));
     else if (t.dataset.exhint) { const ex = exById(t.dataset.exhint); const R = rec(ex.id); R.hints = Math.min(ex.hints.length, (R.hints || 0) + 1); save(); rerender(ex); revealIn(ex, '.hints .new'); }
     else if (t.dataset.exexp) { const ex = exById(t.dataset.exexp); const s = exState[ex.id] || (exState[ex.id] = {}); s.showExp = !s.showExp; rerender(ex); }
-    else if (t.dataset.exsol) { const ex = exById(t.dataset.exsol); const s = exState[ex.id] || (exState[ex.id] = {}); s.showSol = !s.showSol; if (s.showSol && !rec(ex.id).done) { rec(ex.id).usedSolution = true; save(); } rerender(ex); }
+    else if (t.dataset.exretry) { const ex = exById(t.dataset.exretry); const s = exState[ex.id] || (exState[ex.id] = {}); s.showSol = false; s.fb = null; s.run = null; s.showExp = false; P.drafts[ex.id] = ''; editors['ex:' + ex.id] = ''; xrayStore('ex:' + ex.id, null); save(); rerender(ex); const ta = $('#ex-' + CSS.escape(ex.id) + ' textarea', body); if (ta) { ta.focus(); ta.closest('.ex').scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' }); } toast('Now type it from memory'); }
+    else if (t.dataset.exsol) { const ex = exById(t.dataset.exsol); const s = exState[ex.id] || (exState[ex.id] = {}); s.showSol = !s.showSol; if (s.showSol && !rec(ex.id).done) { rec(ex.id).usedSolution = true; save(); } if (s.showSol && ex.kind !== 'script') { const d = freshDB(ex.setup); xrayStore('sol:' + ex.id, xray(d, ex.solution)); d.close(); } rerender(ex); if (s.showSol) revealIn(ex, '.sol'); }
     else if (t.dataset.exask) { const ex = exById(t.dataset.exask); const s = exState[ex.id] || {}; lastRun = { sql: getSQL(ex), error: s.fb && !s.fb.pass ? fbText(s.fb) : (s.run && !s.run.ok ? s.run.error : null), where: 'exercise ' + ex.id, ex }; openTutor(); askTutor(s.fb && !s.fb.pass ? 'My answer to this exercise is wrong. Give me one hint about what to look at, without writing the full solution.' : 'Can you give me a hint for this exercise without writing the full solution?'); }
     else if (t.dataset.goto) { viewDay(day.n, t.dataset.goto); window.scrollTo({ top: 0 }); }
   };
@@ -6957,7 +7256,7 @@ function x2Table(set, total, cls) {
 }
 function x2Inner(id) {
   const x = XREG[id], st = x.stages;
-  if (!x.open) return '<button class="x2-open" data-x2act="open"><span class="x2-play" aria-hidden="true">▶</span><span><b>Watch how your query runs</b><small>' + st.length + ' steps, with your real data. See where rows are added or removed.</small></span></button>';
+  if (!x.open) return '<button class="x2-open" data-x2act="open"><span class="x2-play" aria-hidden="true">▶</span><span><b>' + (id.startsWith('sol:') ? 'Watch the solution run' : 'Watch how your query runs') + '</b><small>' + st.length + ' steps, with real data. See where rows are added or removed.</small></span></button>';
   const i = x.step, s = st[i], prev = i ? st[i - 1].n : null;
   const unit = n => s.note === 'groups' ? (n === 1 ? 'group' : 'groups') : (n === 1 ? 'row' : 'rows');
   let change;

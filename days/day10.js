@@ -236,7 +236,8 @@ HAVING COUNT(DISTINCT customer_city) > 1;`,
         "Make one group per customer: GROUP BY customer_id",
         "COUNT(DISTINCT customer_city) counts the different cities.",
         "Keep only the broken groups with HAVING ... > 1"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> In a correct table, customer_id → customer_city: one customer has one city. To find broken data, count the different cities per customer.</p><p><b>How it works:</b> <code>GROUP BY customer_id</code> makes one group per customer. <code>COUNT(DISTINCT customer_city)</code> counts the different cities in each group. <code>HAVING ... &gt; 1</code> keeps only customers with more than one city. These are the update anomalies.</p><p><b>Common mistake:</b> Using <code>COUNT(customer_city)</code> without DISTINCT. It counts rows, not different cities, so every repeat customer looks broken.</p>"
     },
     {
       id: 'd10-2', level: 1,
@@ -250,7 +251,8 @@ HAVING COUNT(DISTINCT dept_id) > 1;`,
         "Same pattern as the lesson: GROUP BY the left side. Then count the different values of the right side.",
         "Remove NULL cities with WHERE before grouping.",
         "COUNT(DISTINCT dept_id) already ignores NULL dept_id values."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A functional dependency X → Y holds if each X value has only one Y value. So group by X and count the different Y values.</p><p><b>How it works:</b> <code>WHERE city IS NOT NULL</code> ignores unknown cities. <code>GROUP BY city</code> makes one group per city. <code>COUNT(DISTINCT dept_id)</code> counts the different departments in that city. NULL departments are not counted. <code>HAVING ... &gt; 1</code> shows the cities where the rule breaks.</p><p><b>Common mistake:</b> Grouping by <code>dept_id</code> instead. That tests the opposite rule, dept_id → city.</p>"
     },
     {
       id: 'd10-3', level: 2,
@@ -264,7 +266,8 @@ HAVING COUNT(DISTINCT unit_price) > 1;`,
         "GROUP BY product_id",
         "Add MIN(unit_price) and MAX(unit_price) next to COUNT(DISTINCT ...).",
         "Keep the broken groups with HAVING COUNT(DISTINCT unit_price) > 1"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> product_id → unit_price should hold. Group by product and look for more than one price.</p><p><b>How it works:</b> <code>GROUP BY product_id</code> makes one group per product. <code>COUNT(DISTINCT unit_price)</code> counts its different prices. <code>MIN</code> and <code>MAX</code> show the lowest and highest price. <code>HAVING COUNT(DISTINCT unit_price) &gt; 1</code> keeps only the broken products.</p><p><b>Common mistake:</b> Putting the count in WHERE. WHERE runs before grouping, so it cannot use COUNT.</p>"
     },
     {
       id: 'd10-4', level: 2,
@@ -277,7 +280,8 @@ HAVING COUNT(*) > 1;`,
         "course_id is in sections, so join enrollments to sections.",
         "GROUP BY both columns of the possible key.",
         "A group with more than one row is a counterexample."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A set of columns is a key only if no value pair repeats. To prove it is not a key, find a pair that appears twice.</p><p><b>How it works:</b> The JOIN adds <code>course_id</code> to each enrollment. <code>GROUP BY e.student_id, s.course_id</code> groups by the pair. <code>COUNT(*)</code> counts how often each pair appears. <code>HAVING COUNT(*) &gt; 1</code> keeps the pairs that repeat. These are students who took the same course in two sections.</p><p><b>Common mistake:</b> Grouping by <code>section_id</code> instead of <code>course_id</code>. Each student takes a section only once, so you find nothing.</p>"
     },
     {
       id: 'd10-5', level: 2, kind: 'script',
@@ -291,7 +295,8 @@ SELECT DISTINCT customer_id, customer_name, customer_city FROM orders_flat;`,
         "First CREATE TABLE, then INSERT ... SELECT.",
         "SELECT DISTINCT customer_id, customer_name, customer_city FROM orders_flat",
         "The names are different: name in customers comes from customer_name in orders_flat."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Customer facts depend only on customer_id. So they move to their own table, stored once per customer.</p><p><b>How it works:</b> <code>CREATE TABLE customers</code> makes the new table with <code>customer_id</code> as the key. <code>INSERT ... SELECT DISTINCT</code> copies the customer columns from orders_flat. DISTINCT removes the repeats, so each customer appears once.</p><p><b>Common mistake:</b> Leaving out <code>DISTINCT</code>. A customer with several order lines is inserted many times, and the primary key rejects the duplicates.</p>"
     },
     {
       id: 'd10-6', level: 3, kind: 'script',
@@ -327,7 +332,8 @@ ORDER BY o.order_id, p.product_id;`,
         "Make one table per left side. Create the parents (customers, products) before the children (orders, order_items).",
         "Fill each table with INSERT ... SELECT DISTINCT from orders_flat, parents first.",
         "order_items does not need DISTINCT: (order_id, product_id) is already unique in orders_flat."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Give each group of facts its own table, keyed by the thing it depends on. Customers depend on customer_id, products on product_id, orders on order_id. Order lines depend on the pair.</p><p><b>How it works:</b> The four CREATE statements build the tables. Foreign keys link orders → customers and order_items → orders and products. The INSERTs fill the parents first, then the children. That way the foreign keys always find their target. <code>SELECT DISTINCT</code> removes repeats for customers, products and orders. Every flat row becomes one order_items row.</p><p><b>Common mistake:</b> Filling order_items before orders or products. The foreign keys then point to rows that do not exist yet.</p>"
     },
     {
       id: 'd10-7', level: 3, kind: 'script',
@@ -356,7 +362,8 @@ ORDER BY 1, 2, 3, 4;`,
         "PRIMARY KEY (student_id, skill) and student_id REFERENCES students(student_id)",
         "By hand: INSERT INTO student_skills VALUES (1001, 'SQL'), (1001, 'Python'), ...",
         "With a CTE: take the text before the first comma with substr and instr. Keep the rest for the next step."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> 1NF says one value per cell. A list of skills must become many rows: one row per student per skill.</p><p><b>How it works:</b> <code>student_skills</code> uses the pair <code>(student_id, skill)</code> as its key. The recursive CTE <code>split</code> cuts the text one skill at a time. Each step takes the text before the first comma as <code>skill</code>. It keeps the rest after the comma as <code>rest</code>. It stops when <code>rest</code> is empty. The final SELECT drops the empty start rows and inserts the real skills.</p><p><b>Common mistake:</b> Storing the whole list in one row of the new table. The cell still holds several values, so the table still breaks 1NF.</p>"
     },
     {
       id: 'd10-8', level: 3, kind: 'script',
@@ -379,7 +386,8 @@ ORDER BY 1, 2, 3, 4;`,
         "Split on the dependency that breaks BCNF: one table for tutor → course, one for the rest.",
         "The shared column (tutor) is the key of tutor_course. So no data is lost when you join them back.",
         "INSERT INTO tutor_course SELECT DISTINCT tutor, course FROM tutoring;"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> BCNF says every determinant must be a key. Here tutor → course, but tutor is not a key. So move that fact into its own table where tutor is the key.</p><p><b>How it works:</b> <code>tutor_course</code> stores each tutor's course once, with tutor as the primary key. <code>student_tutor</code> keeps who studies with which tutor. It points to tutor_course with a foreign key. <code>SELECT DISTINCT tutor, course</code> fills the first table without repeats. Then every tutoring row becomes a student–tutor pair.</p><p><b>Common mistake:</b> Splitting into (student, course) and (course, tutor). Then you lose which tutor each student has, because a course has several tutors.</p>"
     },
     {
       id: 'd10-9', level: 3,
@@ -395,7 +403,8 @@ SELECT (SELECT COUNT(*) FROM base) AS original_rows,
         "Use WITH to name each step: base, a, b, and the join j.",
         "a and b are SELECT DISTINCT from base.",
         "Subqueries inside SELECT let you return three counts in one row: SELECT (SELECT COUNT(*) FROM base) AS original_rows, ..."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A split is \"lossy\" if joining the parts back gives extra rows that were never true. This query measures how many fake rows appear.</p><p><b>How it works:</b> <code>base</code> keeps students with a department and a city. <code>a</code> stores (name, dept_id) and <code>b</code> stores (dept_id, city). <code>j</code> joins them back on dept_id. A name now matches every city of its department, not only its own. The final SELECT counts the original rows and the joined rows, and subtracts them.</p><p><b>Common mistake:</b> Thinking the join returns the original table. dept_id does not decide the city, so the join cannot know which city belongs to which student.</p>"
     }
   ],
   quiz: [

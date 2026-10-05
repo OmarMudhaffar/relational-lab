@@ -37,6 +37,7 @@ require('sql.js/dist/sql-asm.js')().then(SQL => {
       const w = tag + ' ' + ex.id;
       if (ids.has(ex.id)) fail(w, 'duplicate id'); ids.add(ex.id);
       if (!ex.hints || ex.hints.length < 2) fail(w, 'needs at least 2 hints');
+      if (!ex.explain || ex.explain.length < 80) fail(w, 'needs an explain field (shown with the model solution)');
       try {
         const db = fresh();
         if (ex.kind === 'script') {

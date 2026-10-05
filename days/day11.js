@@ -188,7 +188,8 @@ UPDATE accounts SET balance = balance - 200 WHERE id = 'A';
 UPDATE accounts SET balance = balance + 200 WHERE id = 'B';
 COMMIT;`,
       check: `SELECT id, balance FROM accounts ORDER BY id;`,
-      hints: ['You need two UPDATE statements between BEGIN and COMMIT.', 'Take money from A: SET balance = balance - 200 WHERE id = \'A\'.', 'BEGIN; UPDATE ... A; UPDATE ... B; COMMIT;']
+      hints: ['You need two UPDATE statements between BEGIN and COMMIT.', 'Take money from A: SET balance = balance - 200 WHERE id = \'A\'.', 'BEGIN; UPDATE ... A; UPDATE ... B; COMMIT;'],
+      explain: `<p><b>The idea:</b> A transfer is two changes: money leaves A and arrives in B. A transaction makes both changes happen together, or not at all.</p><p><b>How it works:</b> <code>BEGIN</code> starts the transaction. The first <code>UPDATE</code> takes 200 from A with <code>balance = balance - 200</code>. The second <code>UPDATE</code> adds 200 to B. <code>COMMIT</code> saves both changes at the same moment. If the system stops before <code>COMMIT</code>, the database undoes everything.</p><p><b>Common mistake:</b> Writing the two UPDATEs without <code>BEGIN</code> and <code>COMMIT</code>. Then a crash between them can lose 200: it leaves A but never arrives in B.</p>`
     },
     {
       id: 'd11-2', level: 1, kind: 'script',
@@ -199,7 +200,8 @@ INSERT INTO accounts VALUES ('A','Layla',500),('B','Omar',300),('C','Mei',0);`,
 UPDATE accounts SET balance = 0;
 ROLLBACK;`,
       check: `SELECT id, balance FROM accounts ORDER BY id;`,
-      hints: ['One keyword cancels a transaction. It undoes every change since BEGIN.', 'BEGIN; UPDATE accounts SET balance = 0; ROLLBACK;']
+      hints: ['One keyword cancels a transaction. It undoes every change since BEGIN.', 'BEGIN; UPDATE accounts SET balance = 0; ROLLBACK;'],
+      explain: `<p><b>The idea:</b> <code>ROLLBACK</code> cancels a transaction. Every change since <code>BEGIN</code> disappears, as if it never happened.</p><p><b>How it works:</b> <code>BEGIN</code> opens the transaction. <code>UPDATE accounts SET balance = 0</code> changes every row, but only inside the transaction. <code>ROLLBACK</code> throws these changes away. The balances are back to 500, 300 and 0, and no transaction is open.</p><p><b>Common mistake:</b> Writing <code>COMMIT</code> instead of <code>ROLLBACK</code>. COMMIT saves the zeros for ever. Another mistake is to forget ROLLBACK, so the transaction stays open.</p>`
     },
     {
       id: 'd11-3', level: 2, kind: 'script',
@@ -215,7 +217,8 @@ UPDATE accounts SET balance = balance + 300 WHERE id = 'C';
 ROLLBACK TO sp;
 COMMIT;`,
       check: `SELECT id, balance FROM accounts ORDER BY id;`,
-      hints: ['Each move of money is two UPDATE statements.', 'Write SAVEPOINT sp; between the first move and the second move.', 'After the second move, write ROLLBACK TO sp; and then COMMIT;']
+      hints: ['Each move of money is two UPDATE statements.', 'Write SAVEPOINT sp; between the first move and the second move.', 'After the second move, write ROLLBACK TO sp; and then COMMIT;'],
+      explain: `<p><b>The idea:</b> A savepoint is a mark inside a transaction. <code>ROLLBACK TO</code> a savepoint undoes only the work after the mark. The work before it stays.</p><p><b>How it works:</b> <code>BEGIN</code> starts. Two UPDATEs move 100 from A to C. <code>SAVEPOINT sp</code> puts a mark here. Two more UPDATEs move 300 from B to C. <code>ROLLBACK TO sp</code> undoes only this second move. <code>COMMIT</code> saves the first move, so A = 400, B = 300, C = 100.</p><p><b>Common mistake:</b> Writing <code>ROLLBACK</code> without <code>TO sp</code>. That cancels the whole transaction, including the first move, so nothing changes.</p>`
     },
     {
       id: 'd11-4', level: 2, kind: 'script',
@@ -228,7 +231,8 @@ INSERT INTO audit VALUES ('transfer C->A started');
 UPDATE accounts SET balance = balance + 50 WHERE id = 'A';
 ROLLBACK;`,
       check: `SELECT (SELECT group_concat(id || '=' || balance, ',') FROM (SELECT * FROM accounts ORDER BY id)) AS balances, (SELECT COUNT(*) FROM audit) AS audit_rows;`,
-      hints: ['Everything between BEGIN and ROLLBACK disappears. This includes the INSERT into audit.', 'BEGIN; ...your statements...; ROLLBACK;', 'Your script must end with ROLLBACK. Then the final state equals the start state.']
+      hints: ['Everything between BEGIN and ROLLBACK disappears. This includes the INSERT into audit.', 'BEGIN; ...your statements...; ROLLBACK;', 'Your script must end with ROLLBACK. Then the final state equals the start state.'],
+      explain: `<p><b>The idea:</b> When something goes wrong in the middle, you cancel the whole transaction. Even the rows you inserted into other tables disappear.</p><p><b>How it works:</b> <code>BEGIN</code> starts. The INSERT writes a message into <code>audit</code>. The UPDATE adds 50 to A. Then we see that C has no money to send. <code>ROLLBACK</code> undoes both the INSERT and the UPDATE. The balances are unchanged and <code>audit</code> is empty again.</p><p><b>Common mistake:</b> Thinking that ROLLBACK only undoes UPDATEs. It undoes every change since BEGIN, including INSERT and DELETE. Writing COMMIT here would keep a half-done transfer.</p>`
     },
     {
       id: 'd11-5', level: 2, kind: 'script',
@@ -238,7 +242,8 @@ UPDATE instructors SET salary = ROUND(salary * 1.10) WHERE dept_id = (SELECT dep
 UPDATE instructors SET salary = ROUND(salary * 1.05) WHERE dept_id = (SELECT dept_id FROM departments WHERE name = 'History');
 COMMIT;`,
       check: `SELECT instructor_id, salary FROM instructors ORDER BY instructor_id;`,
-      hints: ['Use a subquery in WHERE. It finds the dept_id from the department name.', 'UPDATE instructors SET salary = ROUND(salary * 1.10) WHERE dept_id = (SELECT dept_id FROM departments WHERE name = \'Physics\');', 'Put both UPDATE statements between BEGIN and COMMIT.']
+      hints: ['Use a subquery in WHERE. It finds the dept_id from the department name.', 'UPDATE instructors SET salary = ROUND(salary * 1.10) WHERE dept_id = (SELECT dept_id FROM departments WHERE name = \'Physics\');', 'Put both UPDATE statements between BEGIN and COMMIT.'],
+      explain: `<p><b>The idea:</b> Two related changes go in one transaction, so the raises for Physics and History are saved together. A subquery finds each department id from its name.</p><p><b>How it works:</b> <code>(SELECT dept_id FROM departments WHERE name = 'Physics')</code> returns one number. The UPDATE changes only instructors with that <code>dept_id</code>. <code>ROUND(salary * 1.10)</code> adds 10% and rounds to a whole number. The second UPDATE does the same for History with 5%. <code>COMMIT</code> saves both.</p><p><b>Common mistake:</b> Typing the id numbers (3 and 6) instead of finding them by name. The query breaks if the ids change. Another mistake is <code>salary * 0.10</code>, which sets the salary to 10% instead of adding 10%.</p>`
     },
     {
       id: 'd11-6', level: 2, kind: 'script',
@@ -248,7 +253,8 @@ INSERT INTO counters VALUES ('home', 41);`,
       solution: `UPDATE counters SET value = value + 1 WHERE name = 'home';
 UPDATE counters SET value = value + 1 WHERE name = 'home';`,
       check: `SELECT name, value FROM counters ORDER BY name;`,
-      hints: ['Do not write a fixed number, like SET value = 42.', 'SET value = value + 1 reads and writes in one statement.']
+      hints: ['Do not write a fixed number, like SET value = 42.', 'SET value = value + 1 reads and writes in one statement.'],
+      explain: `<p><b>The idea:</b> To avoid a lost update, do the math inside the database. <code>value = value + 1</code> reads and writes the value in one step, so two users cannot overwrite each other.</p><p><b>How it works:</b> Each UPDATE takes the current value and adds 1 in the same statement. The first makes 41 into 42. The second makes 42 into 43. Even if two users run it at the same time, the database applies them one after the other.</p><p><b>Common mistake:</b> Reading the value first and then writing a fixed number, like <code>SET value = 42</code> twice. Both users read 41, both write 42, and one update is lost.</p>`
     },
     {
       id: 'd11-7', level: 3, kind: 'script',
@@ -264,14 +270,16 @@ COMMIT;`,
       check: `SELECT 'acct' AS kind, id AS k, balance AS v, NULL AS extra FROM accounts
 UNION ALL SELECT 'xfer', from_id, amount, to_id FROM transfers
 ORDER BY kind, k;`,
-      hints: ['First write CREATE TABLE, then BEGIN.', 'Leave transfer_id out of the INSERT column list. SQLite fills it in.', 'Inside the transaction: two UPDATE statements and one INSERT.']
+      hints: ['First write CREATE TABLE, then BEGIN.', 'Leave transfer_id out of the INSERT column list. SQLite fills it in.', 'Inside the transaction: two UPDATE statements and one INSERT.'],
+      explain: `<p><b>The idea:</b> The transfer and its log row belong together. Put the two UPDATEs and the INSERT in one transaction, so you never have a transfer without a log, or a log without a transfer.</p><p><b>How it works:</b> <code>CREATE TABLE transfers</code> makes the log table. <code>transfer_id INTEGER PRIMARY KEY</code> gets a value by itself. <code>BEGIN</code> starts. Two UPDATEs move 120 from B to A. The INSERT lists only <code>from_id, to_id, amount</code>, so the database creates <code>transfer_id</code>. <code>COMMIT</code> saves all three changes.</p><p><b>Common mistake:</b> Writing the INSERT after COMMIT. Then a crash in between leaves money moved but not logged. Giving <code>transfer_id</code> a value by hand is also not needed.</p>`
     },
     {
       id: 'd11-8', level: 1,
       prompt: '<p>Many users change popular rows at the same time. Find the most popular sections: the ones with at least 6 enrollments.</p><ul class="spec"><li><b>Columns:</b> <code>section_id</code>, <code>enrolled</code> (the number of students in the section)</li><li><b>Order:</b> <code>enrolled</code> from high to low, then <code>section_id</code> from low to high</li></ul>',
       solution: `SELECT section_id, COUNT(*) AS enrolled FROM enrollments GROUP BY section_id HAVING COUNT(*) >= 6 ORDER BY enrolled DESC, section_id;`,
       ordered: true,
-      hints: ['Use GROUP BY section_id and COUNT(*).', 'Filter groups with HAVING, not WHERE.', 'ORDER BY enrolled DESC, section_id']
+      hints: ['Use GROUP BY section_id and COUNT(*).', 'Filter groups with HAVING, not WHERE.', 'ORDER BY enrolled DESC, section_id'],
+      explain: `<p><b>The idea:</b> Count enrollments per section with GROUP BY. Then keep only the big groups with HAVING.</p><p><b>How it works:</b> <code>GROUP BY section_id</code> makes one group per section. <code>COUNT(*) AS enrolled</code> counts the rows in each group. <code>HAVING COUNT(*) &gt;= 6</code> keeps groups with 6 or more students. <code>ORDER BY enrolled DESC, section_id</code> puts the biggest first and breaks ties by id.</p><p><b>Common mistake:</b> Writing <code>WHERE COUNT(*) &gt;= 6</code>. WHERE runs before grouping, so it cannot use COUNT. Use HAVING for conditions on groups.</p>`
     },
     {
       id: 'd11-9', level: 3,
@@ -282,7 +290,8 @@ ORDER BY kind, k;`,
   SELECT 'ALL', COUNT(*), SUM(amount), 1 FROM payments
 ) ORDER BY grp, method;`,
       ordered: true,
-      hints: ['Make the rows per method with GROUP BY. Make the ALL row with a second SELECT without GROUP BY.', 'Join the two results with UNION ALL.', 'To put ALL last, add a helper column: 0 for normal rows, 1 for the ALL row. Sort by it first.']
+      hints: ['Make the rows per method with GROUP BY. Make the ALL row with a second SELECT without GROUP BY.', 'Join the two results with UNION ALL.', 'To put ALL last, add a helper column: 0 for normal rows, 1 for the ALL row. Sort by it first.'],
+      explain: `<p><b>The idea:</b> Build two results, one row per method and one total row, and stack them with <code>UNION ALL</code>. An extra column <code>grp</code> puts the total row last.</p><p><b>How it works:</b> The first SELECT groups by <code>method</code> and counts and sums each group, with <code>grp = 0</code>. The second SELECT counts and sums all payments, labelled <code>'ALL'</code>, with <code>grp = 1</code>. <code>UNION ALL</code> joins the two results. The outer query sorts by <code>grp</code>, then <code>method</code>, and shows only the three columns.</p><p><b>Common mistake:</b> Sorting only by <code>method</code>. Then <code>'ALL'</code> comes first, because capital letters sort before small letters. It must be the last row.</p>`
     }
   ],
   quiz: [

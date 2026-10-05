@@ -150,7 +150,8 @@ LIMIT 5 OFFSET 5;`,
       hints: [
         'You need only one table: departments.',
         'The pattern is: SELECT column1, column2 FROM table;'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> The answer lives in one table, <code>departments</code>. You only need to pick two of its columns.</p><p><b>How it works:</b> <code>FROM departments</code> takes every row of the table. <code>SELECT name, budget</code> keeps only those two columns, in that order.</p><p><b>Common mistake:</b> Writing <code>SELECT *</code> returns all four columns. The question asks for two, so the answer has the wrong shape.</p>"
     },
     {
       id: 'd1-2',
@@ -161,14 +162,16 @@ LIMIT 5 OFFSET 5;`,
       hints: [
         'Sort by two columns. The second column is used only when the first one is equal.',
         'ORDER BY credits DESC, title'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You need <code>ORDER BY</code> with two columns. The second column only breaks ties in the first one.</p><p><b>How it works:</b> <code>FROM courses</code> takes every course. <code>SELECT title, credits</code> keeps two columns. <code>ORDER BY credits DESC</code> puts the most credits first. Courses with the same credits are then sorted by <code>title ASC</code>, A to Z.</p><p><b>Common mistake:</b> Writing <code>ORDER BY title, credits DESC</code> sorts by title first. Then the credits order is lost.</p>"
     },
     {
       id: 'd1-3',
       level: 1,
       prompt: '<p>Which cities do our students come from? Show each city only once.</p><ul class="spec"><li><b>Columns:</b> <code>city</code></li><li><b>Note:</b> some students have no city (NULL). Keep that NULL row too.</li></ul>',
       solution: 'SELECT DISTINCT city FROM students;',
-      hints: ['One keyword removes repeated rows.', 'SELECT DISTINCT city FROM ...']
+      hints: ['One keyword removes repeated rows.', 'SELECT DISTINCT city FROM ...'],
+      explain: "<p><b>The idea:</b> One city can appear many times. <code>DISTINCT</code> keeps one copy of each different row.</p><p><b>How it works:</b> <code>FROM students</code> takes all 40 students. <code>SELECT DISTINCT city</code> keeps only the city column and removes repeated cities. The NULL city stays as one row.</p><p><b>Common mistake:</b> Writing <code>SELECT city FROM students</code> without <code>DISTINCT</code> returns 40 rows, with many repeats.</p>"
     },
     {
       id: 'd1-4',
@@ -180,7 +183,8 @@ LIMIT 5 OFFSET 5;`,
         'In SQLite, salary / 12 drops the decimals. Divide by 12.0 instead.',
         'ROUND(value, 2) keeps two decimals.',
         'Sort by salary (or by monthly) with DESC.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> You can calculate in <code>SELECT</code>. Divide by <code>12.0</code>, not <code>12</code>, to keep the decimals.</p><p><b>How it works:</b> <code>FROM instructors</code> takes every instructor. <code>salary / 12.0</code> gives the monthly amount with decimals. <code>ROUND(..., 2)</code> keeps 2 decimal places, and <code>AS monthly</code> names the column. <code>ORDER BY salary DESC</code> puts the highest salary first.</p><p><b>Common mistake:</b> Writing <code>salary / 12</code> divides two whole numbers. SQLite then cuts off the decimals, so 98000 / 12 gives 8166, not 8166.67.</p>"
     },
     {
       id: 'd1-5',
@@ -191,7 +195,8 @@ LIMIT 5 OFFSET 5;`,
       hints: [
         'Dates are text like 2024-08-26. They sort correctly as text.',
         'ORDER BY ... DESC, then LIMIT 3.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> To get \"the newest 3\", sort from newest to oldest and keep the first 3 rows.</p><p><b>How it works:</b> <code>FROM instructors</code> takes all rows. <code>ORDER BY hire_date DESC</code> puts the latest date first. Dates are written as YYYY-MM-DD, so they sort correctly as text. <code>LIMIT 3</code> keeps only the first 3 rows.</p><p><b>Common mistake:</b> Writing <code>LIMIT 3</code> without <code>ORDER BY</code> gives any 3 rows, not the newest ones.</p>"
     },
     {
       id: 'd1-6',
@@ -203,7 +208,8 @@ LIMIT 5 OFFSET 5;`,
         'Read the lesson part "Joining text together with ||".',
         `The fixed pieces are ' <' (a space and <) and '>'. Put them in single quotes.`,
         `name || ' <' || email || '>' AS contact, then ORDER BY name`
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Use <code>||</code> to glue text pieces into one column. Fixed text goes in single quotes.</p><p><b>How it works:</b> <code>FROM students</code> takes every student. In <code>SELECT</code>, <code>name || ' &lt;' || email || '&gt;'</code> joins four pieces: the name, a space with &lt;, the email, and &gt;. <code>AS contact</code> names the column. <code>ORDER BY name</code> sorts A to Z.</p><p><b>Common mistake:</b> Writing <code>name, email</code> gives two columns, not one. Forgetting the space inside <code>' &lt;'</code> gives \"Ahmed Al-Sayed&lt;...\" with no space.</p>"
     },
     {
       id: 'd1-7',
@@ -215,7 +221,8 @@ LIMIT 5 OFFSET 5;`,
         'Read the lesson part "Pages of results with OFFSET".',
         'Page 2 means: skip the first 10 rows, then take 10.',
         'ORDER BY name LIMIT 10 OFFSET 10'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Page 2 with 10 rows per page means: skip 10 rows, then take 10. That is <code>LIMIT 10 OFFSET 10</code>.</p><p><b>How it works:</b> <code>FROM students</code> takes all students. <code>SELECT student_id, name</code> keeps two columns. <code>ORDER BY name</code> sorts A to Z. <code>OFFSET 10</code> skips rows 1 to 10, and <code>LIMIT 10</code> keeps rows 11 to 20.</p><p><b>Common mistake:</b> Writing <code>LIMIT 10 OFFSET 2</code> skips only 2 rows. OFFSET counts rows, not pages: (page − 1) × 10 = 10.</p>"
     }
   ],
   quiz: [

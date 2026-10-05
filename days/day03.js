@@ -173,21 +173,24 @@ ORDER BY students DESC, city;`
       level: 1,
       prompt: '<p>Count all students. Also count the students who have a major.</p><ul class="spec"><li><b>Columns:</b> <code>total_students</code>, <code>with_major</code></li><li><b>Note:</b> return one row. A student has a major when <code>dept_id</code> is not NULL.</li></ul>',
       solution: 'SELECT COUNT(*) AS total_students, COUNT(dept_id) AS with_major FROM students;',
-      hints: ['One COUNT counts all rows. The other one skips NULLs.', 'COUNT(*) and COUNT(dept_id)']
+      hints: ['One COUNT counts all rows. The other one skips NULLs.', 'COUNT(*) and COUNT(dept_id)'],
+      explain: "<p><b>The idea:</b> <code>COUNT(*)</code> counts rows. <code>COUNT(column)</code> counts only the rows where that column is not NULL.</p><p><b>How it works:</b> <code>FROM students</code> takes all rows. There is no GROUP BY, so the whole table is one group and you get one row. <code>COUNT(*)</code> gives all 40 students. <code>COUNT(dept_id)</code> skips the NULL majors.</p><p><b>Common mistake:</b> Writing <code>COUNT(*)</code> twice gives 40 and 40. Only <code>COUNT(dept_id)</code> leaves out the students with no major.</p>"
     },
     {
       id: 'd3-2',
       level: 1,
       prompt: '<p>For each payment method, count the payments and add up the money.</p><ul class="spec"><li><b>Columns:</b> <code>method</code>, <code>payments</code>, <code>total</code></li><li><b>Note:</b> <code>payments</code> is the number of payments. <code>total</code> is the sum of <code>amount</code>.</li></ul>',
       solution: 'SELECT method, COUNT(*) AS payments, SUM(amount) AS total FROM payments GROUP BY method;',
-      hints: ['You need one row for each method.', 'GROUP BY method, then COUNT(*) and SUM(amount).']
+      hints: ['You need one row for each method.', 'GROUP BY method, then COUNT(*) and SUM(amount).'],
+      explain: "<p><b>The idea:</b> <code>GROUP BY method</code> makes one group per method. Aggregates then work inside each group.</p><p><b>How it works:</b> <code>FROM payments</code> takes all payments. <code>GROUP BY method</code> puts card, bank and cash rows into three groups. In <code>SELECT</code>, <code>COUNT(*)</code> counts each group and <code>SUM(amount)</code> adds its money.</p><p><b>Common mistake:</b> Forgetting <code>GROUP BY</code> gives one row for the whole table. Most databases also reject <code>method</code> in SELECT then.</p>"
     },
     {
       id: 'd3-3',
       level: 1,
       prompt: '<p>Find the lowest, the highest and the average score of all enrollments.</p><ul class="spec"><li><b>Columns:</b> <code>lowest</code>, <code>highest</code>, <code>average</code></li><li><b>Note:</b> return one row. Round <code>average</code> to 1 decimal place.</li></ul>',
       solution: 'SELECT MIN(score) AS lowest, MAX(score) AS highest, ROUND(AVG(score), 1) AS average FROM enrollments;',
-      hints: ['MIN, MAX and AVG skip NULL scores by themselves.', 'ROUND(AVG(score), 1)']
+      hints: ['MIN, MAX and AVG skip NULL scores by themselves.', 'ROUND(AVG(score), 1)'],
+      explain: "<p><b>The idea:</b> MIN, MAX and AVG summarize the whole column. With no GROUP BY, you get one row.</p><p><b>How it works:</b> <code>FROM enrollments</code> takes every enrollment. <code>MIN(score)</code> and <code>MAX(score)</code> find the extremes. <code>AVG(score)</code> finds the average, and <code>ROUND(..., 1)</code> keeps 1 decimal. All three skip the NULL scores.</p><p><b>Common mistake:</b> Writing <code>ROUND(AVG(score))</code> without the 1 rounds to a whole number. The question asks for 1 decimal place.</p>"
     },
     {
       id: 'd3-4',
@@ -195,7 +198,8 @@ ORDER BY students DESC, city;`
       prompt: '<p>How many students are in each year of study?</p><ul class="spec"><li><b>Columns:</b> <code>year</code>, <code>students</code></li><li><b>Order:</b> by <code>year</code>, smallest first</li></ul>',
       solution: 'SELECT year, COUNT(*) AS students FROM students GROUP BY year ORDER BY year;',
       ordered: true,
-      hints: ['Group by the year column.', 'GROUP BY year ORDER BY year']
+      hints: ['Group by the year column.', 'GROUP BY year ORDER BY year'],
+      explain: "<p><b>The idea:</b> Group the students by year, then count each group.</p><p><b>How it works:</b> <code>FROM students</code> takes all students. <code>GROUP BY year</code> makes one group per year. <code>COUNT(*) AS students</code> counts each group. <code>ORDER BY year</code> sorts from year 1 to year 4.</p><p><b>Common mistake:</b> Writing <code>SELECT year, COUNT(*) FROM students</code> without GROUP BY gives one row with a random year and 40.</p>"
     },
     {
       id: 'd3-5',
@@ -206,7 +210,8 @@ ORDER BY students DESC, city;`
         'One row per section: GROUP BY section_id.',
         '"5 or more" is a rule for a group, not for one row.',
         'HAVING COUNT(*) >= 5'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> WHERE filters rows. <code>HAVING</code> filters groups, after they are counted.</p><p><b>How it works:</b> <code>FROM enrollments</code> takes all rows. <code>GROUP BY section_id</code> makes one group per section. <code>HAVING COUNT(*) &gt;= 5</code> keeps sections with 5 or more students. <code>SELECT</code> shows the count and the rounded average.</p><p><b>Common mistake:</b> Writing <code>WHERE COUNT(*) &gt;= 5</code> gives an error. WHERE runs before grouping, so it cannot use COUNT.</p>"
     },
     {
       id: 'd3-6',
@@ -218,7 +223,8 @@ ORDER BY students DESC, city;`
         `STRFTIME('%Y-%m', paid_on) turns a date into YYYY-MM.`,
         'Group by that expression.',
         'HAVING SUM(amount) >= 5000, then ORDER BY income DESC, month'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Turn each date into a month with <code>STRFTIME('%Y-%m', ...)</code>, then group by that month.</p><p><b>How it works:</b> <code>FROM payments</code> takes all payments. <code>GROUP BY STRFTIME('%Y-%m', paid_on)</code> makes one group per month. <code>HAVING SUM(amount) &gt;= 5000</code> keeps big months. <code>ORDER BY income DESC, month</code> puts the highest income first.</p><p><b>Common mistake:</b> Writing <code>GROUP BY paid_on</code> makes one group per day, not per month. The totals become too small.</p>"
     },
     {
       id: 'd3-7',
@@ -228,7 +234,8 @@ ORDER BY students DESC, city;`
       hints: [
         'Remove the NULL department before you group.',
         'WHERE dept_id IS NOT NULL ... GROUP BY dept_id'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Remove the unwanted rows with WHERE first, then group what is left.</p><p><b>How it works:</b> <code>FROM instructors</code> takes all instructors. <code>WHERE dept_id IS NOT NULL</code> drops the one instructor with no department. <code>GROUP BY dept_id</code> makes one group per department. <code>COUNT(*)</code> and <code>SUM(salary)</code> summarize each group.</p><p><b>Common mistake:</b> Forgetting the WHERE gives an extra group with dept_id NULL. GROUP BY keeps NULL as its own group.</p>"
     },
     {
       id: 'd3-8',
@@ -243,7 +250,8 @@ FROM enrollments GROUP BY section_id;`,
         'One row per section, with three different counts.',
         'Put a CASE inside SUM: 1 when the row matches, 0 when it does not.',
         'Pending rows have grade IS NULL.'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> To count only some rows inside a group, add 1 when the row matches and 0 when it does not.</p><p><b>How it works:</b> <code>FROM enrollments</code> takes all rows. <code>GROUP BY section_id</code> makes one group per section. <code>SUM(CASE WHEN grade IN ('A','B','C','D') THEN 1 ELSE 0 END)</code> counts passes. The same idea counts F grades and NULL grades.</p><p><b>Common mistake:</b> Writing <code>CASE WHEN grade = NULL</code> never matches, so pending is always 0. Use <code>grade IS NULL</code>.</p>"
     },
     {
       id: 'd3-9',
@@ -255,7 +263,8 @@ FROM enrollments GROUP BY section_id;`,
         'Both rules look at all the payments of one student. So both go in HAVING.',
         'Count the cash payments of each student with SUM(CASE ...).',
         'HAVING SUM(amount) >= 3000 AND (number of cash payments) = 0'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> HAVING can test two things about each group: the total, and how many cash payments it has.</p><p><b>How it works:</b> <code>FROM payments</code> takes all payments. <code>GROUP BY student_id</code> makes one group per student. <code>HAVING SUM(amount) &gt;= 3000</code> keeps big payers. <code>AND SUM(CASE WHEN method = 'cash' THEN 1 ELSE 0 END) = 0</code> keeps students with zero cash payments.</p><p><b>Common mistake:</b> Writing <code>WHERE method &lt;&gt; 'cash'</code> only removes the cash rows. A student who paid cash once would still appear, with a smaller total.</p>"
     },
     {
       id: 'd3-10',
@@ -267,7 +276,8 @@ FROM enrollments GROUP BY section_id;`,
         'A term is a pair (year, semester). Group by both.',
         'seats = SUM(capacity).',
         'HAVING SUM(capacity) > 300'
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A term is two columns. So you group by both: <code>GROUP BY year, semester</code>.</p><p><b>How it works:</b> <code>FROM sections</code> takes all sections. <code>GROUP BY year, semester</code> makes one group per term. <code>HAVING SUM(capacity) &gt; 300</code> keeps big terms. <code>ORDER BY year, semester</code> sorts by year, then semester A to Z.</p><p><b>Common mistake:</b> Writing <code>GROUP BY year</code> only mixes Fall and Spring of the same year into one group.</p>"
     }
   ],
   quiz: [

@@ -496,6 +496,29 @@ button.pill.link:hover { border-color: var(--accent); }
 .sp-legend { border-top: 1px solid var(--line); padding: 10px 16px; font-size: 13px; color: var(--muted); line-height: 2; }
 .sp-legend .pill { margin: 0 4px 0 0; }
 
+/* ---------- solution walkthrough ---------- */
+.sol { margin: 0 16px 16px; border: 1px solid var(--accent); border-radius: 10px; background: var(--surface); padding: 14px 16px 16px; }
+.sol-h { display: flex; gap: 4px 12px; flex-wrap: wrap; align-items: baseline; margin-bottom: 4px; }
+.sol-h > b { font-size: 16px; color: var(--accent); }
+.sol-h span { font-size: 13.5px; color: var(--muted); }
+.sol-sec { font: 700 12px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 16px 0 6px; }
+.sol .code { margin: 0; }
+.sol-why { background: var(--accent-soft); border-radius: 8px; padding: 12px 14px; font-size: 15px; }
+.sol-why p { margin: 0 0 8px; }
+.sol-why p:last-child { margin-bottom: 0; }
+.sol-why b { color: var(--accent); }
+.sol-lines { display: grid; gap: 6px; }
+.sl { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.sl .code { font-size: 13px; padding: 8px 10px; white-space: pre-wrap; }
+.sl p { margin: 0; font-size: 14.5px; padding-top: 6px; }
+.sol-x { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.sol-x .x2 { border-top: 0; }
+.sol-more { margin-top: 12px; }
+.sol-more summary { cursor: pointer; font-size: 13.5px; color: var(--muted); }
+.sol-more .code { margin-top: 6px; }
+.sol-act { margin-top: 16px; display: flex; justify-content: flex-end; }
+@media (max-width: 640px) { .sl { grid-template-columns: minmax(0, 1fr); gap: 2px; } .sl p { padding: 0 2px 6px; } .sol { margin: 0 10px 12px; padding: 12px; } }
+
 /* ---------- table viewer ---------- */
 .tv { position: fixed; z-index: 70; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(1100px, calc(100vw - 24px)); height: min(820px, calc(100vh - 32px)); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.35); display: flex; flex-direction: column; overflow: hidden; }
 body.modal-open { overflow: hidden; }
@@ -1180,7 +1203,7 @@ function exHTML(ex, idx) {
   h += '<div class="console">' + editorHTML('ex:' + ex.id, draft, 4) + '<div class="toolbar ex-tb"><div class="tb-main"><button class="btn small" data-exrun="' + ex.id + '">Run</button><button class="btn primary small" data-excheck="' + ex.id + '">Check answer</button></div><div class="tb-side"><button class="btn small tb-hint" data-exhint="' + ex.id + '"' + (hintsShown >= ex.hints.length ? ' disabled' : '') + '>' + (hintsShown >= ex.hints.length ? 'All hints shown' : 'Hint ' + (hintsShown + 1) + ' of ' + ex.hints.length) + '</button>' + (ex.kind !== 'script' ? '<button class="btn ghost small" data-exexp="' + ex.id + '">' + (s.showExp ? 'Hide expected' : 'Expected result') + '</button>' : '') + '<button class="btn ghost small" data-exsol="' + ex.id + '"' + (canSolve ? '' : ' disabled title="Unlocks after 2 checks or after all hints"') + '>' + (s.showSol ? 'Hide solution' : canSolve ? 'Solution' : 'Solution (locked)') + '</button><button class="btn ghost small tutor-only" data-exask="' + ex.id + '" hidden>Ask the professor</button></div></div>' +
     fbBlock + '<div class="out"' + (s.run && !(s.fb && s.fb.kind === 'error') ? '' : ' hidden') + '>' + (s.run ? (s.fb ? '<div class="out-lab">Your result</div>' : '') + runResultHTML(s.run) + (s.run.ok ? xrayWidget('ex:' + ex.id) : '') : '') + (s.plan ? '<div class="meta"><span>Plan: ' + esc(s.plan) + '</span></div>' : '') + '</div></div>';
   if (s.showExp && ex.kind !== 'script') { let set = null; try { set = expectedFor(ex); } catch (e) {} h += '<div class="exp"><div class="lab">Expected result (your target)</div>' + gridHTML(set) + '</div>'; }
-  if (s.showSol) h += '<div class="sol"><div class="lab">Model solution</div><pre class="code">' + hl(ex.solution) + '</pre>' + (ex.check ? '<div class="lab">How it is checked</div><pre class="code">' + hl(ex.check) + '</pre>' : '') + (ex.plan ? '<div class="lab">Query whose plan is checked</div><pre class="code">' + hl(ex.plan.query) + '</pre><p class="note">The plan must contain: ' + esc(ex.plan.mustContain) + '</p>' : '') + '</div>';
+  if (s.showSol) h += solutionHTML(ex);
   return h + '</article>';
 }
 function miniRows(rows, cols, cls) {
@@ -1188,9 +1211,143 @@ function miniRows(rows, cols, cls) {
   return '<div class="grid-wrap mini-diff ' + cls + '"><table class="grid"><thead><tr>' + cols.slice(0, max).map(c => '<th>' + esc(c) + '</th>').join('') + (cols.length > max ? '<th>…</th>' : '') + '</tr></thead><tbody>' +
     rows.map(r => '<tr>' + r.slice(0, max).map(v => v === '∅' ? '<td class="null">NULL</td>' : '<td>' + esc(v) + '</td>').join('') + (cols.length > max ? '<td>…</td>' : '') + '</tr>').join('') + '</tbody></table></div>';
 }
+function splitStatements(sql) {
+  const cuts = [0];
+  scanSQL(sql, (i, kind) => { if (kind === 'semi') cuts.push(i + 1); return 0; });
+  const parts = cuts.map((a, k) => sql.slice(a, k + 1 < cuts.length ? cuts[k + 1] : sql.length)).map(x => x.trim()).filter(x => x && !/^(--[^\n]*\s*)+$/.test(x));
+  const out = [];
+  for (let i = 0; i < parts.length; i++) {
+    let st = parts[i];
+    if (/^\s*(--[^\n]*\n\s*)*create\s+trigger/i.test(st)) { while (!/\bend\s*;?\s*$/i.test(st) && i + 1 < parts.length) st += '\n' + parts[++i]; }
+    out.push(st);
+  }
+  return out;
+}
+function nameAfter(re, st) { const m = re.exec(st); return m ? m[1] : ''; }
+function clauseSay(kw, txt) {
+  const t = txt.replace(/^\s*(from|where|having|limit|select(\s+distinct)?|group\s+by|order\s+by)\s+/i, '');
+  const first = (firstWord(t) || '').replace(/[^\w]/g, '');
+  const alias = /^\s*"?\w+"?\s+(?:as\s+)?([a-z]\w*)\b/i.exec(t);
+  const al = alias && !/^(on|using|where|join|left|inner|group|order|limit|natural|cross)$/i.test(alias[1]) ? ' <code>' + esc(alias[1]) + '</code> is a short name (alias) for it.' : '';
+  switch (kw) {
+    case 'WITH': return 'First build a named temporary result (a CTE). The main query below can use it like a table.';
+    case 'SELECT': return /^\s*select\s+distinct/i.test(txt) ? 'Choose the columns to show, then remove duplicate rows.' : /\b(count|sum|avg|min|max|group_concat)\s*\(/i.test(txt) ? 'Choose what to show. COUNT, SUM, AVG, MIN and MAX give one value per group.' + (/\bover\s*\(/i.test(txt) ? ' OVER (…) computes a window value for every row.' : '') : /\bover\s*\(/i.test(txt) ? 'Choose what to show. OVER (…) computes a value for every row, without grouping.' : 'Choose the columns to show.' + (/\bas\b/i.test(txt) ? ' <code>AS</code> gives a column a new name.' : '');
+    case 'FROM': return /,/.test(t.split(/\bwhere\b/i)[0]) ? 'Take every combination of rows from these tables.' : 'Start from the <b>' + esc(first) + '</b> table.' + al;
+    case 'JOIN': {
+      const kind = txt.trim().split(/\s+join/i)[0].toUpperCase();
+      const tbl = (firstWord(txt.replace(/^[\s\S]*?\bjoin\b\s*/i, '')) || '').replace(/[^\w]/g, '');
+      if (/LEFT/.test(kind)) return 'Attach the matching rows of <b>' + esc(tbl) + '</b>. Rows with no match are kept, with NULL in its columns.';
+      if (/CROSS/.test(kind)) return 'Pair every row with every row of <b>' + esc(tbl) + '</b>.';
+      return 'Attach the matching rows of <b>' + esc(tbl) + '</b>: keep pairs where the <code>ON</code> condition is true.';
+    }
+    case 'WHERE': return 'Keep only the rows where this condition is true.';
+    case 'GROUP BY': return 'Make one group for each different value. Each group becomes one row.';
+    case 'HAVING': return 'Keep only the groups where this condition is true.';
+    case 'ORDER BY': return 'Sort the result' + (/\bdesc\b/i.test(txt) ? ' (<code>DESC</code> = highest first)' : '') + '.' + (/,/.test(txt) ? ' The second column only breaks ties.' : '');
+    case 'LIMIT': return /\boffset\b/i.test(txt) ? 'Skip rows with <code>OFFSET</code>, then keep the next rows.' : 'Keep only the first rows.';
+    case 'UNION': return /union\s+all/i.test(txt) ? 'Add the rows of the next query (duplicates kept).' : 'Add the rows of the next query and remove duplicates.';
+    case 'INTERSECT': return 'Keep only rows that the next query also returns.';
+    case 'EXCEPT': return 'Remove rows that the next query returns.';
+    case 'WINDOW': return 'Define a named window used by OVER.';
+  }
+  return '';
+}
+function stmtSay(st) {
+  const s0 = st.replace(/^\s*(--[^\n]*\n\s*)*/, '');
+  let m;
+  if (/^create\s+table/i.test(s0)) return 'Create the table <b>' + esc(nameAfter(/create\s+table\s+(?:if\s+not\s+exists\s+)?"?(\w+)/i, s0)) + '</b> with its columns and rules (keys, NOT NULL, CHECK, links).';
+  if (/^create\s+(unique\s+)?index/i.test(s0)) return 'Create an index on <b>' + esc(nameAfter(/\bon\s+"?(\w+)/i, s0)) + '</b>, so the database can find rows by these columns without reading the whole table.';
+  if (/^create\s+view/i.test(s0)) return 'Save a query as the view <b>' + esc(nameAfter(/create\s+view\s+(?:if\s+not\s+exists\s+)?"?(\w+)/i, s0)) + '</b>. You can then SELECT from it like a table.';
+  if (/^create\s+trigger/i.test(s0)) return 'Create a trigger: code that runs automatically ' + esc((nameAfter(/\b(before|after|instead\s+of)\b/i, s0) || '').toUpperCase()) + ' a change on <b>' + esc(nameAfter(/\bon\s+"?(\w+)/i, s0)) + '</b>.';
+  if (/^insert/i.test(s0)) return 'Add rows to <b>' + esc(nameAfter(/insert\s+(?:or\s+\w+\s+)?into\s+"?(\w+)/i, s0)) + '</b>' + (/\bselect\b/i.test(s0) ? ', taken from a query.' : '.') + (/on\s+conflict/i.test(s0) ? ' If the key already exists, update it instead (upsert).' : '');
+  if (/^update/i.test(s0)) return 'Change existing rows in <b>' + esc(nameAfter(/update\s+"?(\w+)/i, s0)) + '</b>. Only rows that match WHERE are changed.';
+  if (/^delete/i.test(s0)) return 'Delete rows from <b>' + esc(nameAfter(/from\s+"?(\w+)/i, s0)) + '</b> that match WHERE.';
+  if (/^alter/i.test(s0)) return 'Change the structure of the table <b>' + esc(nameAfter(/alter\s+table\s+"?(\w+)/i, s0)) + '</b>.';
+  if (/^drop/i.test(s0)) return 'Remove it completely.';
+  if (/^begin/i.test(s0)) return 'Start a transaction: the next changes count as one unit.';
+  if (/^commit/i.test(s0)) return 'Save all changes of the transaction for good.';
+  if (/^rollback\s+to/i.test(s0)) return 'Undo the changes made after the savepoint, but stay in the transaction.';
+  if (/^rollback/i.test(s0)) return 'Undo every change since BEGIN.';
+  if (/^savepoint/i.test(s0)) return 'Mark a point you can go back to later.';
+  if (/^release/i.test(s0)) return 'Forget the savepoint (keep the changes).';
+  if (/^(select|with)\b/i.test(s0)) return 'Read data to check the result.';
+  return '';
+}
+function splitTop(body) {
+  const parts = []; let depth = 0, cur = '', q = null;
+  for (const ch of body) {
+    if (q) { cur += ch; if (ch === q) q = null; continue; }
+    if (ch === "'" || ch === '"') { q = ch; cur += ch; continue; }
+    if (ch === '(') depth++; else if (ch === ')') depth--;
+    if (ch === ',' && depth === 0) { parts.push(cur.trim()); cur = ''; } else cur += ch;
+  }
+  if (cur.trim()) parts.push(cur.trim());
+  return parts;
+}
+function colSay(def) {
+  const d = def.replace(/\s+/g, ' ').trim(); let m;
+  if (/^primary key/i.test(d)) return 'Table rule: these columns <b>together</b> are the primary key. The same combination cannot appear twice.';
+  if (/^foreign key/i.test(d)) { m = /references\s+"?(\w+)"?\s*\(([^)]*)\)/i.exec(d); return 'Table rule: a foreign key. The values must match <b>' + esc(m ? m[1] + '.' + m[2] : 'another table') + '</b>.' + (/on delete cascade/i.test(d) ? ' Deleting the parent row deletes these rows too.' : /on delete set null/i.test(d) ? ' Deleting the parent row sets this to NULL.' : ''); }
+  if (/^unique/i.test(d)) return 'Table rule: the combination of these columns must be unique.';
+  if (/^check/i.test(d)) return 'Table rule: every row must pass this check.';
+  if (/^constraint/i.test(d)) return 'A named rule for the table.';
+  const name = (/^"?(\w+)"?/.exec(d) || [])[1] || '';
+  const type = (/^"?\w+"?\s+([A-Za-z]+(?:\s*\([^)]*\))?)/.exec(d) || [])[1] || '';
+  const TY = { integer: 'a whole number', int: 'a whole number', text: 'text', real: 'a decimal number', numeric: 'a number', decimal: 'a decimal number', varchar: 'text', date: 'a date', boolean: 'true/false', blob: 'binary data' };
+  const bits = [];
+  const tkey = type.toLowerCase().replace(/\s*\(.*$/, '');
+  bits.push('<code>' + esc(name) + '</code> holds ' + (TY[tkey] || (type ? esc(type) : 'any value')));
+  if (/primary key/i.test(d)) bits.push('it is the <b>primary key</b>: it identifies each row' + (/autoincrement/i.test(d) ? ' and the number is created for you' : ''));
+  if (/not null/i.test(d)) bits.push('it is <b>required</b> (cannot be NULL)');
+  if (/\bunique\b/i.test(d)) bits.push('no two rows can have the same value');
+  if ((m = /check\s*\((.*)\)/i.exec(d))) bits.push('it must pass the rule <code>' + esc(m[1]) + '</code>');
+  if ((m = /default\s+('[^']*'|[\w.-]+)/i.exec(d))) bits.push('if you give no value, it becomes <code>' + esc(m[1]) + '</code>');
+  if ((m = /references\s+"?(\w+)"?\s*\(([^)]*)\)/i.exec(d))) bits.push('it must match a <b>' + esc(m[1] + '.' + m[2]) + '</b> (foreign key)' + (/on delete cascade/i.test(d) ? '; deleting that row deletes this one too' : /on delete set null/i.test(d) ? '; deleting that row sets this to NULL' : ''));
+  return bits.join(', ') + '.';
+}
+function stmtLines(st) {
+  const s0 = st.replace(/^\s*(--[^\n]*\n\s*)*/, '');
+  const ct = /^create\s+table\s+(?:if\s+not\s+exists\s+)?"?(\w+)"?\s*\(/i.exec(s0);
+  if (ct) {
+    const open = s0.indexOf('('), close = s0.lastIndexOf(')');
+    const defs = splitTop(s0.slice(open + 1, close));
+    return '<div class="sl"><pre class="code">' + hl('CREATE TABLE ' + ct[1] + ' (').replace(/\n$/, '') + '</pre><p>Create the table <b>' + esc(ct[1]) + '</b>. Each line inside the brackets is one column or one rule.</p></div>' +
+      defs.map(df => '<div class="sl"><pre class="code">' + hl('  ' + df).replace(/\n$/, '') + '</pre><p>' + colSay(df) + '</p></div>').join('') +
+      '<div class="sl"><pre class="code">' + hl(s0.slice(close).trim()).replace(/\n$/, '') + '</pre><p>End of the table definition.</p></div>';
+  }
+  if (/^(select|with)\b/i.test(s0)) return queryLines(s0);
+  return '<div class="sl"><pre class="code">' + hl(st).replace(/\n$/, '') + '</pre><p>' + stmtSay(st) + '</p></div>';
+}
+function solutionLines(ex) {
+  const stmts = splitStatements(ex.solution);
+  const isQuery = stmts.length === 1 && /^(\s|--[^\n]*\n)*(select|with)\b/i.test(stmts[0]);
+  if (!isQuery) return stmts.map(stmtLines).join('');
+  return queryLines(stmts[0]);
+}
+function queryLines(q0) {
+  const stmts = [q0];
+  const st = stmts[0].replace(/;\s*$/, '');
+  const toks = clauseTokens(st);
+  const si = toks.findIndex(t => t.kw === 'SELECT');
+  const pieces = [];
+  if (si > 0 || (si === 0 && toks[0].start > 0 && /^\s*with\b/i.test(st))) pieces.push({ kw: 'WITH', text: st.slice(0, toks[si].start) });
+  toks.slice(Math.max(si, 0)).forEach((t, i, a) => pieces.push({ kw: t.kw, text: st.slice(t.start, i + 1 < a.length ? a[i + 1].start : st.length) }));
+  return pieces.filter(p => p.text.trim()).map(p => '<div class="sl"><pre class="code">' + hl(p.text.trim()).replace(/\n$/, '') + '</pre><p>' + clauseSay(p.kw, p.text) + '</p></div>').join('');
+}
+function solutionHTML(ex) {
+  let h = '<div class="sol"><div class="sol-h"><b>Model solution</b><span>Read it line by line. Then press <b>Your turn</b> and type it yourself.</span></div>';
+  h += '<div class="sol-sec">The full answer</div><pre class="code">' + hl(ex.solution) + '</pre>';
+  if (ex.explain) h += '<div class="sol-sec">Why this works</div><div class="sol-why prose">' + ex.explain + '</div>';
+  h += '<div class="sol-sec">Line by line</div><div class="sol-lines">' + solutionLines(ex) + '</div>';
+  if (ex.kind !== 'script' && XREG['sol:' + ex.id] && XREG['sol:' + ex.id].stages) h += '<div class="sol-sec">Watch the solution run</div><div class="sol-x">' + xrayWidget('sol:' + ex.id) + '</div>';
+  if (ex.check) h += '<details class="sol-more"><summary>How your answer is checked</summary><pre class="code">' + hl(ex.check) + '</pre></details>';
+  if (ex.plan) h += '<details class="sol-more" open><summary>How your answer is checked</summary><p class="note">This query must use your index. Its plan must contain <code>' + esc(ex.plan.mustContain) + '</code>.</p><pre class="code">' + hl(ex.plan.query) + '</pre></details>';
+  h += '<div class="sol-act"><button class="btn primary" data-exretry="' + ex.id + '">Your turn: hide the solution and type it yourself</button></div>';
+  return h + '</div>';
+}
 function fbText(fb) { const strip = x => String(x || '').replace(/<[^>]+>/g, ''); return fb.kind === 'error' ? 'Error: ' + (fb.run && fb.run.error) : strip(fb.title) + '. ' + (fb.points || []).map(strip).join(' ') + (fb.tip ? ' Tip: ' + strip(fb.tip) : ''); }
 function fbHTML(fb, rec) {
-  if (fb.pass) return '<div class="fb pass"><div class="fb-title">✓ Correct, request delivered</div><p>' + (rec.usedSolution ? 'Next time, try it without the model solution.' : 'Now open the model solution and compare it with yours. There is often a shorter way.') + '</p></div>';
+  if (fb.pass) return '<div class="fb pass"><div class="fb-title">✓ Correct, request delivered</div><p>' + (rec.usedSolution ? 'Well done: you rebuilt it after studying the solution. Try this exercise again tomorrow without help, so it really sticks.' : 'Now open the model solution and compare it with yours. There is often a shorter way.') + '</p></div>';
   if (fb.kind === 'empty') return '<div class="fb fail"><div class="fb-title">Write a query first</div><p>Type your SQL in the editor above, then press <b>Check answer</b>.</p></div>';
   if (fb.kind === 'error') return '<div class="fb fail"><div class="fb-title">✕ ' + esc(fb.title) + '</div>' + errorHTML(fb.run) + '</div>';
   let h = '<div class="fb fail"><div class="fb-title">✕ ' + esc(fb.title) + '</div>';
@@ -1264,7 +1421,8 @@ function renderPractice(day, body) {
     else if (t.dataset.excheck) doCheck(exById(t.dataset.excheck));
     else if (t.dataset.exhint) { const ex = exById(t.dataset.exhint); const R = rec(ex.id); R.hints = Math.min(ex.hints.length, (R.hints || 0) + 1); save(); rerender(ex); revealIn(ex, '.hints .new'); }
     else if (t.dataset.exexp) { const ex = exById(t.dataset.exexp); const s = exState[ex.id] || (exState[ex.id] = {}); s.showExp = !s.showExp; rerender(ex); }
-    else if (t.dataset.exsol) { const ex = exById(t.dataset.exsol); const s = exState[ex.id] || (exState[ex.id] = {}); s.showSol = !s.showSol; if (s.showSol && !rec(ex.id).done) { rec(ex.id).usedSolution = true; save(); } rerender(ex); }
+    else if (t.dataset.exretry) { const ex = exById(t.dataset.exretry); const s = exState[ex.id] || (exState[ex.id] = {}); s.showSol = false; s.fb = null; s.run = null; s.showExp = false; P.drafts[ex.id] = ''; editors['ex:' + ex.id] = ''; xrayStore('ex:' + ex.id, null); save(); rerender(ex); const ta = $('#ex-' + CSS.escape(ex.id) + ' textarea', body); if (ta) { ta.focus(); ta.closest('.ex').scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' }); } toast('Now type it from memory'); }
+    else if (t.dataset.exsol) { const ex = exById(t.dataset.exsol); const s = exState[ex.id] || (exState[ex.id] = {}); s.showSol = !s.showSol; if (s.showSol && !rec(ex.id).done) { rec(ex.id).usedSolution = true; save(); } if (s.showSol && ex.kind !== 'script') { const d = freshDB(ex.setup); xrayStore('sol:' + ex.id, xray(d, ex.solution)); d.close(); } rerender(ex); if (s.showSol) revealIn(ex, '.sol'); }
     else if (t.dataset.exask) { const ex = exById(t.dataset.exask); const s = exState[ex.id] || {}; lastRun = { sql: getSQL(ex), error: s.fb && !s.fb.pass ? fbText(s.fb) : (s.run && !s.run.ok ? s.run.error : null), where: 'exercise ' + ex.id, ex }; openTutor(); askTutor(s.fb && !s.fb.pass ? 'My answer to this exercise is wrong. Give me one hint about what to look at, without writing the full solution.' : 'Can you give me a hint for this exercise without writing the full solution?'); }
     else if (t.dataset.goto) { viewDay(day.n, t.dataset.goto); window.scrollTo({ top: 0 }); }
   };
@@ -1686,7 +1844,7 @@ function x2Table(set, total, cls) {
 }
 function x2Inner(id) {
   const x = XREG[id], st = x.stages;
-  if (!x.open) return '<button class="x2-open" data-x2act="open"><span class="x2-play" aria-hidden="true">▶</span><span><b>Watch how your query runs</b><small>' + st.length + ' steps, with your real data. See where rows are added or removed.</small></span></button>';
+  if (!x.open) return '<button class="x2-open" data-x2act="open"><span class="x2-play" aria-hidden="true">▶</span><span><b>' + (id.startsWith('sol:') ? 'Watch the solution run' : 'Watch how your query runs') + '</b><small>' + st.length + ' steps, with real data. See where rows are added or removed.</small></span></button>';
   const i = x.step, s = st[i], prev = i ? st[i - 1].n : null;
   const unit = n => s.note === 'groups' ? (n === 1 ? 'group' : 'groups') : (n === 1 ? 'row' : 'rows');
   let change;

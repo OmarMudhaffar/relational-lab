@@ -251,7 +251,8 @@ LEFT JOIN ta_staff f ON f.person_id = p.person_id;`
       hints: [
         "Use the pragma function like a table: SELECT ... FROM pragma_foreign_key_list('enrollments')",
         "from and table are SQL keywords. So put them in double quotes: \"from\", \"table\"."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> The database stores its own design in a catalog, and you can query it like a table. <code>pragma_foreign_key_list</code> returns the foreign keys of one table.</p><p><b>How it works:</b> <code>pragma_foreign_key_list('enrollments')</code> returns one row per foreign key. The column <code>\"from\"</code> is the local column. The column <code>\"table\"</code> is the table it points to. They are in double quotes because from and table are SQL keywords.</p><p><b>Common mistake:</b> Writing <code>SELECT from, table</code> without quotes. The database reads them as keywords and gives a syntax error.</p>"
     },
     {
       id: 'd9-2', level: 1,
@@ -261,7 +262,8 @@ LEFT JOIN ta_staff f ON f.person_id = p.person_id;`
         "You need the departments with no matching instructor row.",
         "NOT EXISTS (SELECT 1 FROM instructors i WHERE i.dept_id = d.dept_id)",
         "A LEFT JOIN with WHERE i.instructor_id IS NULL also works."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> In the ER diagram, a department's link to instructors is optional. \"No instructors\" means no matching row exists, which is <code>NOT EXISTS</code>.</p><p><b>How it works:</b> For each department, the inner query looks for an instructor with the same <code>dept_id</code>. If none is found, NOT EXISTS is TRUE and the department is kept.</p><p><b>Common mistake:</b> Using an INNER JOIN. It keeps only departments that do have instructors.</p>"
     },
     {
       id: 'd9-3', level: 2,
@@ -271,7 +273,8 @@ LEFT JOIN ta_staff f ON f.person_id = p.person_id;`
         "Use the instructors table twice, with two aliases.",
         "Join the instructor's mentor_id to the mentor's instructor_id.",
         "An inner JOIN drops the instructors without a mentor. That is what you want."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> \"Mentors\" is a recursive relationship: it links the instructors table to itself. So you join the table to itself.</p><p><b>How it works:</b> Alias <code>i</code> is the instructor and alias <code>m</code> is the mentor. <code>m.instructor_id = i.mentor_id</code> follows the foreign key to the mentor's row. Instructors without a mentor have no match, so the INNER JOIN leaves them out.</p><p><b>Common mistake:</b> Using one alias for both roles. The database cannot tell the instructor from the mentor.</p>"
     },
     {
       id: 'd9-4', level: 2,
@@ -284,7 +287,8 @@ JOIN courses p ON p.course_id = r.prereq_id;`,
         "Start FROM prereqs. It holds the pairs.",
         "Join courses twice: once for course_id, once for prereq_id.",
         "Give the two copies aliases, for example c and p. Select c.title and p.title."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> prereqs is a junction table for an M:N relationship of courses with themselves. To read it, you join courses twice: once for each role.</p><p><b>How it works:</b> Alias <code>c</code> joins on <code>r.course_id</code> and gives the course title. Alias <code>p</code> joins on <code>r.prereq_id</code> and gives the title of the course it needs. Each prereqs row becomes one readable pair.</p><p><b>Common mistake:</b> Joining courses only once. Then both columns show the same title.</p>"
     },
     {
       id: 'd9-5', level: 2,
@@ -298,7 +302,8 @@ ORDER BY advisees DESC, i.name;`,
         "\"Every instructor, 0 if none\" means LEFT JOIN from instructors.",
         "COUNT(s.student_id) counts only matched students. COUNT(*) would give 1 to instructors with no students.",
         "ORDER BY advisees DESC, name"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> \"Advises\" is a 1:N relationship with optional participation: some instructors advise nobody. To keep them, use a LEFT JOIN.</p><p><b>How it works:</b> <code>instructors LEFT JOIN students</code> keeps every instructor. <code>GROUP BY</code> makes one row per instructor. <code>COUNT(s.student_id)</code> counts only real students, so instructors with nobody show 0. <code>ORDER BY advisees DESC, i.name</code> puts the busiest first and breaks ties by name.</p><p><b>Common mistake:</b> Using <code>COUNT(*)</code>. It counts the empty NULL row, so instructors with no advisees show 1.</p>"
     },
     {
       id: 'd9-6', level: 3,
@@ -312,7 +317,8 @@ GROUP BY m.name;`,
         "FROM sqlite_master m. Keep only type = 'table'.",
         "LEFT JOIN pragma_foreign_key_list(m.name) f. You need no ON clause: the argument links them.",
         "GROUP BY m.name and COUNT(f.\"from\"), so tables without foreign keys show 0."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Use the catalog to count foreign keys for every table. A LEFT JOIN keeps tables that have none.</p><p><b>How it works:</b> <code>sqlite_master</code> lists the tables, and <code>WHERE m.type = 'table'</code> keeps only real tables. <code>pragma_foreign_key_list(m.name)</code> runs once for each table name. The LEFT JOIN keeps a table even with no foreign keys. <code>COUNT(f.\"from\")</code> counts only real foreign keys, so those tables show 0.</p><p><b>Common mistake:</b> Using a plain JOIN. Tables with no foreign keys, like departments, disappear from the result.</p>"
     },
     {
       id: 'd9-7', level: 2, kind: 'script',
@@ -339,7 +345,8 @@ CREATE TABLE loans (
         "Create the parent tables (members, books) before the child table (loans).",
         "Required = NOT NULL. The foreign keys in loans are required too.",
         "member_id INTEGER NOT NULL REFERENCES members(member_id)"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Each entity becomes a table. A member borrows many books, and a book can be borrowed many times. Each loan is its own event, so loans gets its own id.</p><p><b>How it works:</b> <code>members</code> and <code>books</code> are strong entities with their own keys. <code>UNIQUE</code> on email stops two members from sharing one email. <code>loans</code> has two foreign keys, one to each side. Its key is <code>loan_id</code>, not the pair. So the same member can borrow the same book again later. <code>returned_on</code> stays NULL until the book comes back.</p><p><b>Common mistake:</b> Using <code>PRIMARY KEY (member_id, isbn)</code> for loans. Then a member could never borrow the same book twice.</p>"
     },
     {
       id: 'd9-8', level: 3, kind: 'script',
@@ -366,7 +373,8 @@ ORDER BY 1, 2, 3, 4;`,
         "M:N → a junction table with both foreign keys.",
         "The key on two columns goes on its own line: PRIMARY KEY (isbn, author_id)",
         "Insert into authors before book_authors. Otherwise the foreign keys fail."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> Books and authors are M:N, so they need a junction table. Extra facts about the pair, like the author order, live in the junction table.</p><p><b>How it works:</b> <code>authors</code> is a simple entity table. <code>book_authors</code> has a foreign key to each side. Its key is the pair <code>(isbn, author_id)</code>. <code>author_order</code> belongs to the pair: the same author can be first on one book and third on another. The INSERTs add the authors first, then the links, because links must point to existing rows.</p><p><b>Common mistake:</b> Putting <code>author_order</code> in the authors table. An author would then have one order for every book.</p>"
     },
     {
       id: 'd9-9', level: 3, kind: 'script',
@@ -386,7 +394,8 @@ ORDER BY 1, 2, 3, 4;`,
         "Multivalued attribute → a table (owner key, value).",
         "PRIMARY KEY (student_id, phone) stops the same number being stored twice.",
         "REFERENCES students(student_id) ON DELETE CASCADE"
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A column cannot hold a list. A multivalued attribute (several phones) gets its own table, with one row per value.</p><p><b>How it works:</b> <code>student_phones</code> stores one phone per row. Its key is the pair <code>(student_id, phone)</code>, so one student can have many different numbers. <code>ON DELETE CASCADE</code> removes the phones when the student is deleted. The INSERT adds three rows: two for 1001 and one for 1002.</p><p><b>Common mistake:</b> Making <code>student_id</code> alone the key. Then each student could store only one phone.</p>"
     },
     {
       id: 'd9-10', level: 3, kind: 'script',
@@ -404,7 +413,8 @@ CREATE TABLE visits (
         "A weak entity's key = owner key + partial key.",
         "PRIMARY KEY (patient_id, visit_no)",
         "\"Delete their visits too\" means ON DELETE CASCADE."
-      ]
+      ],
+      explain: "<p><b>The idea:</b> A weak entity has no full key of its own. Its key is the owner's key plus its own partial key.</p><p><b>How it works:</b> <code>patients</code> is the owner, with its own key. In <code>visits</code>, <code>visit_no</code> repeats for each patient (1, 2, 3 …). So the key is <code>(patient_id, visit_no)</code>. <code>ON DELETE CASCADE</code> removes the visits with their patient, because a visit cannot exist alone.</p><p><b>Common mistake:</b> Making <code>visit_no</code> alone the primary key. Two patients could not both have visit number 1.</p>"
     }
   ],
   quiz: [

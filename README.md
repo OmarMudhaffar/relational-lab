@@ -25,7 +25,15 @@ A free 14-day course that makes you fluent in SQL and database design. A real SQ
 
 Each feature follows a learning method with strong research behind it: retrieval practice, spacing, predicting before seeing the answer, worked examples with fading hints, interleaving, and self-explanation. All exercises use one university database: students, instructors, departments, courses, sections, enrollments and payments.
 
-Your progress is saved in your own browser (localStorage).
+## Interactive extras
+
+- **Live 3D database:** the 8 tables are drawn as database cylinders linked by their foreign keys. When you run a query, the tables it touches light up and data packets travel along the joins. You can drag the model to turn it, and clicking a table shows its columns.
+- **Query X-ray:** after every run, an animated breakdown shows how the database built your result in the order it actually runs (FROM, JOIN, WHERE, GROUP BY, HAVING, SELECT, ORDER BY, LIMIT), with the row count after each step.
+- **Real-world requests:** each exercise is a request from a university office (Registrar, Finance, HR…). Solving one delivers it, earns XP and moves you up the ranks from Intern to Data Architect.
+
+Your progress (XP, streak, solved exercises, review cards) is saved automatically in your own browser (localStorage). You can download a backup file and restore it on another device.
+
+Designed and built by **Omar Mudhaffar**.
 
 ## Run it locally
 

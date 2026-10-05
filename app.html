@@ -1,7 +1,7 @@
 <title>Relational Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Mrs+Saint+Delafield&display=swap">
 <style>
 /* Layout: syllabus rail on the left, a reading column for lessons, console-style editors and result grids inside it, tutor drawer on the right. */
 :root {
@@ -52,7 +52,8 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 a.btn { text-decoration: none; }
-html, body { height: 100%; }
+html { height: 100%; }
+body { min-height: 100%; }
 body { background: var(--bg); color: var(--ink); font: 15.5px/1.6 var(--f-body); -webkit-font-smoothing: antialiased; }
 a { color: var(--accent); }
 button { font: inherit; color: inherit; }
@@ -330,20 +331,143 @@ textarea.plain { width: 100%; min-height: 180px; padding: 12px 14px; border: 1px
   .topbar .btn .lbl-long { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .drawer, .rail { transition: none; } }
+/* ---------- motion ---------- */
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes flash { 0% { opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: .0; } }
+@keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@keyframes floatup { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, -54px); } }
+@keyframes stamp { 0% { opacity: 0; transform: rotate(-14deg) scale(2.2); } 60% { opacity: 1; transform: rotate(-9deg) scale(.95); } 100% { opacity: 1; transform: rotate(-9deg) scale(1); } }
+@keyframes burst { from { opacity: 1; transform: translate(0,0) rotate(0); } to { opacity: 0; transform: translate(var(--x), var(--y)) rotate(var(--r)); } }
+@keyframes ping { 0% { box-shadow: 0 0 0 0 var(--accent); } 100% { box-shadow: 0 0 0 7px transparent; } }
+main > .col { animation: rise .32s ease both; }
+table.grid tbody tr { animation: rise .25s ease both; }
+table.grid tbody tr:nth-child(2) { animation-delay: 20ms; } table.grid tbody tr:nth-child(3) { animation-delay: 40ms; } table.grid tbody tr:nth-child(4) { animation-delay: 60ms; } table.grid tbody tr:nth-child(5) { animation-delay: 80ms; } table.grid tbody tr:nth-child(6) { animation-delay: 100ms; } table.grid tbody tr:nth-child(7) { animation-delay: 120ms; } table.grid tbody tr:nth-child(n+8) { animation-delay: 140ms; }
+.hero h1 { animation: rise .5s ease both; }
+.ex { transition: border-color .3s ease, box-shadow .3s ease; position: relative; }
+.ex:focus-within { box-shadow: var(--shadow); }
+.btn { transition: border-color .15s ease, transform .1s ease, filter .15s ease; }
+.btn:active:not([disabled]) { transform: translateY(1px); }
+.btn.danger { border-color: var(--bad); color: var(--bad); }
+
+/* ---------- top bar extras ---------- */
+.rank { display: inline-flex; align-items: baseline; gap: 6px; padding: 4px 10px; border-radius: 14px; background: var(--accent-soft); font-size: 12.5px; white-space: nowrap; }
+.rank b { font: 700 12.5px var(--f-body); color: var(--accent); }
+.rank span { font: 500 11.5px var(--f-mono); color: var(--muted); }
+.rank.bump { animation: bump .5s ease; }
+.saved { font: 500 11px var(--f-mono); color: var(--ok); opacity: 0; }
+.saved.flash { animation: flash 1.6s ease; }
+.xpfloat { position: absolute; z-index: 70; pointer-events: none; font: 700 15px var(--f-mono); color: var(--hl); animation: floatup 1.3s ease-out forwards; text-shadow: 0 1px 0 var(--surface); }
+
+/* ---------- signature footer ---------- */
+.maincol { min-width: 0; display: flex; flex-direction: column; }
+.maincol main { flex: 1; }
+.sig { border-top: 1px solid var(--line); padding-block: 26px 40px; padding-inline: clamp(16px, 4vw, 48px); text-align: center; color: var(--muted); }
+.sig-name { font-family: "Mrs Saint Delafield", "Snell Roundhand", "Brush Script MT", cursive; font-size: 46px; line-height: 1.1; color: var(--ink); letter-spacing: .01em; }
+.sig-meta { font: 500 12px var(--f-mono); letter-spacing: .03em; margin-top: 4px; }
+
+/* ---------- 3D ---------- */
+.l3-wrap { min-width: 0; }
+.l3 { position: relative; overflow: hidden; touch-action: none; }
+.hero3d .l3 { height: 330px; border: 1px solid var(--line); border-radius: var(--radius); background: radial-gradient(ellipse at 50% 60%, var(--accent-soft), transparent 70%), var(--surface); }
+.l3-cap { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
+.l3-canvas { display: block; cursor: grab; }
+.l3-labels { position: absolute; inset: 0; pointer-events: none; }
+.l3-lab { position: absolute; left: 0; top: 0; pointer-events: auto; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 11px var(--f-mono); padding: 1px 6px; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: background .2s ease, color .2s ease, border-color .2s ease; }
+.l3-lab small { font-weight: 500; color: var(--muted); margin-left: 5px; }
+.l3-lab.hot { background: var(--hl); border-color: var(--hl); color: var(--surface); }
+.l3-lab.hot small { color: var(--surface); opacity: .85; }
+.l3-tip { position: absolute; z-index: 2000; max-width: 220px; background: var(--ink); color: var(--bg); font: 12px/1.45 var(--f-mono); padding: 6px 9px; border-radius: 5px; pointer-events: none; }
+.dock { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 35; width: 320px; max-width: calc(100% - 32px); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
+.dock-h { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; border-bottom: 1px solid var(--line); }
+.dock-h b { font: 700 13px var(--f-body); white-space: nowrap; }
+.dock-sub { font-size: 11.5px; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; animation: ping 1.8s ease-out infinite; }
+.dock .l3 { height: 210px; }
+.dock.min { width: auto; }
+.dock.min .dock-body, .dock.min .dock-sub { display: none; }
+.dock.min .dock-h { border-bottom: 0; }
+
+/* ---------- X-ray ---------- */
+.xray { border-top: 1px solid var(--line); }
+.xray summary { cursor: pointer; padding: 7px 12px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; list-style: none; }
+.xray summary::-webkit-details-marker { display: none; }
+.xray summary::before { content: "▸"; color: var(--accent); font-size: 11px; transition: transform .2s ease; }
+.xray[open] summary::before { transform: rotate(90deg); }
+.xray summary b { font: 700 12px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.xray summary span { font-size: 12.5px; color: var(--muted); }
+.xr { padding: 2px 12px 12px; display: grid; gap: 5px; }
+.xr-row { display: grid; grid-template-columns: 116px minmax(0, 1fr) minmax(60px, 34%) 74px; gap: 10px; align-items: center; font-size: 12.5px; animation: rise .3s ease both; animation-delay: calc(var(--i) * 110ms); }
+.xr-k { font: 700 11px var(--f-mono); color: var(--hl); letter-spacing: .03em; }
+.xr-t { font: 12px var(--f-mono); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.xr-bar { height: 10px; background: var(--bg2); border-radius: 5px; overflow: hidden; }
+.xr-bar i { display: block; height: 100%; background: var(--accent); border-radius: 5px; transform-origin: left; animation: grow .6s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 110ms + 80ms); }
+.xr-row:last-child .xr-bar i { background: var(--hl); }
+.xr-n { font: 600 12.5px var(--f-mono); font-variant-numeric: tabular-nums; text-align: right; }
+.xr-n small { font-weight: 400; color: var(--muted); }
+
+/* ---------- scenario ---------- */
+.brief { border: 1px solid var(--line); border-left: 3px solid var(--accent); background: var(--surface); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; }
+.brief p { margin: 4px 0 0; font-size: 14.5px; max-width: 72ch; }
+.ex-h .av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--surface); font: 700 11px var(--f-mono); flex: none; }
+.ex-h .req { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.ex-h .req b { font-size: 13.5px; }
+.ex-h .req small { font: 500 11px var(--f-mono); color: var(--muted); }
+.ex-h .id { display: none; }
+.stamp { position: absolute; top: 5px; right: 12px; z-index: 3; pointer-events: none; font: 800 15px var(--f-display); font-stretch: 115%; letter-spacing: .14em; text-transform: uppercase; color: var(--ok); border: 3px solid var(--ok); border-radius: 6px; padding: 3px 10px; animation: stamp .45s cubic-bezier(.2,.9,.3,1.3) both; background: var(--surface); opacity: .95; }
+.fb { position: relative; }
+.burst { position: absolute; left: 30px; top: 50%; width: 0; height: 0; pointer-events: none; }
+.burst i { position: absolute; width: 7px; height: 7px; border-radius: 2px; animation: burst .9s ease-out forwards; }
+
+/* ---------- progress panel ---------- */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.stats > div { border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); padding: 12px 14px; min-width: 0; }
+.stats small { display: block; font: 600 11px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.stats b { display: block; font: 800 24px/1.2 var(--f-display); font-stretch: 108%; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
+.stats b em { font-style: normal; font-weight: 500; font-size: 15px; color: var(--muted); }
+.stats span { font-size: 12.5px; color: var(--muted); }
+.stats .meterbar { margin: 8px 0 0; height: 6px; }
+.ladder { display: flex; gap: 4px; margin-top: 12px; overflow-x: auto; }
+.ladder span { flex: 1 0 96px; border-top: 3px solid var(--line); padding-top: 6px; }
+.ladder span.on { border-top-color: var(--accent); }
+.ladder span.cur { border-top-color: var(--hl); }
+.ladder b { display: block; font-size: 12.5px; }
+.ladder small { font: 500 11px var(--f-mono); color: var(--muted); }
+.saverow { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+.saverow .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.saverow .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); margin-right: 8px; vertical-align: 1px; }
+label.btn { cursor: pointer; }
+
+@media (min-width: 1100px) { body.dock-open main { padding-right: 356px; } }
+@media (max-width: 480px) { .rank { display: none; } }
+@media (max-width: 980px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 820px) {
+  .rank span { display: none; }
+  .xr-row { grid-template-columns: 92px minmax(0, 1fr) 64px; }
+  .xr-row .xr-t { display: none; }
+  .hero3d .l3 { height: 280px; }
+  .sig-name { font-size: 38px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; transition: none !important; }
+}
+
 </style>
 
 <div class="topbar">
   <button class="btn ghost small icon-btn" id="menuBtn" aria-label="Open the day list">☰</button>
   <a class="brand" href="#home"><b>Relational Lab</b><span>14 DAYS · SQL &amp; DATABASE DESIGN</span></a>
   <div class="spacer"></div>
-  <div class="meter" title="Overall progress"><div class="track"><div class="fill" id="meterFill" style="width:0%"></div></div><span id="meterTxt">0%</span></div>
+  <span class="rank" id="rankChip" title="Your rank"></span>
+  <div class="meter" title="Overall progress"><span class="saved" id="savedTag" title="Progress is saved automatically">Saved</span><div class="track"><div class="fill" id="meterFill" style="width:0%"></div></div><span id="meterTxt">0%</span></div>
   <button class="btn small" id="schemaBtn" aria-label="Show the database schema">Schema</button>
   <a class="btn small" href="#review" id="reviewBtn">Review <span class="badge" id="dueBadge" hidden>0</span></a>
   <button class="btn small" id="tutorBtn" hidden><span class="lbl-long">Ask the </span>Professor</button>
 </div>
 <div class="layout">
   <nav class="rail" id="rail" aria-label="Course"></nav>
-  <main id="main"><div class="loading" id="boot">Starting the SQL engine…</div></main>
+  <div class="maincol"><main id="main"><div class="loading" id="boot">Starting the SQL engine…</div></main>
+  <footer class="sig"><div class="sig-name">Omar Mudhaffar</div><div class="sig-meta">Designed and built by Omar Mudhaffar · <a href="https://github.com/OmarMudhaffar/relational-lab" target="_blank" rel="noopener">Source on GitHub</a> · Relational Lab, 2026</div></footer></div>
 </div>
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="schemaDrawer" aria-label="Database schema">
@@ -366,8 +490,13 @@ textarea.plain { width: 100%; min-height: 180px; padding: 12px 14px; border: 1px
     <div class="row"><button class="btn primary small" id="sendTutor">Send</button><button class="btn small" id="stopTutor" hidden>Stop</button><button class="btn ghost small" id="clearTutor">New chat</button></div>
   </div>
 </aside>
+<div class="dock" id="dock" hidden>
+  <div class="dock-h"><span class="pulse-dot"></span><b>Live database</b><span class="dock-sub">tables your query touches light up</span><button class="btn ghost small" id="dockToggle" aria-label="Minimize or expand the live database">–</button></div>
+  <div class="dock-body l3-wrap"><div class="l3" id="dock3d"></div></div>
+</div>
 <div class="toast" id="toast" hidden></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.14.2/sql-asm-memory-growth.min.js"></script>
 <script>
 /*__SEED__*/
@@ -402,6 +531,7 @@ function save() {
   const t = todayStr(); if (!P.active.includes(t)) P.active.push(t);
   if (!P.start) P.start = t;
   lsSet(P);
+  const sv = document.getElementById('savedTag'); if (sv) { sv.classList.remove('flash'); void sv.offsetWidth; sv.classList.add('flash'); }
   clearTimeout(saveTimer); saveTimer = setTimeout(pushRemote, 1500);
   updateChrome();
 }
@@ -606,6 +736,7 @@ function updateChrome() {
   const o = overall();
   $('#meterFill').style.width = o + '%'; $('#meterTxt').textContent = o + '% of 14 days';
   const due = dueCards().length; const b = $('#dueBadge'); b.hidden = !due; b.textContent = due;
+  updateRank();
 }
 function closeRail() { $('#rail').classList.remove('open'); if (!$('#drawer').classList.contains('open')) $('#scrim').hidden = true; }
 
@@ -638,7 +769,8 @@ function viewHome() {
     '<section class="hero"><div><div class="eyebrow">Your personal database course</div><h1>Fourteen days to <em>fluent SQL</em> and solid database design.</h1>' +
     '<p>A real SQL engine runs in this page. You read a short idea, predict what happens, run it, then solve graded problems on a university database.' + (HOSTED ? ' A professor is one click away when you get stuck.' : ' Hints and model solutions are there when you get stuck.') + '</p>' +
     '<div class="actions"><a class="btn primary" href="#day-' + nd + '">' + (started ? 'Continue with Day ' + nd : 'Start Day 1') + '</a><a class="btn" href="#playground">Open the playground</a>' + (dueCards().length ? '<a class="btn" href="#review">Review ' + dueCards().length + ' cards</a>' : '') + '</div></div>' +
-    '<div><div class="map">' + map + '</div><div class="map-caption"><span>Fill = progress per day</span><span>' + (P.start ? 'Calendar day ' + pd + ' of 14' : 'Plan starts when you do') + '</span></div></div></section>' +
+    '<div class="l3-wrap hero3d"><div class="l3" id="home3d"></div><p class="l3-cap">The database you will work with, live: 8 tables linked by foreign keys. Drag to turn it. Click a table to see its columns.</p></div></section>' +
+    '<section class="section"><h2>Your progress</h2><p class="lead">Every request you solve earns XP and moves you up the ranks. ' + (P.start ? 'Calendar day ' + pd + ' of 14.' : 'Your 14 days start when you begin Day 1.') + '</p>' + progressHTML() + '<div class="map" style="margin-top:18px">' + map + '</div><div class="map-caption"><span>Fill = progress per day</span><span>Orange outline = your next day</span></div></section>' +
     '<section class="section"><h2>The daily routine</h2><p class="lead">About 2.5 hours a day. Do the blocks in this order: the first and last blocks are where most of the remembering happens.</p><div class="routine">' +
     routine.map(r => '<div style="flex:' + parseInt(r[0]) + ' 1 0"><b>' + r[0] + '</b><span>' + r[1] + '</span><small>' + r[2] + '</small></div>').join('') + '</div></section>' +
     '<section class="section"><h2>Why the lab is built this way</h2><p class="lead">Each feature follows a learning method with strong evidence behind it. None of them feel easy. That effort is the point: it is what makes knowledge last past the exam.</p><div class="principles">' +
@@ -652,6 +784,7 @@ function viewHome() {
     (HOSTED ? '<li><strong>Use the professor for "why" questions</strong>, not to get answers. Ask it to quiz you, or to explain your error message.</li>' : '') +
     '<li>Shortcuts: <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> runs a query. In exercises, <kbd>Shift</kbd> + <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> checks it.</li>' +
     '</ul></div></section></div>';
+  wireProgress();
 }
 
 /* ---------------- views: day ---------------- */
@@ -698,7 +831,7 @@ function renderLearn(day, body) {
     h += '<section class="seg" data-seg="' + i + '"><h2><span class="n">' + pad2(i + 1) + '</span>' + esc(s.h) + '</h2><div class="prose">' + (s.html || '') + '</div>';
     if (s.sql) {
       const v = editors[key] !== undefined ? editors[key] : s.sql;
-      h += '<div class="console">' + editorHTML(key, v) + '<div class="toolbar"><button class="btn primary small" data-run="' + key + '">Run</button><button class="btn ghost small" data-reset="' + key + '">Reset</button><span class="hint-k">Ctrl/⌘ + Enter</span></div><div class="out" data-out="' + key + '"' + (lessonRuns[key] ? '' : ' hidden') + '>' + runResultHTML(lessonRuns[key]) + '</div></div>';
+      h += '<div class="console">' + editorHTML(key, v) + '<div class="toolbar"><button class="btn primary small" data-run="' + key + '">Run</button><button class="btn ghost small" data-reset="' + key + '">Reset</button><span class="hint-k">Ctrl/⌘ + Enter</span></div><div class="out" data-out="' + key + '"' + (lessonRuns[key] ? '' : ' hidden') + '>' + runResultHTML(lessonRuns[key]) + (lessonRuns[key] ? xrayHTML(lessonRuns[key].xray) : '') + '</div></div>';
       if (s.note) h += '<p class="note">' + s.note + '</p>';
     }
     if (s.predict) h += predictHTML(key, s.predict);
@@ -711,9 +844,10 @@ function renderLearn(day, body) {
   const runLesson = (key) => {
     const i = Number(key.split('-').pop());
     const sql = editors[key] !== undefined ? editors[key] : day.lesson[i].sql;
-    const d = freshDB(); const r = runAll(d, sql); d.close();
-    lessonRuns[key] = r;
-    const out = $('[data-out="' + key + '"]', body); out.innerHTML = runResultHTML(r); out.hidden = false;
+    const d = freshDB(); const r = runAll(d, sql); const xr = r.ok ? xray(d, sql) : null; d.close();
+    lessonRuns[key] = r; r.xray = xr;
+    const out = $('[data-out="' + key + '"]', body); out.innerHTML = runResultHTML(r) + xrayHTML(xr); out.hidden = false;
+    liveRun(sql);
     markSeen(day, i);
     lastRun = { sql, error: r.ok ? null : r.error, where: 'lesson example' };
   };
@@ -745,11 +879,12 @@ function exHTML(ex, idx) {
   const draft = P.drafts[ex.id] !== undefined ? P.drafts[ex.id] : (ex.kind === 'script' ? '-- write your SQL here\n' : 'SELECT ');
   const hintsShown = rec.hints || 0;
   const canSolve = rec.done || (rec.attempts || 0) >= 2 || hintsShown >= ex.hints.length;
-  let h = '<article class="ex' + (rec.done ? ' done' : '') + '" id="ex-' + esc(ex.id) + '"><div class="ex-h"><span class="id">' + pad2(idx + 1) + '</span><span class="lvl" title="Level ' + ex.level + '">' + [1, 2, 3].map(l => '<i class="' + (l <= ex.level ? 'on' : '') + '"></i>').join('') + '</span>' + (ex.kind === 'script' ? '<span class="eyebrow">' + (ex.plan ? 'index task' : 'build task') + '</span>' : '') + status + '</div>';
+  const rq = requesterFor(ex);
+  let h = '<article class="ex' + (rec.done ? ' done' : '') + '" id="ex-' + esc(ex.id) + '"><div class="ex-h"><span class="av" aria-hidden="true">' + rq[1] + '</span><span class="req"><b>' + esc(rq[0]) + '</b><small>REQ-' + esc(ex.id.toUpperCase()) + ' · ' + xpOfEx(ex) + ' XP</small></span><span class="id">' + pad2(idx + 1) + '</span><span class="lvl" title="Level ' + ex.level + '">' + [1, 2, 3].map(l => '<i class="' + (l <= ex.level ? 'on' : '') + '"></i>').join('') + '</span>' + (ex.kind === 'script' ? '<span class="eyebrow">' + (ex.plan ? 'index task' : 'build task') + '</span>' : '') + status + '</div>';
   const tl = tablesFor(ex);
   h += '<div class="ex-p prose">' + ex.prompt + (tl.length ? '<div class="tables-line">Tables: ' + tl.map(t => '<button class="tchip" data-schema="' + esc(t) + '" data-setupof="' + esc(ex.id) + '" title="Show the columns of ' + esc(t) + '">' + esc(t) + '</button>').join('') + '</div>' : '') + (ex.ordered ? '<p class="note">Row order is checked.</p>' : '') + (ex.setup ? '<details><summary class="note" style="cursor:pointer">Setup SQL that runs before yours</summary><pre class="code">' + hl(ex.setup) + '</pre></details>' : '') + '</div>';
   h += '<div class="console">' + editorHTML('ex:' + ex.id, draft, 4) + '<div class="toolbar"><button class="btn small" data-exrun="' + ex.id + '">Run</button><button class="btn primary small" data-excheck="' + ex.id + '">Check answer</button><button class="btn ghost small" data-exhint="' + ex.id + '"' + (hintsShown >= ex.hints.length ? ' disabled' : '') + '>Hint ' + Math.min(hintsShown + 1, ex.hints.length) + '/' + ex.hints.length + '</button>' + (ex.kind !== 'script' ? '<button class="btn ghost small" data-exexp="' + ex.id + '">' + (s.showExp ? 'Hide' : 'Show') + ' expected result</button>' : '') + '<button class="btn ghost small" data-exsol="' + ex.id + '"' + (canSolve ? '' : ' disabled title="Unlocks after 2 checks or all hints"') + '>' + (s.showSol ? 'Hide' : 'Model') + ' solution</button><button class="btn ghost small tutor-only" data-exask="' + ex.id + '" hidden>Ask the professor</button></div>' +
-    '<div class="out"' + (s.run ? '' : ' hidden') + '>' + (s.run ? runResultHTML(s.run) : '') + (s.plan ? '<div class="meta"><span>Plan: ' + esc(s.plan) + '</span></div>' : '') + '</div></div>';
+    '<div class="out"' + (s.run ? '' : ' hidden') + '>' + (s.run ? runResultHTML(s.run) + (s.run.ok ? xrayHTML(s.xray) : '') : '') + (s.plan ? '<div class="meta"><span>Plan: ' + esc(s.plan) + '</span></div>' : '') + '</div></div>';
   if (s.fb) h += '<div class="fb ' + (s.fb.pass ? 'pass' : 'fail') + '">' + (s.fb.pass ? '<strong>Correct.</strong> ' + (rec.usedSolution ? 'Next time try it without the solution.' : 'Read the model solution and compare it with yours.') : '<strong>' + esc(s.fb.msg) + '</strong>' + (s.fb.sub ? '<span class="sub">' + esc(s.fb.sub) + '</span>' : '')) + '</div>';
   if (hintsShown) h += '<div class="hints">' + ex.hints.slice(0, hintsShown).map((t, i) => '<div><b>HINT ' + (i + 1) + '</b>' + t + '</div>').join('') + '</div>';
   if (s.showExp && ex.kind !== 'script') { let set = null; try { set = expectedFor(ex); } catch (e) {} h += '<div class="exp"><div class="lab">Expected result (your target)</div>' + gridHTML(set) + '</div>'; }
@@ -758,7 +893,7 @@ function exHTML(ex, idx) {
 }
 function renderPractice(day, body) {
   const st = dayStats(day);
-  let h = '<p class="prose note" style="margin-top:0">Solve in order: levels go from ● to ●●●. Each exercise runs on a fresh copy of the database, so you cannot break anything. Model solutions unlock after two checks or after all hints. Click a table name to see its columns, or press <strong>Schema</strong> in the top bar.</p><div class="listing">';
+  let h = '<div class="brief"><div class="eyebrow">Your role</div><p>You are the new database engineer at Ibn Rushd University. Offices across campus send you requests. Run your query to watch the tables it touches light up in the live database, and X-ray how the result was built. Then press <strong>Check answer</strong> to deliver it.</p></div><p class="prose note" style="margin-top:0">Solve in order: levels go from ● to ●●●. Each exercise runs on a fresh copy of the database, so you cannot break anything. Model solutions unlock after two checks or after all hints. Click a table name to see its columns, or press <strong>Schema</strong> in the top bar.</p><div class="listing">';
   day.exercises.forEach((ex, i) => { h += exHTML(ex, i); });
   h += '</div><div class="next-row"><span class="note">' + st.exDone + ' of ' + st.exTotal + ' solved.</span><button class="btn primary" data-goto="recall">Go to recall quiz →</button></div>';
   body.innerHTML = h;
@@ -778,7 +913,9 @@ function renderPractice(day, body) {
     const sql = getSQL(ex);
     const d = freshDB(ex.setup); s.run = runAll(d, sql);
     s.plan = (ex.plan && s.run.ok) ? (() => { try { return planText(d, ex.plan.query); } catch (e) { return ''; } })() : null;
+    s.xray = s.run.ok ? xray(d, sql) : null;
     d.close();
+    liveRun(sql + ' ' + (ex.setup || ''));
     lastRun = { sql, error: s.run.ok ? null : s.run.error, where: 'exercise ' + ex.id, ex };
     rerender(ex);
   };
@@ -789,11 +926,15 @@ function renderPractice(day, body) {
     const r = grade(ex, sql);
     const R = rec(ex.id);
     R.attempts = (R.attempts || 0) + 1;
-    if (r.pass && !R.done) { R.done = true; R.doneAt = todayStr(); }
+    const firstPass = r.pass && !R.done;
+    if (firstPass) { R.done = true; R.doneAt = todayStr(); }
     s.fb = r; s.run = r.run; s.plan = r.plan || null;
+    if (r.run && r.run.ok && ex.kind !== 'script') { const xd = freshDB(ex.setup); s.xray = xray(xd, sql); xd.close(); } else s.xray = null;
+    liveRun(sql + ' ' + (ex.setup || ''));
     save(); renderRail();
     lastRun = { sql, error: r.pass ? null : (r.msg + ' ' + (r.sub || '')), where: 'exercise ' + ex.id, ex };
     rerender(ex);
+    if (firstPass) celebrate($('#ex-' + CSS.escape(ex.id), body), R.usedSolution ? xpOfEx(ex) / 2 : xpOfEx(ex));
     if (r.pass) { const done = dayStats(day).exDone; $$('.steps-nav .eyebrow').forEach(e => { e.textContent = done + '/' + day.exercises.length; }); }
   };
   const onKey = (key, val, shift) => { const ex = exById(key.slice(3)); if (ex) (shift ? doCheck : doRun)(ex); };
@@ -968,15 +1109,17 @@ function viewPlayground() {
   if (!PG) PG = freshDB();
   const v = editors['pg'] !== undefined ? editors['pg'] : "-- Anything goes here. Changes persist until you reset.\nSELECT s.name, d.name AS major, s.year\nFROM students s\nLEFT JOIN departments d ON d.dept_id = s.dept_id\nORDER BY s.year DESC, s.name;";
   $('#main').innerHTML = '<div class="col" style="max-width:1180px"><header class="dayhead"><div class="eyebrow">Free practice</div><h1>SQL playground</h1><p class="note">One database that keeps your changes while this page is open. Experiment freely: create tables, delete rows, break things, then reset.</p></header>' +
-    '<div class="pg"><div style="min-width:0"><div class="console">' + editorHTML('pg', v, 8) + '<div class="toolbar"><button class="btn primary small" id="pgRun">Run</button><button class="btn small" id="pgPlan">Explain plan</button><button class="btn ghost small" id="pgReset">Reset database</button><button class="btn ghost small tutor-only" id="pgAsk" hidden>Ask about this query</button><span class="hint-k">Ctrl/⌘ + Enter</span></div><div class="out" id="pgOut"' + (pgRun ? '' : ' hidden') + '>' + runResultHTML(pgRun) + '</div></div>' +
+    '<div class="pg"><div style="min-width:0"><div class="console">' + editorHTML('pg', v, 8) + '<div class="toolbar"><button class="btn primary small" id="pgRun">Run</button><button class="btn small" id="pgPlan">Explain plan</button><button class="btn ghost small" id="pgReset">Reset database</button><button class="btn ghost small tutor-only" id="pgAsk" hidden>Ask about this query</button><span class="hint-k">Ctrl/⌘ + Enter</span></div><div class="out" id="pgOut"' + (pgRun ? '' : ' hidden') + '>' + runResultHTML(pgRun) + (pgRun && pgRun.ok ? xrayHTML(pgRun.xray) : '') + '</div></div>' +
     '<div class="history" id="pgHist">' + (pgHist.length ? '<div class="eyebrow" style="margin-bottom:6px">History</div>' + pgHist.map((q, i) => '<button data-h="' + i + '" title="' + esc(q) + '">' + esc(q.replace(/\s+/g, ' ')) + '</button>').join('') : '') + '</div></div>' +
     '<aside><div class="eyebrow" style="margin-bottom:8px">Schema</div><div id="pgSchema">' + schemaHTML(PG) + '</div></aside></div></div>';
   const run = (sql, plan) => {
     const q = sql.trim().replace(/;\s*$/, '');
     pgRun = plan ? runAll(PG, 'EXPLAIN QUERY PLAN ' + q) : runAll(PG, sql);
+    if (!plan && pgRun.ok) pgRun.xray = xray(PG, sql);
     if (sql.trim() && pgHist[0] !== sql.trim()) { pgHist.unshift(sql.trim()); pgHist = pgHist.slice(0, 12); }
     lastRun = { sql, error: pgRun.ok ? null : pgRun.error, where: 'playground' };
     viewPlayground();
+    liveRun(sql);
   };
   mountEditors($('#main'), (k, val) => run(val));
   $('#pgRun').onclick = () => run(editors['pg'] !== undefined ? editors['pg'] : v);
@@ -1074,6 +1217,368 @@ async function connectTutor() {
   if (current.view === 'day' && (P.tab[current.day] || 'learn') === 'explain') route();
 }
 
+/* ---------------- query X-ray: logical processing order with row counts ---------------- */
+const XKW = [['GROUP BY', /^group\s+by\b/i], ['ORDER BY', /^order\s+by\b/i], ['SELECT', /^select\b/i], ['FROM', /^from\b/i], ['WHERE', /^where\b/i], ['HAVING', /^having\b/i], ['LIMIT', /^limit\b/i], ['WINDOW', /^window\b/i], ['UNION', /^union\b/i], ['INTERSECT', /^intersect\b/i], ['EXCEPT', /^except\b/i], ['JOIN', /^(?:natural\s+)?(?:(?:left|right|full)\s+(?:outer\s+)?|inner\s+|cross\s+)?join\b/i]];
+function scanSQL(s, onTop) {
+  // walks s, skipping strings, quoted names and comments; calls onTop(i, kind) at top-level words and semicolons
+  let depth = 0, i = 0; const n = s.length;
+  while (i < n) {
+    const c = s[i];
+    if (c === "'" || c === '"' || c === '`') { const q = c; i++; while (i < n && s[i] !== q) i++; i++; continue; }
+    if (c === '-' && s[i + 1] === '-') { while (i < n && s[i] !== '\n') i++; continue; }
+    if (c === '/' && s[i + 1] === '*') { const e = s.indexOf('*/', i + 2); i = e < 0 ? n : e + 2; continue; }
+    if (c === '(') { depth++; i++; continue; }
+    if (c === ')') { depth--; i++; continue; }
+    if (c === ';' && depth === 0) { onTop(i, 'semi'); i++; continue; }
+    if (/[A-Za-z_]/.test(c) && !/[A-Za-z0-9_]/.test(s[i - 1] || '')) {
+      const skip = depth === 0 ? onTop(i, 'word') : 0;
+      if (skip) { i = skip; continue; }
+      while (i < n && /[A-Za-z0-9_]/.test(s[i])) i++;
+      continue;
+    }
+    i++;
+  }
+}
+function lastStatement(sql) {
+  const cuts = [0];
+  scanSQL(sql, (i, kind) => { if (kind === 'semi') cuts.push(i + 1); return 0; });
+  const parts = cuts.map((a, k) => sql.slice(a, k + 1 < cuts.length ? cuts[k + 1] - 1 : sql.length));
+  const stmts = parts.map(p => p.replace(/^(\s|--[^\n]*\n?)*/, '').trim()).filter(Boolean);
+  return stmts.length ? stmts[stmts.length - 1].replace(/;\s*$/, '') : '';
+}
+function clauseTokens(st) {
+  const out = [];
+  scanSQL(st, (i, kind) => {
+    if (kind !== 'word') return 0;
+    const rest = st.slice(i, i + 48);
+    for (const [k, re] of XKW) { const m = re.exec(rest); if (m) { out.push({ kw: k, start: i, end: i + m[0].length, raw: m[0].replace(/\s+/g, ' ').toUpperCase() }); return i + m[0].length; } }
+    return 0;
+  });
+  return out;
+}
+function xray(db, sql) {
+  try {
+    const st = lastStatement(sql);
+    if (!/^(select|with)\b/i.test(st)) return null;
+    const T0 = clauseTokens(st);
+    if (T0.some(t => t.kw === 'UNION' || t.kw === 'INTERSECT' || t.kw === 'EXCEPT')) return null;
+    const si = T0.findIndex(t => t.kw === 'SELECT'); if (si < 0) return null;
+    const prefix = st.slice(0, T0[si].start);
+    const T = T0.slice(si), C = T.filter(t => t.kw !== 'JOIN');
+    const span = k => { const i = C.findIndex(t => t.kw === k); if (i < 0) return null; return [C[i].end, i + 1 < C.length ? C[i + 1].start : st.length]; };
+    const text = k => { const s = span(k); return s ? st.slice(s[0], s[1]).trim() : null; };
+    const fs = span('FROM'); if (!fs) return null;
+    const fromT = text('FROM'), selT = text('SELECT'), whereT = text('WHERE'), groupT = text('GROUP BY'), havingT = text('HAVING'), winT = text('WINDOW'), orderT = text('ORDER BY'), limitT = text('LIMIT');
+    const count = q => { try { const r = db.exec(prefix + q); return r.length ? Number(r[0].values[0][0]) : null; } catch (e) { return null; } };
+    const stages = [];
+    const joins = T.filter(t => t.kw === 'JOIN' && t.start > fs[0] && t.start < fs[1]);
+    const base = st.slice(fs[0], joins.length ? joins[0].start : fs[1]).trim();
+    stages.push({ k: 'FROM', t: base, n: count('SELECT COUNT(*) FROM ' + base) });
+    joins.forEach((j, idx) => {
+      const nextStart = idx + 1 < joins.length ? joins[idx + 1].start : fs[1];
+      stages.push({ k: j.raw.replace('OUTER ', ''), t: st.slice(j.end, nextStart).trim(), n: count('SELECT COUNT(*) FROM ' + st.slice(fs[0], nextStart)) });
+    });
+    const fw = fromT + (whereT ? ' WHERE ' + whereT : '');
+    if (whereT) stages.push({ k: 'WHERE', t: whereT, n: count('SELECT COUNT(*) FROM ' + fw) });
+    const grp = groupT ? ' GROUP BY ' + groupT : '';
+    if (groupT) stages.push({ k: 'GROUP BY', t: groupT, n: count('SELECT COUNT(*) FROM (SELECT ' + selT + ' FROM ' + fw + grp + ')'), note: 'groups' });
+    if (havingT) stages.push({ k: 'HAVING', t: havingT, n: count('SELECT COUNT(*) FROM (SELECT ' + selT + ' FROM ' + fw + grp + ' HAVING ' + havingT + ')'), note: 'groups' });
+    const core = 'SELECT ' + selT + ' FROM ' + fw + grp + (havingT ? ' HAVING ' + havingT : '') + (winT ? ' WINDOW ' + winT : '');
+    const nSel = count('SELECT COUNT(*) FROM (' + core + ')');
+    stages.push({ k: /^distinct\b/i.test(selT) ? 'SELECT DISTINCT' : 'SELECT', t: selT.replace(/^distinct\s+/i, ''), n: nSel });
+    if (orderT) stages.push({ k: 'ORDER BY', t: orderT, n: nSel, note: 'same rows, new order' });
+    if (limitT) stages.push({ k: 'LIMIT', t: limitT, n: count('SELECT COUNT(*) FROM (' + st.slice(T[0].start) + ')') });
+    const ok = stages.filter(s => s.n !== null && !isNaN(s.n));
+    return ok.length >= 2 ? ok : null;
+  } catch (e) { return null; }
+}
+const XR_KEY = 'relational-lab-xray-open';
+let xrayOpen = true; try { xrayOpen = localStorage.getItem(XR_KEY) !== '0'; } catch (e) {}
+document.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('xray')) { xrayOpen = e.target.open; try { localStorage.setItem(XR_KEY, xrayOpen ? '1' : '0'); } catch (err) {} } }, true);
+function xrayHTML(stages) {
+  if (!stages) return '';
+  const max = Math.max(1, ...stages.map(s => s.n));
+  const short = t => { t = String(t).replace(/\s+/g, ' '); return t.length > 70 ? t.slice(0, 68) + '…' : t; };
+  return '<details class="xray"' + (xrayOpen ? ' open' : '') + '><summary><b>Query X-ray</b><span>how the database built this result, in the order it really runs</span></summary><div class="xr">' +
+    stages.map((s, i) => '<div class="xr-row" style="--i:' + i + '"><span class="xr-k">' + esc(s.k) + '</span><span class="xr-t" title="' + esc(s.t) + '">' + hl(short(s.t)).replace(/\n$/, '') + '</span><span class="xr-bar"><i style="width:' + Math.max(1.5, 100 * s.n / max).toFixed(1) + '%"></i></span><span class="xr-n">' + s.n + '<small>' + (s.note === 'groups' ? ' groups' : ' rows') + '</small></span></div>').join('') +
+    '</div></details>';
+}
+
+/* ---------------- scenario: requests from university offices ---------------- */
+const OFFICES = [['payments', 'Finance Office', 'FO'], ['prereqs', 'Curriculum Committee', 'CC'], ['enrollments', "Registrar's Office", 'RO'], ['sections', "Registrar's Office", 'RO'], ['instructors', 'Human Resources', 'HR'], ['departments', "Dean's Office", 'DO'], ['students', 'Student Affairs', 'SA'], ['courses', 'Curriculum Committee', 'CC']];
+function requesterFor(ex) {
+  if (ex.kind === 'script') return ex.plan ? ['Performance team', 'PT'] : ['Engineering lead', 'EL'];
+  const tl = tablesFor(ex);
+  for (const [t, name, ini] of OFFICES) if (tl.includes(t)) return [name, ini];
+  return ['Engineering lead', 'EL'];
+}
+let KNOWN_TABLES = null;
+function tablesIn(sql) {
+  if (!KNOWN_TABLES) KNOWN_TABLES = Object.keys(LAB.TABLE_NOTES);
+  const words = new Set((String(sql).replace(/--[^\n]*/g, ' ').replace(/'(?:[^']|'')*'/g, ' ').match(/[A-Za-z_][A-Za-z0-9_]*/g) || []).map(w => w.toLowerCase()));
+  return KNOWN_TABLES.filter(t => words.has(t));
+}
+
+/* ---------------- XP, ranks, streak ---------------- */
+const RANKS = [[0, 'Intern'], [150, 'Junior Analyst'], [500, 'SQL Developer'], [1100, 'Database Engineer'], [1900, 'Senior DBA'], [2800, 'Data Architect']];
+function xpOfEx(ex) { return 10 * ex.level; }
+function xpTotal() {
+  let x = 0;
+  DAYS.forEach(d => {
+    d.exercises.forEach(e => { const r = P.ex[e.id]; if (r && r.done) x += r.usedSolution ? xpOfEx(e) / 2 : xpOfEx(e); });
+    d.quiz.forEach(q => { if (P.quiz[q.id] && P.quiz[q.id].first) x += 5; });
+    if (P.teach[d.n]) x += 10;
+  });
+  x += 2 * Object.keys(P.predict).length;
+  return Math.round(x);
+}
+function rankOf(x) { let r = RANKS[0], next = null; RANKS.forEach((k, i) => { if (x >= k[0]) { r = k; next = RANKS[i + 1] || null; } }); return { name: r[1], at: r[0], next }; }
+function streak() {
+  const set = new Set(P.active || []); let d = todayStr(), n = 0;
+  if (!set.has(d)) d = addDays(d, -1);
+  while (set.has(d)) { n++; d = addDays(d, -1); }
+  return n;
+}
+let lastXP = null;
+function floatXP(n, el) {
+  if (!n || n <= 0) return;
+  const r = (el || $('#rankChip')).getBoundingClientRect();
+  const f = document.createElement('div'); f.className = 'xpfloat'; f.textContent = '+' + n + ' XP';
+  f.style.left = (r.left + r.width / 2) + 'px'; f.style.top = (r.top + window.scrollY) + 'px';
+  document.body.appendChild(f); setTimeout(() => f.remove(), 1400);
+}
+function updateRank() {
+  const x = xpTotal(), rk = rankOf(x), chip = $('#rankChip');
+  chip.innerHTML = '<b>' + esc(rk.name) + '</b><span>' + x + ' XP</span>';
+  chip.title = rk.next ? (rk.next[0] - x) + ' XP to ' + rk.next[1] : 'Top rank reached';
+  if (lastXP !== null && x > lastXP) { chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump'); }
+  lastXP = x;
+}
+const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function celebrate(article, gain) {
+  if (!article) return;
+  const stamp = document.createElement('div'); stamp.className = 'stamp'; stamp.textContent = 'Delivered';
+  article.appendChild(stamp);
+  floatXP(gain, article.querySelector('.fb') || article);
+  if (reduceMotion) return;
+  const box = document.createElement('div'); box.className = 'burst';
+  for (let i = 0; i < 18; i++) { const p = document.createElement('i'); const a = (i / 18) * Math.PI * 2; p.style.setProperty('--x', (Math.cos(a) * (60 + Math.random() * 70)).toFixed(0) + 'px'); p.style.setProperty('--y', (Math.sin(a) * (40 + Math.random() * 60)).toFixed(0) + 'px'); p.style.setProperty('--r', (Math.random() * 360).toFixed(0) + 'deg'); p.style.background = ['var(--accent)', 'var(--hl)', 'var(--ok)'][i % 3]; box.appendChild(p); }
+  const fb = article.querySelector('.fb'); (fb || article).appendChild(box);
+  setTimeout(() => box.remove(), 1200);
+}
+
+/* ---------------- live 3D database ---------------- */
+const Live3D = (function () {
+  let renderer = null, scene, camera, root, nodes = {}, edges = [], packets = [], labels = null, tip = null, host = null, raf = 0, visible = true, failed = false;
+  let rotY = 0.5, rotX = 0.42, auto = !reduceMotion, drag = null, lastT = 0, hover = null;
+  const ORDER = ['students', 'enrollments', 'sections', 'courses', 'prereqs', 'departments', 'instructors', 'payments'];
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888';
+  function colors() { return { accent: new THREE.Color(css('--accent')), hl: new THREE.Color(css('--hl')), line: new THREE.Color(css('--muted')) }; }
+  function build() {
+    if (renderer || failed) return !!renderer;
+    if (!window.THREE) { failed = true; return false; }
+    try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { failed = true; return false; }
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    scene = new THREE.Scene(); camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+    root = new THREE.Group(); scene.add(root);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+    const dl = new THREE.DirectionalLight(0xffffff, 0.75); dl.position.set(4, 9, 6); scene.add(dl);
+    const db = freshDB();
+    const info = {};
+    ORDER.forEach(t => {
+      const n = db.exec('SELECT COUNT(*) FROM ' + t)[0].values[0][0];
+      const fk = db.exec("SELECT DISTINCT \"table\" FROM pragma_foreign_key_list('" + t + "')");
+      const cols = db.exec("SELECT name FROM pragma_table_info('" + t + "')")[0].values.map(v => v[0]);
+      info[t] = { n, fk: fk.length ? fk[0].values.map(v => v[0]) : [], cols };
+    });
+    db.close();
+    const C = colors();
+    labels = document.createElement('div'); labels.className = 'l3-labels';
+    tip = document.createElement('div'); tip.className = 'l3-tip'; tip.hidden = true;
+    ORDER.forEach((t, i) => {
+      const a = (i / ORDER.length) * Math.PI * 2;
+      const g = new THREE.Group(); g.position.set(Math.cos(a) * 4.1, 0, Math.sin(a) * 4.1);
+      const discs = Math.max(2, Math.min(7, Math.round(Math.log2(info[t].n + 1))));
+      const mats = [];
+      for (let k = 0; k < discs; k++) {
+        const m = new THREE.MeshStandardMaterial({ color: C.accent.clone(), emissive: C.hl.clone(), emissiveIntensity: 0, roughness: 0.45, metalness: 0.1, transparent: true, opacity: 0.92 });
+        const d = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.2, 48), m);
+        d.position.y = k * 0.26; d.userData.table = t; g.add(d); mats.push(m);
+      }
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.8, 0.86, 48), new THREE.MeshBasicMaterial({ color: C.hl.clone(), transparent: true, opacity: 0, side: THREE.DoubleSide }));
+      ring.rotation.x = -Math.PI / 2; ring.position.y = -0.14; g.add(ring);
+      root.add(g);
+      const lab = document.createElement('button'); lab.className = 'l3-lab'; lab.type = 'button'; lab.innerHTML = esc(t) + '<small>' + info[t].n + '</small>';
+      lab.onclick = () => openSchema(t);
+      labels.appendChild(lab);
+      nodes[t] = { g, mats, ring, lab, heat: 0, top: (discs - 1) * 0.26 + 0.3, info: info[t] };
+    });
+    ORDER.forEach(t => info[t].fk.forEach(to => {
+      if (!nodes[to] || to === t) return;
+      const A = nodes[t].g.position, B = nodes[to].g.position;
+      const mid = A.clone().add(B).multiplyScalar(0.5); mid.y = 1.6 + A.distanceTo(B) * 0.12;
+      const curve = new THREE.QuadraticBezierCurve3(A.clone().setY(0.2), mid, B.clone().setY(0.2));
+      const mat = new THREE.LineBasicMaterial({ color: C.line.clone(), transparent: true, opacity: 0.45 });
+      const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(40)), mat);
+      root.add(line);
+      edges.push({ a: t, b: to, curve, mat, heat: 0 });
+    }));
+    const el = renderer.domElement; el.className = 'l3-canvas'; el.setAttribute('aria-label', '3D model of the database tables and their foreign keys');
+    el.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, rx: rotX, ry: rotY, moved: false }; el.setPointerCapture(e.pointerId); auto = false; });
+    el.addEventListener('pointermove', e => {
+      if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true; rotY = drag.ry + dx * 0.008; rotX = Math.max(0.12, Math.min(1.1, drag.rx + dy * 0.005)); loop(performance.now()); }
+      pick(e);
+    });
+    el.addEventListener('pointerup', () => { if (drag && !drag.moved && hover) openSchema(hover); drag = null; });
+    el.addEventListener('pointerleave', () => { tip.hidden = true; hover = null; });
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const recolor = () => { const c = colors(); Object.values(nodes).forEach(n => n.mats.forEach(m => { m.color.copy(c.accent); m.emissive.copy(c.hl); })); edges.forEach(e => e.mat.color.copy(c.line)); };
+    if (mq.addEventListener) mq.addEventListener('change', recolor);
+    new MutationObserver(recolor).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) loop(performance.now()); });
+    return true;
+  }
+  function pick(e) {
+    if (!host) return;
+    const r = renderer.domElement.getBoundingClientRect();
+    const v = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    const rc = new THREE.Raycaster(); rc.setFromCamera(v, camera);
+    const hit = rc.intersectObjects(root.children, true).find(h => h.object.userData.table);
+    hover = hit ? hit.object.userData.table : null;
+    renderer.domElement.style.cursor = hover ? 'pointer' : (drag ? 'grabbing' : 'grab');
+    if (hover) { const n = nodes[hover]; tip.hidden = false; tip.innerHTML = '<b>' + esc(hover) + '</b> · ' + n.info.n + ' rows<br>' + n.info.cols.map(esc).join(', '); tip.style.left = Math.min(r.width - 200, e.clientX - r.left + 12) + 'px'; tip.style.top = (e.clientY - r.top + 12) + 'px'; }
+    else tip.hidden = true;
+  }
+  function size() {
+    if (!host) return;
+    const w = host.clientWidth, h = host.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false); renderer.domElement.style.width = w + 'px'; renderer.domElement.style.height = h + 'px';
+    camera.aspect = w / h; camera.position.set(0, 0, w / h < 1.2 ? 16 : 12.5); camera.updateProjectionMatrix();
+  }
+  function moving() { return auto || packets.length || Object.values(nodes).some(n => n.heat > 0) || drag; }
+  function loop(t) {
+    cancelAnimationFrame(raf);
+    if (!host || !host.isConnected || document.hidden || !visible) return;
+    const dt = Math.max(0, Math.min(0.05, (t - (lastT || t)) / 1000)); lastT = Math.max(t, lastT);
+    if (auto) rotY += dt * 0.18;
+    root.rotation.set(0, rotY, 0); root.updateMatrixWorld();
+    const dist = camera.position.length() || 12.5;
+    camera.position.set(0, Math.sin(rotX) * dist, Math.cos(rotX) * dist); camera.lookAt(0, 0.4, 0);
+    Object.values(nodes).forEach(n => {
+      n.heat = Math.max(0, n.heat - dt * 0.4);
+      const pulse = n.heat > 0 ? 0.55 + 0.45 * Math.sin(t / 140) : 0;
+      n.mats.forEach(m => { m.emissiveIntensity = n.heat * pulse * 0.9; });
+      const s = 1 + n.heat * 0.12; n.g.scale.set(s, 1 + n.heat * 0.08, s);
+      n.ring.material.opacity = n.heat * 0.9; const rs = 1 + (1 - n.heat) * 0.6; n.ring.scale.set(rs, rs, rs);
+    });
+    edges.forEach(e => { e.heat = Math.max(0, e.heat - dt * 0.4); e.mat.opacity = 0.35 + e.heat * 0.6; });
+    packets = packets.filter(p => {
+      p.t += dt * p.speed; if (p.t > 1) { scene.remove(p.mesh); p.mesh.geometry.dispose(); return false; }
+      p.mesh.visible = p.t >= 0;
+      const pt = p.edge.curve.getPoint(Math.max(0, p.dir > 0 ? p.t : 1 - p.t)); p.mesh.position.copy(pt).applyMatrix4(root.matrixWorld); return true;
+    });
+    renderer.render(scene, camera);
+    const r = host.getBoundingClientRect();
+    Object.values(nodes).forEach(n => {
+      const v = new THREE.Vector3(0, n.top + 0.2, 0).applyMatrix4(n.g.matrixWorld).project(camera);
+      n.lab.style.transform = 'translate(-50%, -100%) translate(' + ((v.x + 1) / 2 * r.width).toFixed(1) + 'px,' + ((1 - v.y) / 2 * r.height).toFixed(1) + 'px)';
+      n.lab.classList.toggle('hot', n.heat > 0.05);
+      n.lab.style.zIndex = String(Math.round((1 - v.z) * 1000));
+    });
+    if (moving()) raf = requestAnimationFrame(loop);
+  }
+  let io = null;
+  function mount(el) {
+    if (!el) return false;
+    if (!build()) { const w = el.closest('.l3-wrap'); if (w) w.hidden = true; return false; }
+    host = el;
+    el.appendChild(renderer.domElement); el.appendChild(labels); el.appendChild(tip);
+    size();
+    if (io) io.disconnect();
+    if ('IntersectionObserver' in window) { io = new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) loop(performance.now()); }); io.observe(el); }
+    lastT = 0; loop(performance.now());
+    return true;
+  }
+  function pulse(tables) {
+    if (!renderer || !tables || !tables.length) return;
+    const set = new Set(tables);
+    set.forEach(t => { if (nodes[t]) nodes[t].heat = 1; });
+    const C = colors();
+    edges.forEach(e => {
+      if (set.has(e.a) && set.has(e.b)) {
+        e.heat = 1;
+        for (let k = 0; k < 3; k++) {
+          const m = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 12), new THREE.MeshBasicMaterial({ color: C.hl }));
+          scene.add(m); packets.push({ mesh: m, edge: e, t: -k * 0.22, speed: 0.75, dir: k % 2 ? -1 : 1 });
+        }
+      }
+    });
+    lastT = 0; loop(performance.now());
+  }
+  window.addEventListener('resize', () => { if (renderer && host) { size(); loop(performance.now()); } });
+  return { mount, pulse, ok: () => !failed && !!window.THREE, resize: () => { if (renderer && host) { size(); loop(performance.now()); } } };
+})();
+const DOCK_KEY = 'relational-lab-dock';
+function dockState() { try { const v = localStorage.getItem(DOCK_KEY); if (v) return v; } catch (e) {} return window.innerWidth < 820 ? 'min' : 'open'; }
+function placeLive() {
+  const dock = $('#dock');
+  document.body.classList.remove('dock-open');
+  if (!Live3D.ok()) { dock.hidden = true; return; }
+  if (current.view === 'home') { dock.hidden = true; Live3D.mount($('#home3d')); return; }
+  if (current.view === 'review') { dock.hidden = true; return; }
+  dock.hidden = false;
+  const st = dockState(); dock.classList.toggle('min', st === 'min');
+  document.body.classList.toggle('dock-open', st !== 'min');
+  $('#dockToggle').textContent = st === 'min' ? '+' : '–';
+  if (st !== 'min') Live3D.mount($('#dock3d'));
+}
+function liveRun(sql) { Live3D.pulse(tablesIn(sql)); }
+
+/* ---------------- progress panel ---------------- */
+function progressHTML() {
+  const x = xpTotal(), rk = rankOf(x), sk = streak();
+  const exAll = DAYS.reduce((s, d) => s + d.exercises.length, 0), exDone = DAYS.reduce((s, d) => s + d.exercises.filter(e => P.ex[e.id] && P.ex[e.id].done).length, 0);
+  const qAll = DAYS.reduce((s, d) => s + d.quiz.length, 0), qRight = DAYS.reduce((s, d) => s + d.quiz.filter(q => P.quiz[q.id] && P.quiz[q.id].first).length, 0);
+  const pct = rk.next ? Math.round(100 * (x - rk.at) / (rk.next[0] - rk.at)) : 100;
+  let h = '<div class="stats">' +
+    '<div><small>Rank</small><b>' + esc(rk.name) + '</b><span>' + x + ' XP' + (rk.next ? ' · ' + (rk.next[0] - x) + ' to ' + esc(rk.next[1]) : '') + '</span><div class="meterbar"><i style="width:' + pct + '%"></i></div></div>' +
+    '<div><small>Streak</small><b>' + sk + ' day' + (sk === 1 ? '' : 's') + '</b><span>' + (sk ? 'Study today to keep it' : 'Start today') + '</span></div>' +
+    '<div><small>Requests delivered</small><b>' + exDone + '<em>/' + exAll + '</em></b><span>graded exercises</span></div>' +
+    '<div><small>Recall</small><b>' + qRight + '<em>/' + qAll + '</em></b><span>right on the first try</span></div></div>';
+  h += '<div class="ladder">' + RANKS.map(r => '<span class="' + (x >= r[0] ? 'on' : '') + (r[1] === rk.name ? ' cur' : '') + '"><b>' + esc(r[1]) + '</b><small>' + r[0] + ' XP</small></span>').join('') + '</div>';
+  h += '<div class="saverow"><span class="note"><span class="dot"></span>' + (HOSTED ? 'Saved automatically to your account and this browser.' : 'Saved automatically in this browser. Download a backup to move to another device or browser.') + '</span><span class="btns">' +
+    (!HOSTED ? '<button class="btn small" id="pBackup">Download backup</button>' : '') +
+    '<label class="btn small" for="pRestore">Restore from backup</label><input type="file" id="pRestore" accept=".json,application/json" hidden>' +
+    '<button class="btn small ghost" id="pReset">Reset progress</button></span></div>';
+  return h;
+}
+function wireProgress() {
+  const b = $('#pBackup');
+  if (b) b.onclick = () => {
+    const blob = new Blob([JSON.stringify(P, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'relational-lab-progress-' + todayStr() + '.json';
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    toast('Backup downloaded');
+  };
+  const inp = $('#pRestore');
+  if (inp) inp.onchange = () => {
+    const f = inp.files && inp.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try { const o = JSON.parse(rd.result); if (!o || typeof o !== 'object' || !o.ex) throw 0; P = Object.assign({}, P, o); save(); toast('Progress restored'); route(); }
+      catch (e) { toast('That file is not a Relational Lab backup'); }
+    };
+    rd.readAsText(f);
+  };
+  const r = $('#pReset');
+  if (r) r.onclick = () => {
+    if (!r.dataset.arm) { r.dataset.arm = '1'; r.textContent = 'Click again to erase everything'; r.classList.add('danger'); setTimeout(() => { if (r.isConnected) { delete r.dataset.arm; r.textContent = 'Reset progress'; r.classList.remove('danger'); } }, 4000); return; }
+    P = { v: 1, updatedAt: 0, start: null, active: [], seen: {}, predict: {}, ex: {}, drafts: {}, quiz: {}, cards: {}, teach: {}, tab: {}, lang: P.lang };
+    save(); toast('Progress reset'); route();
+  };
+}
+
 /* ---------------- router ---------------- */
 function route() {
   const h = (location.hash || '#home').slice(1);
@@ -1084,11 +1589,13 @@ function route() {
   else if (h === 'review') { current = { view: 'review' }; reviewQueue = null; renderRail(); viewReview(); }
   else { current = { view: 'home' }; renderRail(); viewHome(); }
   updateChrome(); setTutorContext();
+  placeLive();
 }
 window.addEventListener('hashchange', () => { route(); window.scrollTo({ top: 0 }); });
 $('#menuBtn').onclick = () => { $('#rail').classList.add('open'); $('#scrim').hidden = false; };
 $('#scrim').onclick = () => { closeRail(); closeTutor(); closeSchema(); };
 $('#schemaBtn').onclick = () => openSchema(null);
+$('#dockToggle').onclick = () => { const st = dockState() === 'min' ? 'open' : 'min'; try { localStorage.setItem(DOCK_KEY, st); } catch (e) {} placeLive(); };
 $('#closeSchema').onclick = closeSchema;
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSchema(); closeTutor(); closeRail(); } });
 $('#tutorBtn').onclick = openTutor;

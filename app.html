@@ -496,6 +496,18 @@ button.pill.link:hover { border-color: var(--accent); }
 .sp-legend { border-top: 1px solid var(--line); padding: 10px 16px; font-size: 13px; color: var(--muted); line-height: 2; }
 .sp-legend .pill { margin: 0 4px 0 0; }
 
+/* ---------- database switch ---------- */
+.dbswitch { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.dbswitch button { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 14px; text-align: left; cursor: pointer; min-width: 220px; flex: 1 1 220px; max-width: 360px; }
+.dbswitch button b { display: block; font-size: 15px; }
+.dbswitch button small { display: block; font-size: 12.5px; color: var(--muted); }
+.dbswitch button.on { border-color: var(--accent); background: var(--accent-soft); }
+.dbswitch button.on b { color: var(--accent); }
+#dbStatus { margin-top: 8px; color: var(--hl); }
+.brief.sak { margin-top: 14px; }
+.qchips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.qchips .chip { font-size: 13px; padding: 5px 11px; }
+
 /* ---------- help ladder ---------- */
 .console .help { margin: 10px 12px; }
 .help { border: 1px solid var(--hl); border-radius: 10px; background: var(--surface); padding: 12px 14px; }
@@ -1160,11 +1172,11 @@ function gridHTML(set, extraMeta) {
 }
 let NAMES = null;
 function names() {
-  if (NAMES) return NAMES;
-  const d = freshDB(); const t = [], c = new Set();
+  if (NAMES && NAMES.key === ACTIVE_DB + (activeIsSakila() ? 1 : 0)) return NAMES;
+  const d = activeIsSakila() ? sakilaDB() : freshDB(); const t = [], c = new Set();
   (d.exec("SELECT name FROM sqlite_master WHERE type='table'")[0] || { values: [] }).values.forEach(([n]) => { t.push(n); (d.exec("SELECT name FROM pragma_table_info('" + n + "')")[0] || { values: [] }).values.forEach(([x]) => c.add(x)); });
   d.close();
-  return (NAMES = { tables: t, cols: [...c] });
+  return (NAMES = { tables: t, cols: [...c], key: ACTIVE_DB + (activeIsSakila() ? 1 : 0) });
 }
 function lev(a, b) { a = a.toLowerCase(); b = b.toLowerCase(); const m = []; for (let i = 0; i <= a.length; i++) { m[i] = [i]; for (let j = 1; j <= b.length; j++) m[i][j] = i ? Math.min(m[i - 1][j] + 1, m[i][j - 1] + 1, m[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)) : j; } return m[a.length][b.length]; }
 function closest(w, list) { let best = null, bd = 99; list.forEach(x => { const d = lev(w, x); if (d < bd) { bd = d; best = x; } }); return bd <= Math.max(2, Math.floor(w.length / 3)) && bd > 0 ? best : null; }
@@ -1173,7 +1185,7 @@ function explainError(msg, sql) {
   let m; const N = names(); sql = sql || '';
   const dym = (w, list) => { const c = closest(w, list); return c ? ' Did you mean <code>' + esc(c) + '</code>?' : ''; };
   if ((m = /no such column: ([\w."]+)/i.exec(msg))) { const w = m[1].split('.').pop().replace(/"/g, ''); return 'There is no column called <code>' + esc(m[1]) + '</code> in the tables you used.' + dym(w, N.cols) + ' If the column belongs to another table, add that table with a <code>JOIN</code>. Press <b>Schema</b> to check the names.'; }
-  if ((m = /no such table: ([\w."]+)/i.exec(msg))) return 'There is no table called <code>' + esc(m[1]) + '</code>.' + dym(m[1].split('.').pop(), N.tables) + ' Table names in this database are plural, like <code>students</code> and <code>courses</code>.';
+  if ((m = /no such table: ([\w."]+)/i.exec(msg))) return 'There is no table called <code>' + esc(m[1]) + '</code>.' + dym(m[1].split('.').pop(), N.tables) + ' ' + (activeIsSakila() ? 'Sakila table names are singular, like <code>film</code> and <code>rental</code>.' : 'Table names in this database are plural, like <code>students</code> and <code>courses</code>.') + '';
   if ((m = /ambiguous column name: ([\w.]+)/i.exec(msg))) return 'Two of your tables have a column called <code>' + esc(m[1]) + '</code>, so the database does not know which one you mean. Put the table name or alias in front of it, for example <code>s.' + esc(m[1]) + '</code>.';
   if (/misuse of aggregate/i.test(msg)) return 'You used <code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code> or <code>MAX</code> in <code>WHERE</code>. <code>WHERE</code> runs before the rows are grouped, so it cannot use these. Move that condition to <code>HAVING</code>, after <code>GROUP BY</code>.';
   if (/misuse of window function/i.test(msg)) return 'Window functions (like <code>ROW_NUMBER()</code>) cannot be used in <code>WHERE</code>. Compute them in a <code>WITH</code> step or a subquery first, then filter outside.';
@@ -1242,7 +1254,7 @@ function renderRail() {
     });
   });
   const due = dueCards().length;
-  h += '<h4>Tools</h4>' + link('playground', '>_', 'SQL playground', 'free practice + schema', '', current.view === 'playground') + link('review', '↻', 'Spaced review', due ? due + ' cards due' : 'nothing due', due ? '<span class="badge">' + due + '</span>' : '', current.view === 'review');
+  h += '<h4>Tools</h4>' + link('playground', '>_', 'SQL playground', 'free practice + schema', '', current.view === 'playground' && ACTIVE_DB !== 'sakila') + link('sakila', '▣', 'Sakila DVD store', 'a real database to explore', '', current.view === 'playground' && ACTIVE_DB === 'sakila') + link('review', '↻', 'Spaced review', due ? due + ' cards due' : 'nothing due', due ? '<span class="badge">' + due + '</span>' : '', current.view === 'review');
   $('#rail').innerHTML = h;
 }
 function updateChrome() {
@@ -1280,7 +1292,7 @@ function viewHome() {
   $('#main').innerHTML = '<div class="col">' +
     '<section class="hero"><div><div class="eyebrow">Your personal database course</div><h1>Fourteen days to <em>fluent SQL</em> and solid database design.</h1>' +
     '<p>A real SQL engine runs in this page. You read a short idea, predict what happens, run it, then solve graded problems on a university database.' + (HOSTED ? ' A professor is one click away when you get stuck.' : ' Hints and model solutions are there when you get stuck.') + '</p>' +
-    '<div class="actions"><a class="btn primary" href="#day-' + nd + '">' + (started ? 'Continue with Day ' + nd : 'Start Day 1') + '</a><a class="btn" href="#playground">Open the playground</a>' + (dueCards().length ? '<a class="btn" href="#review">Review ' + dueCards().length + ' cards</a>' : '') + '</div></div>' +
+    '<div class="actions"><a class="btn primary" href="#day-' + nd + '">' + (started ? 'Continue with Day ' + nd : 'Start Day 1') + '</a><a class="btn" href="#playground">Open the playground</a><a class="btn" href="#sakila">Explore the Sakila DVD store</a>' + (dueCards().length ? '<a class="btn" href="#review">Review ' + dueCards().length + ' cards</a>' : '') + '</div></div>' +
     '<div class="l3-wrap hero3d"><div class="l3" id="home3d"><button class="btn small l3-expand" data-big3d="1">⤢ Full screen</button></div><p class="l3-cap">The database you will work with, live. Each cylinder is a table (taller = more rows), each line a foreign key. Drag to turn it, scroll to zoom. Click a table to read its data.</p></div></section>' +
     factHTML(false) +
     '<section class="section"><h2>Your progress</h2><p class="lead">Every request you solve earns XP and moves you up the ranks. ' + (P.start ? 'Calendar day ' + pd + ' of 14.' : 'Your 14 days start when you begin Day 1.') + '</p>' + progressHTML() + '<div class="map" style="margin-top:18px">' + map + '</div><div class="map-caption"><span>Fill = progress per day</span><span>Orange outline = your next day</span></div></section>' +
@@ -1828,7 +1840,7 @@ function schemaHTML(db, opts) {
     const fks = db.exec("SELECT \"from\", \"table\" FROM pragma_foreign_key_list('" + t.replace(/'/g, "''") + "')");
     const fkMap = {}; (fks[0] ? fks[0].values : []).forEach(([f, tt]) => { fkMap[f] = tt; });
     let n = 0; try { n = db.exec('SELECT COUNT(*) FROM "' + t.replace(/"/g, '""') + '"')[0].values[0][0]; } catch (e) {}
-    h += '<details data-table="' + esc(t) + '"' + (opts.open && opts.open.includes(t) ? ' open' : '') + '><summary>' + esc(t) + '<small>' + n + ' rows</small></summary><div class="cols">' + (LAB.TABLE_NOTES[t] ? '<p>' + esc(LAB.TABLE_NOTES[t]) + '</p>' : '') +
+    h += '<details data-table="' + esc(t) + '"' + (opts.open && opts.open.includes(t) ? ' open' : '') + '><summary>' + esc(t) + '<small>' + n + ' rows</small></summary><div class="cols">' + (noteFor(t) ? '<p>' + esc(noteFor(t)) + '</p>' : '') +
       (cols ? cols.values : []).map(([c, ty, pk]) => '<div class="c"><span class="' + (pk ? 'k' : fkMap[c] ? 'fk' : '') + '">' + esc(c) + (pk ? ' · PK' : '') + (fkMap[c] ? ' → ' + esc(fkMap[c]) : '') + '</span><span>' + esc((ty || '').toLowerCase()) + '</span></div>').join('') + (opts.preview ? '<button class="btn small ghost" data-preview="' + esc(t) + '" style="margin-top:6px;padding-left:0">Show first 5 rows</button><div class="pv"></div>' : '') + '</div></details>';
   });
   return h + '</div>';
@@ -1864,7 +1876,7 @@ function schemaPanelHTML(db, focus) {
     const search = (t + ' ' + cols.map(c => c[0]).join(' ')).toLowerCase();
     return '<section class="sp-t' + (open ? ' open' : '') + '" data-table="' + esc(t) + '" data-search="' + esc(search) + '">' +
       '<button class="sp-head" data-sptoggle="' + esc(t) + '" aria-expanded="' + open + '"><span class="sp-name">' + esc(t) + '</span><span class="sp-rows">' + n + ' rows</span><span class="sp-chev" aria-hidden="true">›</span></button>' +
-      '<div class="sp-in">' + (LAB.TABLE_NOTES[t] ? '<p class="sp-note">' + esc(LAB.TABLE_NOTES[t]) + '</p>' : '') +
+      '<div class="sp-in">' + (noteFor(t) ? '<p class="sp-note">' + esc(noteFor(t)) + '</p>' : '') +
       '<table class="sp-cols"><thead><tr><th>Column</th><th>Holds</th><th></th></tr></thead><tbody>' +
       cols.map(([c, ty, pk, nn]) => '<tr data-col="' + esc(c.toLowerCase()) + '"><td class="sp-c">' + esc(c) + '</td><td>' + esc(PLAIN_TYPE[(ty || '').toLowerCase()] || (ty || '').toLowerCase()) + '</td><td class="sp-tags">' + (pk ? '<span class="pill key">KEY</span>' : '') + (fk[c] ? '<button class="pill link" data-spgo="' + esc(fk[c]) + '" title="Open ' + esc(fk[c]) + '">→ ' + esc(fk[c]) + '</button>' : '') + (nn && !pk ? '<span class="pill req">required</span>' : '') + '</td></tr>').join('') +
       '</tbody></table>' +
@@ -1874,7 +1886,7 @@ function schemaPanelHTML(db, focus) {
 }
 function spFillExample(sec) {
   const box = $('.sp-ex', sec); if (!box || box.dataset.done) return;
-  const t = sec.dataset.table; const db = freshDB(spSetup);
+  const t = sec.dataset.table; const db = browseDB(spSetup);
   const r = runAll(db, 'SELECT * FROM "' + t.replace(/"/g, '""') + '" LIMIT 3'); db.close();
   box.dataset.done = '1';
   box.innerHTML = '<div class="sp-exlab">Example rows</div><div class="out">' + runResultHTML(r).replace(/<div class="meta">[\s\S]*?<\/div>/, '') + '</div>';
@@ -1885,10 +1897,10 @@ function spOpen(sec, on) {
 }
 function openSchema(focus, setup) {
   spSetup = setup || null;
-  const d = freshDB(spSetup);
+  const d = browseDB(spSetup);
   $('#schemaBody').innerHTML = schemaPanelHTML(d, focus);
   d.close();
-  $('#schemaCtx').textContent = setup ? 'The university database, plus the tables this exercise creates in its setup. Open a table to see its columns and example rows.' : 'The university database has 8 tables. Open a table to see its columns and example rows.';
+  if (!setup && activeIsSakila()) $('#schemaCtx').textContent = 'The Sakila DVD store database has 16 tables. Open a table to see its columns and example rows.'; else $('#schemaCtx').textContent = setup ? 'The university database, plus the tables this exercise creates in its setup. Open a table to see its columns and example rows.' : 'The university database has 8 tables. Open a table to see its columns and example rows.';
   $('#spFind').value = '';
   $('#schemaDrawer').classList.add('open'); $('#scrim').hidden = false;
   if (focus) { const sec = $('#schemaBody .sp-t[data-table="' + CSS.escape(focus) + '"]'); if (sec) { spOpen(sec, true); setTimeout(() => sec.scrollIntoView({ block: 'start' }), 30); } }
@@ -1908,10 +1920,62 @@ document.addEventListener('click', e => {
   if (exId) { const ex = DAYS.flatMap(d => d.exercises).find(x => x.id === exId); setup = ex && ex.setup; }
   openTable(c.dataset.schema, setup);
 });
+/* ---------------- practice databases ---------------- */
+let SAKILA = null, ACTIVE_DB = 'university', sakilaLoading = null;
+const SAKILA_NOTES = {
+  actor: 'Film actors (200 people).', film: 'One row per movie: description, length in minutes, rating (G, PG, PG-13, R, NC-17) and rental price.',
+  film_actor: 'Which actor plays in which film. A many-to-many junction table.', film_category: 'The category (genre) of each film. Junction table between film and category.',
+  category: 'Film genres such as Action, Comedy and Horror.', language: 'Languages a film can be in.', film_text: 'A copy of each film title and description, kept in sync by triggers.',
+  inventory: 'One row per physical DVD copy. A film can have several copies in each store.', rental: 'Each time a customer rents one DVD copy. return_date is NULL while the DVD is still out.',
+  payment: 'Money a customer paid, usually for one rental.', customer: 'People who rent DVDs. active = 1 means the account is open.', staff: 'Employees. Each works in one store.',
+  store: 'The two shops. Each has a manager (a staff member) and an address.', address: 'Street addresses of customers, staff and stores.', city: 'Cities. Each city is in one country.', country: 'Countries.'
+};
+const SAKILA_QUESTIONS = ['Which 10 films were rented most often?', 'How much money did each store take in?', 'Which customers still have a DVD out (not returned)?', 'Which actors played in the most films?', 'How many films are there in each category?', 'Which films have never been rented?', 'Total payments per month.', 'Which customers spent more than 180 in total?'];
+const PG_DEFAULT = {
+  university: "-- Anything goes here. Changes persist until you reset.\nSELECT s.name, d.name AS major, s.year\nFROM students s\nLEFT JOIN departments d ON d.dept_id = s.dept_id\nORDER BY s.year DESC, s.name;",
+  sakila: "-- Sakila: a DVD rental store. Try the questions above, or explore.\nSELECT title, rating, length, rental_rate\nFROM film\nORDER BY length DESC\nLIMIT 10;"
+};
+const pgSaved = {};
+function sakilaDB() { const d = new SQL.Database(SAKILA); d.exec('PRAGMA foreign_keys = ON;'); return d; }
+function activeIsSakila() { return ACTIVE_DB === 'sakila' && !!SAKILA && current.view === 'playground'; }
+function browseDB(setup) { return (!setup && activeIsSakila()) ? sakilaDB() : freshDB(setup); }
+function noteFor(t) { return (activeIsSakila() ? SAKILA_NOTES : LAB.TABLE_NOTES)[t] || ''; }
+async function loadSakila() {
+  if (SAKILA) return SAKILA;
+  if (!sakilaLoading) sakilaLoading = (async () => {
+    if (!('DecompressionStream' in window)) throw new Error('This browser is too old to unpack the database. Please update it.');
+    let r;
+    try { r = await fetch('sakila/sakila.db.gz'); } catch (e) { throw new Error('The database file could not be downloaded. If you opened the lab as a local file, open it from its website instead.'); }
+    if (!r.ok) throw new Error('The database file could not be downloaded (' + r.status + ').');
+    const buf = await new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+    SAKILA = new Uint8Array(buf); return SAKILA;
+  })();
+  try { return await sakilaLoading; } catch (e) { sakilaLoading = null; throw e; }
+}
+async function switchDB(key) {
+  if (key === ACTIVE_DB && PG && (key !== 'sakila' || SAKILA)) return;
+  if (key === 'sakila' && !SAKILA) {
+    const st = $('#dbStatus'); if (st) { st.hidden = false; st.textContent = 'Downloading the Sakila database (1.4 MB)…'; }
+    try { await loadSakila(); } catch (e) { if (st) { st.hidden = false; st.textContent = e.message; } else toast(e.message); return; }
+  }
+  pgSaved[ACTIVE_DB] = { ed: editors['pg'], run: pgRun, hist: pgHist };
+  if (PG) PG.close();
+  ACTIVE_DB = key;
+  PG = key === 'sakila' ? sakilaDB() : freshDB();
+  const sv = pgSaved[key] || {};
+  editors['pg'] = sv.ed !== undefined ? sv.ed : PG_DEFAULT[key]; pgRun = sv.run || null; pgHist = sv.hist || [];
+  xrayStore('pg', null); NAMES = null;
+  if (current.view === 'playground') { renderRail(); viewPlayground(); placeLive(); }
+}
 function viewPlayground() {
-  if (!PG) PG = freshDB();
-  const v = editors['pg'] !== undefined ? editors['pg'] : "-- Anything goes here. Changes persist until you reset.\nSELECT s.name, d.name AS major, s.year\nFROM students s\nLEFT JOIN departments d ON d.dept_id = s.dept_id\nORDER BY s.year DESC, s.name;";
-  $('#main').innerHTML = '<div class="col" style="max-width:1180px"><header class="dayhead"><div class="eyebrow">Free practice</div><h1>SQL playground</h1><p class="note">One database that keeps your changes while this page is open. Experiment freely: create tables, delete rows, break things, then reset.</p></header>' +
+  if (!PG) PG = ACTIVE_DB === 'sakila' && SAKILA ? sakilaDB() : freshDB();
+  const sak = ACTIVE_DB === 'sakila' && SAKILA;
+  const v = editors['pg'] !== undefined ? editors['pg'] : PG_DEFAULT[sak ? 'sakila' : 'university'];
+  const dbs = [['university', 'University', '8 tables · the database of the lessons'], ['sakila', 'Sakila DVD store', '16 tables · 47,000 rows · a real rental business']];
+  $('#main').innerHTML = '<div class="col" style="max-width:1180px"><header class="dayhead"><div class="eyebrow">Free practice</div><h1>SQL playground</h1><p class="note">Pick a database. Your changes stay while this page is open. Experiment freely: create tables, delete rows, break things, then reset.</p>' +
+    '<div class="dbswitch" role="tablist">' + dbs.map(([k, n, d]) => '<button role="tab" data-db="' + k + '" class="' + ((sak ? 'sakila' : 'university') === k ? 'on' : '') + '" aria-selected="' + ((sak ? 'sakila' : 'university') === k) + '"><b>' + n + '</b><small>' + d + '</small></button>').join('') + '</div><p class="note" id="dbStatus" hidden></p>' +
+    (sak ? '<div class="brief sak"><div class="eyebrow">Sakila DVD store</div><p>A real sample database from MySQL. Two DVD rental shops: films and actors, the DVD copies in each store (<code>inventory</code>), customers, every <code>rental</code> and every <code>payment</code>. Click a question to start. There is no grading here: check your result with the table viewer.</p><div class="qchips">' + SAKILA_QUESTIONS.map((q, i) => '<button class="chip" data-sq="' + i + '">' + esc(q) + '</button>').join('') + '</div><p class="note">Sakila sample database © Oracle and/or its affiliates, BSD license. Converted from MySQL to SQLite: the address location (map point) and staff photos are left out.</p></div>' : '') +
+    '</header>' +
     '<div class="pg"><div style="min-width:0"><div class="console">' + editorHTML('pg', v, 8) + '<div class="toolbar"><button class="btn primary small" id="pgRun">Run</button><button class="btn small" id="pgPlan">Explain plan</button><button class="btn ghost small" id="pgFmt">Format</button><button class="btn ghost small" id="pgReset">Reset database</button><button class="btn ghost small tutor-only" id="pgAsk" hidden>Ask about this query</button><span class="hint-k">Ctrl/⌘ + Enter</span></div><div class="out" id="pgOut"' + (pgRun ? '' : ' hidden') + '>' + runResultHTML(pgRun) + (pgRun && pgRun.ok ? xrayWidget('pg') : '') + '</div></div>' +
     '<div class="history" id="pgHist">' + (pgHist.length ? '<div class="eyebrow" style="margin-bottom:6px">History</div>' + pgHist.map((q, i) => '<button data-h="' + i + '" title="' + esc(q) + '">' + esc(q.replace(/\s+/g, ' ')) + '</button>').join('') : '') + '</div></div>' +
     '<aside><div class="eyebrow" style="margin-bottom:8px">Schema</div><div id="pgSchema">' + schemaHTML(PG) + '</div></aside></div></div>';
@@ -1928,7 +1992,9 @@ function viewPlayground() {
   $('#pgRun').onclick = () => run(editors['pg'] !== undefined ? editors['pg'] : v);
   $('#pgPlan').onclick = () => run(editors['pg'] !== undefined ? editors['pg'] : v, true);
   $('#pgFmt').onclick = () => { editors['pg'] = formatSQL(editors['pg'] !== undefined ? editors['pg'] : v); viewPlayground(); };
-  $('#pgReset').onclick = () => { PG.close(); PG = freshDB(); pgRun = null; toast('Database reset to the original data'); viewPlayground(); };
+  $('#pgReset').onclick = () => { PG.close(); PG = ACTIVE_DB === 'sakila' && SAKILA ? sakilaDB() : freshDB(); pgRun = null; toast('Database reset to the original data'); viewPlayground(); };
+  $$('.dbswitch [data-db]').forEach(b => b.onclick = () => switchDB(b.dataset.db));
+  $$('[data-sq]').forEach(b => b.onclick = () => { editors['pg'] = '-- ' + SAKILA_QUESTIONS[Number(b.dataset.sq)] + '\nSELECT '; viewPlayground(); const ta = $('#ed-pg'); if (ta) { ta.focus(); ta.selectionStart = ta.selectionEnd = ta.value.length; } });
   $('#pgHist').onclick = e => { const b = e.target.closest('button[data-h]'); if (b) { editors['pg'] = pgHist[Number(b.dataset.h)]; viewPlayground(); } };
   $('#pgAsk').onclick = () => { lastRun = { sql: editors['pg'] !== undefined ? editors['pg'] : v, error: pgRun && !pgRun.ok ? pgRun.error : null, where: 'playground' }; openTutor(); askTutor(lastRun.error ? 'Explain this error and how to fix it.' : 'Explain what this query does, step by step, and whether it could be written better.'); };
   tutorButtons();
@@ -2206,7 +2272,7 @@ function requesterFor(ex) {
 }
 let KNOWN_TABLES = null;
 function tablesIn(sql) {
-  if (!KNOWN_TABLES) KNOWN_TABLES = Object.keys(LAB.TABLE_NOTES);
+  if (!KNOWN_TABLES) KNOWN_TABLES = Object.keys(LAB.TABLE_NOTES).concat(Object.keys(SAKILA_NOTES));
   const words = new Set((String(sql).replace(/--[^\n]*/g, ' ').replace(/'(?:[^']|'')*'/g, ' ').match(/[A-Za-z_][A-Za-z0-9_]*/g) || []).map(w => w.toLowerCase()));
   return KNOWN_TABLES.filter(t => words.has(t));
 }
@@ -2261,8 +2327,11 @@ function celebrate(article, gain) {
 /* ---------------- live 3D database ---------------- */
 const Live3D = (function () {
   let renderer = null, scene, camera, root, nodes = {}, edges = [], packets = [], labels = null, tip = null, host = null, raf = 0, visible = true, failed = false;
-  let rotY = 0.5, rotX = 0.42, auto = !reduceMotion, drag = null, lastT = 0, hover = null, baseDist = 12.5, zoom = 1;
-  const ORDER = ['students', 'enrollments', 'sections', 'courses', 'prereqs', 'departments', 'instructors', 'payments'];
+  let rotY = 0.5, rotX = 0.42, auto = !reduceMotion, drag = null, lastT = 0, hover = null, baseDist = 12.5, zoom = 1, curKey = null, RAD = 4.1;
+  const ORDERS = {
+    university: ['students', 'enrollments', 'sections', 'courses', 'prereqs', 'departments', 'instructors', 'payments'],
+    sakila: ['film', 'film_actor', 'actor', 'film_text', 'language', 'film_category', 'category', 'inventory', 'rental', 'payment', 'customer', 'store', 'staff', 'address', 'city', 'country']
+  };
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888';
   function colors() { return { accent: new THREE.Color(css('--accent')), hl: new THREE.Color(css('--hl')), line: new THREE.Color(css('--muted')) }; }
   function build() {
@@ -2274,7 +2343,19 @@ const Live3D = (function () {
     root = new THREE.Group(); scene.add(root);
     scene.add(new THREE.AmbientLight(0xffffff, 0.75));
     const dl = new THREE.DirectionalLight(0xffffff, 0.75); dl.position.set(4, 9, 6); scene.add(dl);
-    const db = freshDB();
+    labels = document.createElement('div'); labels.className = 'l3-labels';
+    tip = document.createElement('div'); tip.className = 'l3-tip'; tip.hidden = true;
+    populate('university');
+    setupEvents();
+    return true;
+  }
+  function populate(key) {
+    if (key === curKey) return;
+    root.children.slice().forEach(c => { root.remove(c); c.traverse && c.traverse(o => { if (o.geometry) o.geometry.dispose(); }); });
+    packets.forEach(p => scene.remove(p.mesh)); packets = [];
+    labels.innerHTML = ''; nodes = {}; edges = [];
+    const ORDER = ORDERS[key]; RAD = key === 'sakila' ? 6.4 : 4.1;
+    const db = key === 'sakila' ? sakilaDB() : freshDB();
     const info = {};
     ORDER.forEach(t => {
       const n = db.exec('SELECT COUNT(*) FROM ' + t)[0].values[0][0];
@@ -2284,11 +2365,9 @@ const Live3D = (function () {
     });
     db.close();
     const C = colors();
-    labels = document.createElement('div'); labels.className = 'l3-labels';
-    tip = document.createElement('div'); tip.className = 'l3-tip'; tip.hidden = true;
     ORDER.forEach((t, i) => {
       const a = (i / ORDER.length) * Math.PI * 2;
-      const g = new THREE.Group(); g.position.set(Math.cos(a) * 4.1, 0, Math.sin(a) * 4.1);
+      const g = new THREE.Group(); g.position.set(Math.cos(a) * RAD, 0, Math.sin(a) * RAD);
       const discs = Math.max(2, Math.min(7, Math.round(Math.log2(info[t].n + 1))));
       const mats = [];
       for (let k = 0; k < discs; k++) {
@@ -2314,6 +2393,10 @@ const Live3D = (function () {
       root.add(line);
       edges.push({ a: t, b: to, curve, mat, heat: 0 });
     }));
+    curKey = key;
+    if (host) size();
+  }
+  function setupEvents() {
     const el = renderer.domElement; el.className = 'l3-canvas'; el.setAttribute('aria-label', '3D model of the database tables and their foreign keys');
     el.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, rx: rotX, ry: rotY, moved: false }; el.setPointerCapture(e.pointerId); auto = false; });
     el.addEventListener('pointermove', e => {
@@ -2328,7 +2411,6 @@ const Live3D = (function () {
     if (mq.addEventListener) mq.addEventListener('change', recolor);
     new MutationObserver(recolor).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) loop(performance.now()); });
-    return true;
   }
   function pick(e) {
     if (!host) return;
@@ -2346,7 +2428,7 @@ const Live3D = (function () {
     const w = host.clientWidth, h = host.clientHeight;
     if (!w || !h) return;
     renderer.setSize(w, h, false); renderer.domElement.style.width = w + 'px'; renderer.domElement.style.height = h + 'px';
-    camera.aspect = w / h; baseDist = Math.max(12.5, 6.4 / (Math.tan(19 * Math.PI / 180) * camera.aspect)); camera.updateProjectionMatrix();
+    camera.aspect = w / h; baseDist = Math.max(12.5, 6.4 / (Math.tan(19 * Math.PI / 180) * camera.aspect)) * (RAD / 4.1); camera.updateProjectionMatrix();
   }
   function moving() { return auto || packets.length || Object.values(nodes).some(n => n.heat > 0) || drag; }
   function loop(t) {
@@ -2409,7 +2491,8 @@ const Live3D = (function () {
     lastT = 0; loop(performance.now());
   }
   window.addEventListener('resize', () => { if (renderer && host) { size(); loop(performance.now()); } });
-  return { mount, pulse, ok: () => !failed && !!window.THREE, resize: () => { if (renderer && host) { size(); loop(performance.now()); } } };
+  function useDB(key) { if (!build()) return; if (key === 'sakila' && !SAKILA) key = 'university'; populate(key); if (host) loop(performance.now()); }
+  return { mount, pulse, useDB, ok: () => !failed && !!window.THREE, resize: () => { if (renderer && host) { size(); loop(performance.now()); } } };
 })();
 const DOCK_KEY = 'relational-lab-dock';
 function dockState() { try { const v = localStorage.getItem(DOCK_KEY); if (v) return v; } catch (e) {} return window.innerWidth < 820 ? 'min' : 'open'; }
@@ -2417,6 +2500,7 @@ function placeLive() {
   const dock = $('#dock');
   document.body.classList.remove('dock-open');
   if (!Live3D.ok()) { dock.hidden = true; return; }
+  Live3D.useDB(activeIsSakila() ? 'sakila' : 'university');
   if (current.view === 'home') { dock.hidden = true; Live3D.mount($('#home3d')); return; }
   if (current.view === 'review' || (current.view === 'day' && /^(recall|explain)$/.test(P.tab[current.day] || 'learn'))) { dock.hidden = true; return; }
   dock.hidden = false;
@@ -2486,7 +2570,7 @@ function wireProgress() {
 const TV = { t: null, setup: null, tab: 'data', sort: null, dir: 1, q: '', filter: null, cols: [], fk: {}, refBy: [], rows: [], hist: [] };
 function openTable(t, setup, filter) {
   if (TV.t && !$('#tv').hidden && TV.t !== t) TV.hist.push({ t: TV.t, filter: TV.filter });
-  const db = freshDB(setup || null);
+  const db = browseDB(setup || null);
   const q = t.replace(/'/g, "''");
   TV.cols = (db.exec("SELECT name, type, pk, \"notnull\" FROM pragma_table_info('" + q + "')")[0] || { values: [] }).values;
   TV.fk = {}; (db.exec("SELECT \"from\", \"table\", \"to\" FROM pragma_foreign_key_list('" + q + "')")[0] || { values: [] }).values.forEach(([f, tt, to]) => { TV.fk[f] = { t: tt, to: to || 'rowid' }; });
@@ -2507,7 +2591,7 @@ function closeTable() { if ($('#tv').hidden) return false; $('#tv').hidden = tru
 function tvRender() {
   const names = TV.cols.map(c => c[0]);
   $('#tvName').textContent = TV.t;
-  $('#tvNote').textContent = (LAB.TABLE_NOTES[TV.t] || '') ;
+  $('#tvNote').textContent = noteFor(TV.t);
   $$('#tv [data-tvtab]').forEach(b => { b.classList.toggle('on', b.dataset.tvtab === TV.tab); b.setAttribute('aria-selected', b.dataset.tvtab === TV.tab); });
   $('[data-tvtab="data"]').textContent = 'Data · ' + TV.rows.length + ' rows';
   $('[data-tvtab="cols"]').textContent = 'Columns · ' + TV.cols.length;
@@ -2557,6 +2641,7 @@ function route() {
   closeRail();
   if ((m = /^day-(\d+)$/.exec(h)) && byN(Number(m[1]))) { current = { view: 'day', day: Number(m[1]) }; renderRail(); viewDay(current.day); }
   else if (h === 'playground') { current = { view: 'playground' }; renderRail(); viewPlayground(); }
+  else if (h === 'sakila') { current = { view: 'playground' }; renderRail(); viewPlayground(); switchDB('sakila'); }
   else if (h === 'review') { current = { view: 'review' }; reviewQueue = null; renderRail(); viewReview(); }
   else { current = { view: 'home' }; renderRail(); viewHome(); }
   updateChrome(); setTutorContext();

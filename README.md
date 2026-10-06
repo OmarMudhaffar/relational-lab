@@ -37,15 +37,23 @@ Each feature follows a learning method with strong research behind it: retrieval
 Your progress (XP, streak, solved exercises, review cards) is saved automatically in your own browser (localStorage). You can download a backup file and restore it on another device.
 
 
+## Two databases
+
+- **University** (8 tables): used by every lesson and graded exercise.
+- **Sakila DVD store** (16 tables, about 47,000 rows): the official MySQL sample database of a DVD rental business, converted to SQLite. Open it from **Sakila DVD store** in the menu or the playground's database switch. It is downloaded only when you open it (1.4 MB).
+
+Sakila is © Oracle and/or its affiliates and is distributed under the BSD license in `sakila/LICENSE.txt`. The conversion (`tools/build-sakila.js`) keeps every table, row, index and the six report views. It drops the MySQL-only `address.location` geometry column and the staff photos, and replaces the stored procedures with nothing (SQLite has none).
+
 ## Run it locally
 
-Open `index.html` in a browser. To edit the lessons:
+Serve the folder with any web server (for example `python3 -m http.server`) and open `http://localhost:8000`. Opening `index.html` directly as a file also works, but then the Sakila database cannot be downloaded. To edit the lessons:
 
 ```bash
 npm install
 npm test        # runs every lesson example and exercise solution against the database
 npm run build   # rebuilds index.html from app.html, seed.js and days/
 npm run smoke   # optional: solves every exercise through the UI in headless Chrome
+node tools/build-sakila.js path/to/sakila-data.sql   # rebuild sakila/sakila.db.gz from the MySQL files
 ```
 
 ## Project layout

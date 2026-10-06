@@ -37,3 +37,6 @@ ${body.trim()}
 `;
 fs.writeFileSync(path.join(dir, 'index.html'), standalone);
 console.log('wrote index.html', (standalone.length / 1024).toFixed(0) + ' KB', 'and relational-lab.html');
+// base64 copy of the Sakila file for hosts that will not serve .gz (the claude.ai artifact viewer)
+const gzPath = path.join(dir, 'sakila', 'sakila.db.gz');
+if (fs.existsSync(gzPath)) fs.writeFileSync(gzPath + '.b64.txt', fs.readFileSync(gzPath).toString('base64'));
